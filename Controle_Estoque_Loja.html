@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-10">
+<meta name="versao-sistema" content="2026.11.03-11">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Controle de Estoque – Loja Masculina</title>
@@ -508,6 +508,12 @@ input[data-maiusc]::placeholder{text-transform:none}
 .kpi-link:hover::after{opacity:1}
 .anal-dias{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 10px;font-size:12.5px}
 .alerta-nuvem{background:#eef4ff;border-color:#bcd0f7;color:#1d3a7a}
+.aj-busca label{display:block;font-weight:700}.aj-busca input{margin-top:6px;font-size:15px;padding:10px 12px}
+.aj-mapa{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.aj-tela{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px}.aj-tela>div:nth-child(2){flex:1}.aj-tela p{margin:4px 0 0;color:var(--mut);font-size:13px}
+.aj-ic svg{width:24px;height:24px;fill:none;stroke:var(--ac);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.aj-item{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px}.aj-item summary{cursor:pointer;font-weight:700;display:flex;align-items:center;gap:8px}.aj-item ol{margin:10px 0 10px 4px;line-height:1.6}.aj-item p{margin:8px 0 0}
+.aj-n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#fff;font-size:12px;flex:none}
+.aj-tela[hidden],.aj-item[hidden]{display:none!important}
 .side .marca[data-act]{cursor:pointer;transition:background .15s}.side .marca[data-act]:hover{background:rgba(255,255,255,.06)}
 .at-cab{display:flex;align-items:center;gap:12px;margin-bottom:10px}.at-cab h3{margin:0;flex:1}
 .at-num{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#e5e7eb;color:#475067;flex:none}
@@ -1041,9 +1047,10 @@ const ICONES = {
   usuarios: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>',
   config: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'
 };
+ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1]];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1423,7 +1430,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -4042,6 +4049,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-11', itens: ['Nova tela Ajuda no menu: mapa do sistema (cada tela, para que serve e botão para abrir), passo a passo das principais tarefas (venda, Pix, crediário, condicional, troca, entrada, etiquetas, backup…) e perguntas e respostas, com busca. Cada pessoa vê só o que o perfil dela permite.'] },
   { v: '2026.11.03-10', itens: ['O atalho "Controle de Estoque" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.', 'Botão "Criar atalho na área de trabalho com esta logo" em Configurações → Empresa, para recriar o atalho se alguém apagar.'] },
   { v: '2026.11.03-09', itens: ['Banco de dados SQLite: os dados da loja (produtos, vendas, clientes, financeiro, fotos, logs e cópias internas) passam a ficar no arquivo dados/loja.sqlite, gravado por um servidor local que liga junto com o Windows. Limpar os dados do navegador não apaga mais nada.',
     'Na primeira abertura, os dados que estavam no navegador são levados sozinhos para o banco SQLite.',
@@ -4474,6 +4482,93 @@ ACT.criarAtalho = async () => {
     aviso('Atalho "Controle de Estoque" com a logo da loja criado na área de trabalho e no menu Iniciar.', 'ok');
   } catch (e) { aviso('Não foi possível criar o atalho: ' + e.message, 'erro'); }
 };
+
+/* ===== Ajuda: mapa do sistema, passo a passo e perguntas e respostas =====
+   quem: 'todos' | 'adm' (administrador e master) | 'master'. Cada pessoa vê só o que pode fazer. */
+const AJUDA_MAPA = [
+  ['painel', 'todos', 'Resumo do dia: vendas, ticket médio, estoque, produtos abaixo do mínimo e condicionais atrasadas. Clique num cartão para ver o detalhe.'],
+  ['vendas', 'todos', 'Registrar a venda (leitor de código de barras ou busca), escolher o pagamento (dinheiro, Pix com QR Code, cartões, crediário, vale-troca), dar desconto e emitir o recibo. Embaixo ficam as vendas realizadas.'],
+  ['condicionais', 'todos', 'Peças que o cliente leva para provar em casa: registrar a saída com termo e, na volta, fazer o acerto (o que voltou entra no estoque, o que ficou vira venda).'],
+  ['trocas', 'todos', 'Troca ou devolução pelo número do recibo: as peças voltam ao estoque e o valor vira vale-troca ou é devolvido.'],
+  ['clientes', 'todos', 'Cadastro de clientes, compras, condicionais e créditos (vale-troca) de cada um.'],
+  ['entradas', 'todos', 'Entrada de mercadoria no estoque, à mão ou importando o XML da nota fiscal do fornecedor, com impressão das etiquetas.'],
+  ['produtos', 'todos', 'Lista de produtos por modelo e tamanho, com foto e abas (com estoque, sem estoque, abaixo do mínimo, em condicional, inativos). O administrador cadastra, edita, ajusta estoque e imprime etiquetas e a lista de compra.'],
+  ['movs', 'todos', 'Histórico de tudo o que entrou e saiu do estoque: entradas, vendas, condicionais, trocas, cancelamentos e ajustes.'],
+  ['financeiro', 'adm', 'Contas a receber (crediário e outros títulos), contas a pagar e caixa e resultado.'],
+  ['comissoes', 'adm', 'Comissão de cada vendedora pela regra dela: extrato, fechamento do mês, recibo, PDF e Excel.'],
+  ['relatorios', 'adm', 'Vendas do período por vendedora, forma de pagamento, tipo e marca, e estoque por tipo e tamanho (sintético ou analítico, em PDF ou Excel).'],
+  ['usuarios', 'adm', 'Cadastro de vendedoras e administradores: perfil, senha e regra de comissão.'],
+  ['logs', 'adm', 'Histórico de logs: quem fez o quê e quando no sistema.'],
+  ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, backup e dados.'],
+  ['atualizacao', 'master', 'Atualização do sistema pela internet: verificar, baixar, instalar com a senha do master e confirmar.'],
+  ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
+];
+const AJUDA_PASSOS = [
+  { t: 'Fazer uma venda', quem: 'todos', ir: 'vendas', p: ['Abra <b>Vendas</b>.', 'Passe o leitor de código de barras na etiqueta, ou digite o código, a descrição, a marca, a cor ou o tamanho e clique em <b>Adicionar</b>. Repita para cada peça.', 'Se quiser, escolha o <b>Cliente</b> na lista (ou digite o nome) e informe CPF ou telefone.', 'Escolha a forma de <b>Pagamento</b>. Para usar duas formas, clique em <b>+ dividir com outra forma de pagamento</b>.', 'Desconto: informe em <b>R$</b> ou <b>%</b> no campo Desconto.', 'Confira o total e clique em <b>Finalizar venda e emitir recibo</b>.', 'No recibo: imprima, ou envie pelo <b>WhatsApp (PDF)</b>.'] },
+  { t: 'Receber com Pix (QR Code)', quem: 'todos', ir: 'vendas', p: ['Monte a venda normalmente.', 'Em Pagamento escolha <b>Pix</b>: aparece o botão <b>QR Code Pix</b>.', 'Clique nele e mostre o QR Code ao cliente: ele já vem com a chave da loja e o valor.', 'Depois que o cliente pagar, clique em <b>Finalizar venda e emitir recibo</b>.'] },
+  { t: 'Vender no crediário (a prazo)', quem: 'todos', ir: 'vendas', p: ['Monte a venda e informe o <b>Cliente</b>.', 'Em Pagamento escolha <b>Crediário / a prazo</b>.', 'Informe as <b>Parcelas do crediário</b> e o <b>1º vencimento</b>.', 'Finalize: as parcelas aparecem no recibo e em Financeiro → Contas a receber, onde o administrador registra cada pagamento.'] },
+  { t: 'Usar o vale-troca do cliente', quem: 'todos', ir: 'vendas', p: ['Monte a venda e escolha o <b>Cliente</b> que tem o crédito.', 'Em Pagamento escolha <b>Crédito do cliente (vale-troca)</b>.', 'Se o crédito não cobrir tudo, use <b>+ dividir com outra forma de pagamento</b> para o restante.'] },
+  { t: 'Registrar uma condicional (saída)', quem: 'todos', ir: 'condicionais', p: ['Abra <b>Condicionais</b>.', 'Adicione as peças (leitor ou busca + <b>Adicionar</b>).', 'Preencha <b>Cliente</b> e <b>Telefone</b> (obrigatórios), CPF, endereço e a data em <b>Devolver até</b>.', 'Clique em <b>Registrar saída e imprimir termo</b>. As peças saem do estoque e o cliente assina o termo.'] },
+  { t: 'Fazer o acerto da condicional', quem: 'todos', ir: 'condicionais', p: ['Em <b>Condicionais → Em aberto</b>, clique em <b>Acertar / devolução</b> na condicional do cliente.', 'Informe quantas peças de cada item o cliente <b>devolveu</b> (ou use <b>Devolveu tudo</b> / <b>Comprou tudo</b>).', 'Para o que ele ficou, escolha a forma de pagamento.', 'Confirme: o que voltou entra no estoque e o que ficou vira venda com recibo.'] },
+  { t: 'Fazer uma troca ou devolução', quem: 'todos', ir: 'trocas', p: ['Abra <b>Trocas e devoluções</b>.', 'Digite o número do recibo da venda e clique em <b>Buscar venda</b>. (Sem o recibo em mãos: procure a venda em Vendas → Vendas realizadas.)', 'Informe a quantidade de cada peça que volta.', 'Escolha se o valor vira <b>vale-troca</b> (crédito do cliente, precisa de nome e telefone) ou é <b>devolvido</b>.', 'Confirme. As peças voltam ao estoque. Para levar outra peça na troca, faça uma venda nova usando o vale-troca.'] },
+  { t: 'Dar entrada de mercadoria', quem: 'todos', ir: 'entradas', p: ['Abra <b>Entrada de mercadoria</b>.', 'Com nota fiscal eletrônica: clique em <b>Importar XML da NF-e do fornecedor</b> e escolha o arquivo XML. Os itens novos são cadastrados na hora.', 'Sem XML: preencha Fornecedor e Nota fiscal e adicione os produtos e as quantidades. (Produto novo precisa ser cadastrado antes em Produtos e estoque.)', 'Clique em <b>Confirmar entrada no estoque</b>.', 'Em <b>Últimas entradas</b>, clique em <b>Etiquetas</b> para imprimir as etiquetas das peças que chegaram.'] },
+  { t: 'Cadastrar um produto', quem: 'adm', ir: 'produtos', p: ['Abra <b>Produtos e estoque</b> e clique em <b>+ Novo produto</b>.', 'Preencha tipo, descrição, marca, cor, tamanhos, preço de venda, custo e estoque mínimo.', 'Se quiser, coloque a foto (arquivo ou câmera).', 'Salve. Para muitos produtos de uma vez, use <b>Importar planilha</b> (baixe antes o <b>Modelo da planilha</b>).'] },
+  { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b>, ou em <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
+  { t: 'Ajustar o estoque (contagem)', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, clique no <b>tamanho</b> do produto.', 'Escolha <b>Ajustar</b>.', 'Informe a <b>Quantidade contada na loja</b> e o <b>Motivo</b>.', 'Clique em <b>Salvar ajuste</b>. O ajuste fica registrado em Movimentações.'] },
+  { t: 'Cancelar uma venda', quem: 'adm', ir: 'vendas', p: ['Em <b>Vendas → Vendas realizadas</b>, ache a venda (use as datas De / Até).', 'Clique em <b>Cancelar</b> e informe o <b>Motivo do cancelamento</b>.', 'Confirme. As peças voltam ao estoque. Se havia parcelas já pagas, devolva o valor ao cliente.'] },
+  { t: 'Cadastrar uma vendedora', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Nova vendedora / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedora</b> e a senha inicial.', 'Defina a regra de comissão dela.', 'Salve. No primeiro acesso, ela troca a senha.'] },
+  { t: 'Fechar as comissões do mês', quem: 'adm', ir: 'comissoes', p: ['Abra <b>Comissões</b> e escolha o mês.', 'Confira o valor de cada vendedora (o botão <b>Extrato</b> mostra o detalhe).', 'Clique em <b>Fechar comissões do período</b>.', 'Imprima o <b>Recibo</b> de cada vendedora ou gere o PDF / Excel.'] },
+  { t: 'Fazer backup', quem: 'adm', ir: 'config', p: ['Abra <b>Configurações → Backup e dados</b>.', 'Clique em <b>Exportar backup</b> e guarde o arquivo fora do computador (pen drive, nuvem).', 'Deixe o <b>backup automático</b> ligado e preencha a <b>pasta extra</b> (pen drive ou pasta de rede) para as cópias diárias.'] },
+  { t: 'Instalar uma atualização do sistema', quem: 'master', ir: 'atualizacao', p: ['Abra <b>Atualização do sistema</b> (pelo aviso azul ou em Configurações → Sobre e atualização).', '<b>Verificar agora</b> → <b>Baixar</b>: o sistema confere o código e a assinatura digital.', 'Digite a sua senha e clique em <b>Instalar</b>.', 'Clique em <b>Abrir a versão nova</b> e confira a confirmação.'] },
+  { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
+];
+const AJUDA_PERGUNTAS = [
+  { p: 'Esqueci a minha senha. E agora?', quem: 'todos', r: 'Peça a um administrador: Usuárias / usuários → Editar / senha → digite uma senha nova e salve. No próximo acesso você define a sua.' },
+  { p: 'Apareceu que o meu usuário está bloqueado.', quem: 'todos', r: 'Depois de várias senhas erradas seguidas, o usuário fica bloqueado por alguns minutos. Espere ou peça ao administrador: Usuárias / usuários → Editar / senha → Salvar libera na hora.' },
+  { p: 'O sistema pediu a senha de novo no meio do trabalho.', quem: 'todos', r: 'É o bloqueio por falta de uso, para ninguém usar o seu usuário quando você sai do caixa. Digite a senha: a venda que estava sendo montada continua lá.' },
+  { p: 'O produto não aparece quando eu procuro na venda.', quem: 'todos', r: 'Confira se ele tem estoque: produtos zerados ficam na aba Sem estoque de Produtos e estoque. Tente também pelo código da etiqueta. Produto inativo não aparece para venda.' },
+  { p: 'Como dou desconto?', quem: 'todos', r: 'Na tela de Vendas, no campo Desconto, escolha R$ ou % e digite o valor antes de finalizar.' },
+  { p: 'O cliente quer pagar com duas formas (ex.: Pix e cartão).', quem: 'todos', r: 'Em Pagamento, clique em + dividir com outra forma de pagamento e informe o valor de cada uma.' },
+  { p: 'Como mando o recibo pelo WhatsApp?', quem: 'todos', r: 'No recibo da venda, clique em WhatsApp (PDF). O sistema gera o PDF do recibo para enviar ao cliente.' },
+  { p: 'O cliente quer trocar mas não tem o recibo.', quem: 'todos', r: 'Ache a venda em Vendas → Vendas realizadas (pelas datas e pelo nome do cliente) e use o número dela em Trocas e devoluções.' },
+  { p: 'O que significam as cores na lista de produtos?', quem: 'todos', r: 'Vermelho = sem estoque. Laranja = abaixo do estoque mínimo (hora de repor).' },
+  { p: 'Como abro o documento de um número (venda, condicional, troca)?', quem: 'todos', r: 'Clique no número em qualquer lista: o sistema abre o documento que gerou aquele número.' },
+  { p: 'Apareceu "Não foi possível gravar no banco de dados".', quem: 'todos', r: 'Não feche a janela: o sistema tenta de novo a cada 5 segundos e avisa quando voltar. Se demorar, feche e abra pelo atalho Controle de Estoque (ele religa o servidor) e avise o administrador.' },
+  { p: 'Apareceu "Versão disponível" no topo.', quem: 'todos', r: 'É uma atualização do sistema. Só o suporte (usuário master) instala; basta avisar. Pode continuar trabalhando normalmente.' },
+  { p: 'Abri o sistema e apareceu "Abra pelo atalho Controle de Estoque".', quem: 'todos', r: 'O arquivo do sistema foi aberto direto. Feche e use o atalho com a logo da loja na área de trabalho.' },
+  { p: 'Vendi errado. Como corrijo?', quem: 'todos', r: 'Peça ao administrador para cancelar a venda (Vendas → Vendas realizadas → Cancelar) e faça a venda de novo.' },
+  { p: 'Como vejo o que entrou e saiu de um produto?', quem: 'todos', r: 'Em Movimentações, filtre pelo produto. O administrador também vê pelo tamanho do produto → Histórico.' },
+  { p: 'Quem vê o custo dos produtos e os relatórios?', quem: 'todos', r: 'Só o administrador. Vendedoras vendem, fazem condicionais, lançam entradas e consultam o estoque.' },
+  { p: 'Onde vejo o que os clientes ainda devem (crediário)?', quem: 'adm', r: 'Financeiro → Contas a receber. Para registrar um pagamento, clique em Receber na parcela.' },
+  { p: 'O recibo sai com mais (ou menos) vias do que eu quero.', quem: 'adm', r: 'Configurações → Recibos e impressão: escolha quantas vias. Na bobina térmica, cada via sai começando numa folha nova.' },
+  { p: 'Onde ficam os dados da loja? Limpar o navegador apaga?', quem: 'adm', r: 'Ficam no banco de dados SQLite (pasta ControleEstoqueLoja/dados), gravado pelo servidor local. Limpar o navegador não apaga nada. O servidor guarda uma cópia do banco por dia na pasta backups. Nunca apague a pasta dados.' },
+  { p: 'Como vejo quem fez uma alteração?', quem: 'adm', r: 'Histórico de logs: filtre por usuário, tipo ou data. Tudo o que cada pessoa faz fica gravado e ninguém apaga pelo sistema.' },
+  { p: 'O atalho da área de trabalho sumiu ou está sem a logo.', quem: 'adm', r: 'Configurações → Empresa → Criar atalho na área de trabalho com esta logo.' },
+  { p: 'Como mudo a chave Pix do QR Code?', quem: 'adm', r: 'Configurações → Recibos e impressão: chave Pix, nome e cidade do recebedor.' }
+];
+const semAcento = s => [...String(s || '').toLowerCase().normalize('NFD')].filter(c => { const k = c.charCodeAt(0); return k < 0x300 || k > 0x36f; }).join('');
+const podeVer = q => q === 'todos' || (q === 'adm' && adm()) || (q === 'master' && master());
+const seloQuem = q => q === 'adm' ? ' <span class="tag in">administrador</span>' : q === 'master' ? ' <span class="tag in">master</span>' : '';
+function ajuda() {
+  const nomeTela = k => (MENU.find(x => x[0] === k) || [k, k])[1], txt = h => String(h).replace(/<[^>]+>/g, '');
+  const mapa = AJUDA_MAPA.filter(m => podeVer(m[1])), passos = AJUDA_PASSOS.filter(x => podeVer(x.quem)), pergs = AJUDA_PERGUNTAS.filter(x => podeVer(x.quem));
+  return `${cabTela('Ajuda')}
+  <section class="card aj-busca"><label>O que você quer fazer? <input id="aj-busca" placeholder="Ex.: troca, Pix, etiqueta, senha, crediário…" autocomplete="off"></label><p class="mut" id="aj-nada" hidden>Nada encontrado. Tente outra palavra.</p></section>
+  <section class="card"><div class="cfg-cab"><h3>Mapa do sistema</h3><p class="mut">Cada tela e para que serve. Clique em Abrir para ir até ela.</p></div>
+    <div class="aj-mapa">${mapa.map(([k, q, d]) => `<div class="aj-tela" data-busca="${esc(semAcento(nomeTela(k) + ' ' + d))}"><div class="aj-ic">${icone(k)}</div><div><b>${esc(nomeTela(k))}</b>${seloQuem(q)}<p>${esc(d)}</p></div>${k !== 'ajuda' ? `<button class="btn" data-act="${k === 'atualizacao' ? 'atualizarSistema' : 'ir'}" data-v="${k}">Abrir</button>` : ''}</div>`).join('')}</div></section>
+  <section class="card"><div class="cfg-cab"><h3>Passo a passo</h3><p class="mut">Clique numa tarefa para ver os passos.</p></div>
+    ${passos.map((x, i) => `<details class="aj-item" data-busca="${esc(semAcento(x.t + ' ' + txt(x.p.join(' '))))}"><summary><span class="aj-n">${i + 1}</span>${esc(x.t)}${seloQuem(x.quem)}</summary><ol>${x.p.map(s => `<li>${s}</li>`).join('')}</ol>${x.ir && x.ir !== 'atualizacao' ? `<button class="btn" data-act="ir" data-v="${x.ir}">Ir para ${esc(nomeTela(x.ir))}</button>` : ''}</details>`).join('')}</section>
+  <section class="card"><div class="cfg-cab"><h3>Perguntas e respostas</h3></div>
+    ${pergs.map(x => `<details class="aj-item" data-busca="${esc(semAcento(x.p + ' ' + x.r))}"><summary>${esc(x.p)}${seloQuem(x.quem)}</summary><p>${esc(x.r)}</p></details>`).join('')}</section>
+  <p class="mut">Não achou o que procurava? Fale com o administrador da loja ou com o suporte.</p>`;
+}
+// busca da Ajuda: filtra na hora, sem redesenhar a tela
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'aj-busca') return;
+  const q = semAcento(e.target.value.trim()).split(' ').filter(Boolean); let vis = 0;
+  document.querySelectorAll('#view [data-busca]').forEach(el => { const ok = q.every(w => el.dataset.busca.indexOf(w) >= 0); el.hidden = !ok; if (ok) vis++; if (el.tagName === 'DETAILS') el.open = ok && q.length > 0; });
+  $('#aj-nada').hidden = vis > 0;
+});
 
 /* ===== Histórico de logs do sistema =====
    Tudo o que cada pessoa faz fica gravado num banco separado (lojaRoupasLog): entradas no sistema, vendas, estoque,

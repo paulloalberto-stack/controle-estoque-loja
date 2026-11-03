@@ -1,12 +1,11 @@
 {
- "versao": "2026.11.03-10",
- "publicadoEm": "03/11/2026 17:06",
+ "versao": "2026.11.03-11",
+ "publicadoEm": "03/11/2026 18:06",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "30a6a2d75e9282586dda09bb4e2d03b08058d35d63547a5ef10282df0a3cf391",
- "tamanho": 466167,
- "assinatura": "SxJ8bz6jcbK4sTBQKDV35jabFF51Df4I2tv9koJro0qMTap9v70emiaBbDYF4qB9HMVB5Rka3eVJZGO+6B/iRaWJRVFmTDSAkYvqC7vPrXuAkYXpVM+lZgEymGvA7yTD0p5FRzTXTrbqyC0DNBqXEgF2i0nkzE1b8WlT0wjqZISfXr/HiYxRvSAf6aQzhrsR/kFZnI/I6yaVMSKXUQNcrF2N0+7RgdnziMOJoNv8RwU7zCd3NcoNroj5as1xtawPoqXgcDL3BnNFsBU9sXe4EkolTmOiK/DMfFvHHW7j3DofNl53obYOwrarjx9zQF2UyAiDcP3kJyvZjQ47ZaXeXtlvufQBPC/e5JsU2gcxkBmWlIbDc+fodhnteDVGeygwJSoemvK1DI0VyJUd1cBQ4KVNWFEDAcqGqiLjjeeFN0vJF2z5KqXGxXyres/lFpKmI9F0fw1o7ls7hisKIb5bXHKC/rS8yEKW4Fqy9+QcTv7MBRI2tURqbHRr/RastcL8",
+ "sha256": "387b75a85e6a433d4cb589e92230d5be357b4ddcbd5a9e66d7cda44053018893",
+ "tamanho": 484350,
+ "assinatura": "KMKKKvAXXPtcegu7xhmcOv451o+hTnrKbgjLw28+RBkmzSKikLjVU8QzKsXtYq2zqwJWvxuAe9jLiuRpVrDyaIu4uWsrnoCBqicZTo/lPheO5TmFIaNtM1NCtYgGkISZTBdX35SWLUNDh/D2++/OB2k2Ucr7v+2y1lcjLgrWFCwoE2gVgOyGsmE07j+kR9gd44GbNa4j3jSegkvuSK4l+m5PUEICYiwJkyzpcufbR4yPr9w2QUdKJahlLgZZPxm6+FCFg+ArBb4TruzTqdyoyXhtVK+RYAF0PVEZ5S41XbaNqewth3dYsqYtg0757qiYSJgcV/xUhJIWABNOSTD4nZzqvMI6SLpfZCTR7nnRDAUgyGf3tYrOt/dzlHLeYYpz09eNLU2QP8nMZUVFMXaBHiWHHdtsVQfULwbPZDVVDyRCbkVFV6jHCIeLsUZ/u9K5Gw66d22jqRGx3lmaubgm+iIo0Y5m7G3tUjK9LE3QiGKO00mPffnO2s2IsSA0sHID",
  "novidades": [
-  "O atalho \"Controle de Estoque\" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.",
-  "Botão \"Criar atalho na área de trabalho com esta logo\" em Configurações → Empresa, para recriar o atalho se alguém apagar."
+  "Nova tela Ajuda no menu: mapa do sistema (cada tela, para que serve e botão para abrir), passo a passo das principais tarefas (venda, Pix, crediário, condicional, troca, entrada, etiquetas, backup…) e perguntas e respostas, com busca. Cada pessoa vê só o que o perfil dela permite."
  ]
 }
