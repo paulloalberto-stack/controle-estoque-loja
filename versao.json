@@ -1,0 +1,12 @@
+{
+ "versao": "2026.11.03-06",
+ "publicadoEm": "03/11/2026 14:34",
+ "arquivo": "Controle_Estoque_Loja.html",
+ "sha256": "79d0ce0f3f5aeacb1abcdc6128f04de0dcc92c52c2048c5ac62bde4018aad505",
+ "assinatura": "GeP/fTA18gj2ZjD9/14RcN/yYwxJQ0hBRX38cPT3vWWQUeZm1ij7yYIEGy7spESYdZA9PJtk+Sygoo6nRzM/WOz6IEJC7K4tj63JYZwwnDs3gD27vjFY6UWZCMH3ae9MWGAfJbe+3H52cU15djPJqlVTU0i4SIWOPhTYP5ItxCzNF8Sg4lfFEiWVmKwrU0a9Wj0Q3EXZhT7rGpazafsQTU9hOpVNf9Q0ek1x7K3TIitu4qt7b+E67NDR00tTSVxbsNWVf2dtZHKE4Pz6jOULXbysF4Bok1n+jwS20snGqZLBh0ueTbekWf5pBegkyaxGN3Y7SUq/S9VklL67+/9DxjS6jKB6DK+GELGx571K8kTIvcylK8QBPsaWXJuhpgZtrabFx0noB8Yw6G8QRa8r8LlsliHaVnfy7eqfPJJBk9w7ZuDvNCF6p+mKkK7wXWu1JMWl/40iOV71rQqDK5nU8WB5VHsAdskjPcCYXo9NepLXuHld5HaofO6dszwtGpHU",
+ "novidades": [
+  "2026.11.03-06",
+  "Atualização pela nuvem (GitHub): o sistema avisa quando há versão nova; basta fechar e abrir pelo atalho para instalar. Cada versão vem com assinatura digital da loja e é recusada se tiver sido alterada.",
+  "Configurações → Sobre e atualização: botão \"Verificar atualização agora\"."
+ ]
+}
