@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-12">
+<meta name="versao-sistema" content="2026.11.03-13">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" id="favicon" href="data:,">
 <meta name="author" content="P.A.S Soluções Tecnológicas">
 <meta name="copyright" content="© 2026 P.A.S Soluções Tecnológicas. Todos os direitos reservados.">
 <!-- Controle de Estoque – © 2026 P.A.S Soluções Tecnológicas. Todos os direitos reservados. -->
@@ -2122,7 +2123,7 @@ function carregarLogo(arq, cb) {
 ACT.salvarConfig = () => {
   if (!conferirCampos('#cfg')) return;
   Object.assign(db.config, lerCfg());
-  if (salvar()) { render(); aviso('Configurações salvas.', 'ok'); atualizarIconeLoja().then(r => { if (r && (r.atalhos || []).length) aviso('Ícone do atalho da área de trabalho atualizado.', 'ok'); }).catch(() => { }); }
+  if (salvar()) { render(); aviso('Configurações salvas.', 'ok'); aplicarFavicon(); atualizarIconeLoja().then(r => { if (r && (r.atalhos || []).length) aviso('Ícone do atalho da área de trabalho atualizado.', 'ok'); }).catch(() => { }); }
 };
 /* apagar todos os dados para começar do zero */
 ACT.zerarSistema = () => abrirModal('Apagar todos os dados', `<div class="aviso-min"><b>Isto apaga de vez</b> produtos, estoque, entradas, vendas, condicionais, trocas, clientes, créditos, contas a receber, contas a pagar e movimentações. A numeração dos documentos volta para 000001.</div>
@@ -4055,6 +4056,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-13', itens: ['O ícone da janela do sistema na barra de tarefas do Windows (e na aba do navegador) passa a ser a logo da loja, no lugar do globo. Trocou a logo e salvou, o ícone muda junto.'] },
   { v: '2026.11.03-12', itens: ['Direitos autorais: marca d’água discreta © 2026 P.A.S Soluções Tecnológicas no canto da tela (não aparece na impressão).'] },
   { v: '2026.11.03-11', itens: ['Nova tela Ajuda no menu: mapa do sistema (cada tela, para que serve e botão para abrir), passo a passo das principais tarefas (venda, Pix, crediário, condicional, troca, entrada, etiquetas, backup…) e perguntas e respostas, com busca. Cada pessoa vê só o que o perfil dela permite.'] },
   { v: '2026.11.03-10', itens: ['O atalho "Controle de Estoque" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.', 'Botão "Criar atalho na área de trabalho com esta logo" em Configurações → Empresa, para recriar o atalho se alguém apagar.'] },
@@ -4474,6 +4476,10 @@ async function pngsIcone() {
     return c.toDataURL('image/png').split(',')[1];
   });
 }
+// ícone da janela (barra de tarefas e aba do Edge) com a logo da loja
+async function aplicarFavicon() {
+  try { const p = await pngsIcone(); $('#favicon').href = 'data:image/png;base64,' + p[1]; } catch (e) { }
+}
 async function atualizarIconeLoja(forcar) {
   if (!MODO_SERVIDOR || !srvInfo) return null;
   const h = (await hashTxt([db.config.logo || '', db.config.loja || '', db.config.cor || ''].join('|'))).slice(0, 12);
@@ -4753,7 +4759,7 @@ ACT.verVersoes = () => {
 (async () => {
   if (!MODO_SERVIDOR && sistemaMigrado()) return;
   await carregarDados(); if (MODO_SERVIDOR && !srvOk) return telaSemServidor();
-  await carregarMinis(); conferirVersao(); if (MODO_SERVIDOR) setTimeout(() => atualizarIconeLoja().catch(() => { }), 3000); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
+  await carregarMinis(); conferirVersao(); aplicarFavicon(); if (MODO_SERVIDOR) setTimeout(() => atualizarIconeLoja().catch(() => { }), 3000); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
   if (eu && atualizacaoConfirmadaAgora && master()) view = 'atualizacao';
   render(); if (eu) verNovidadesPendentes();
