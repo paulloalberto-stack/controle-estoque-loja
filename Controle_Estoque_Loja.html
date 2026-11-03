@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-06">
+<meta name="versao-sistema" content="2026.11.03-08">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Controle de Estoque – Loja Masculina</title>
@@ -508,6 +508,12 @@ input[data-maiusc]::placeholder{text-transform:none}
 .kpi-link:hover::after{opacity:1}
 .anal-dias{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 10px;font-size:12.5px}
 .alerta-nuvem{background:#eef4ff;border-color:#bcd0f7;color:#1d3a7a}
+.side .marca[data-act]{cursor:pointer;transition:background .15s}.side .marca[data-act]:hover{background:rgba(255,255,255,.06)}
+.at-cab{display:flex;align-items:center;gap:12px;margin-bottom:10px}.at-cab h3{margin:0;flex:1}
+.at-num{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#e5e7eb;color:#475067;flex:none}
+.at-atual .at-num{background:var(--ac);color:#fff}.at-feito .at-num{background:var(--ok);color:#fff}.at-off{opacity:.55}
+.at-prog{margin-top:12px}.at-barra{position:relative;height:22px;border-radius:999px;background:#e5e7eb;overflow:hidden}.at-barra>div{height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2,var(--ac)));border-radius:999px;transition:width .35s ease}.at-barra>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#141a26}.at-prog.tem-ok .at-barra>div{background:var(--ok)}.at-prog.tem-ok .at-barra>span{color:#fff}.at-prog.tem-erro .at-barra>div{background:var(--err)}.at-det{margin:6px 0 4px}.at-etapas{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}.at-etapas li{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:13px}.at-etapas i{width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;flex:none}.at-etapas li.ok{color:var(--ink)}.at-etapas li.ok i{background:var(--ok);border-color:var(--ok);color:#fff}.at-etapas li.run{color:var(--ink);font-weight:700}.at-etapas li.run i{border-color:var(--ac);color:var(--ac);animation:atPulso 1s infinite}.at-etapas li.erro{color:var(--err);font-weight:700}.at-etapas li.erro i{background:var(--err);border-color:var(--err);color:#fff}@keyframes atPulso{50%{opacity:.4}}.at-erro{margin-top:12px;background:#fff1ec;border:1px solid #f6c6b4;border-radius:10px;padding:12px 14px;color:#7a2810}.at-erro p{margin:6px 0}.at-grande b{font-size:15px}
+.at-ok{background:#e7f6ec;border:1px solid #b7e2c4;border-radius:10px;padding:10px 14px;margin-bottom:10px;color:#17663a}.at-lista{margin:6px 0 0 18px;padding:0;color:var(--ink)}.at-lista code{word-break:break-all;font-size:11.5px}
 @media print{
   .etq{border:0}
   body{background:#fff}
@@ -542,7 +548,7 @@ input[data-maiusc]::placeholder{text-transform:none}
 
 <div id="app" class="app" hidden>
   <aside class="side">
-    <div class="marca"><img id="side-logo" class="side-logo" alt="" hidden><div class="monograma" id="side-mono"></div><span id="loja-nome"></span><small>Controle de estoque</small></div>
+    <div class="marca" data-act="ir" data-v="painel" title="Ir para o Painel" role="link" tabindex="0"><img id="side-logo" class="side-logo" alt="" hidden><div class="monograma" id="side-mono"></div><span id="loja-nome"></span><small>Controle de estoque</small></div>
     <nav id="nav"></nav>
     <div class="user"><div id="quem"></div><button class="icb" data-act="minhaSenha" title="Minha senha" aria-label="Minha senha"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button><button class="icb" data-act="sair" title="Sair" aria-label="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
@@ -634,7 +640,12 @@ function somaDias(n) { const d = new Date(); d.setDate(d.getDate() + n); return 
 const fmtDia = s => s ? s.slice(0, 10).split('-').reverse().join('/') : '';
 const fmtDH = s => s ? fmtDia(s) + ' ' + s.slice(11, 16) : '';
 const nDoc = n => String(n).padStart(6, '0');
-const adm = () => eu && eu.perfil === 'admin';
+const ehAdm = u => !!u && (u.perfil === 'admin' || u.perfil === 'master');
+const adm = () => ehAdm(eu);
+const master = () => !!eu && eu.perfil === 'master';   // suporte: tudo do administrador + atualizar o sistema
+const nomePerfil = p => p === 'master' ? 'Master (suporte)' : p === 'admin' ? 'Administrador' : 'Vendedora';
+const temMaster = () => db.usuarios.some(u => u.perfil === 'master' && u.ativo !== false);
+const podeDarMaster = () => master() || (adm() && !temMaster());   // o 1º master pode ser criado por um administrador; depois, só o master
 
 function sha256(s) {
   s = unescape(encodeURIComponent(s));
@@ -948,7 +959,7 @@ function telaLogin() {
 function entrar(u) {
   eu = u; u.ultimoAcesso = agora(); salvar();
   try { sessionStorage.setItem(CHAVE + '.sessao', String(u.id)); } catch (e) { }
-  view = 'painel'; render();
+  view = atualizacaoConfirmadaAgora && master() ? 'atualizacao' : 'painel'; render();
   if (u.trocarSenha) return formSenha(true);
   if (verNovidadesPendentes()) return;
   avisoMinimo();
@@ -978,15 +989,15 @@ const ICONES = {
 };
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1]];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1]];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
   $('#login').hidden = true; $('#app').hidden = false;
-  const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm())) view = 'painel';
+  const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || (m[3] === 'master' && !master())) view = 'painel';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[2] || adm()).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
-  $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${adm() ? 'Administrador' : 'Vendedora'}</small></div>`;
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm())).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
   $('#topo-data').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase());
@@ -1285,7 +1296,7 @@ function conteudoRel() {
 function usuarios() {
   return `<h2>Usuárias / usuários</h2>
   <section class="card"><div class="acoes" style="margin-bottom:8px"><button class="btn pri" data-act="novoUsuario">+ Nova vendedora / usuário</button></div>
-  <div class="tabw"><table class="tb"><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th class="n">Vendas (mês)</th><th class="n">Comissão (mês)</th><th></th></tr></thead><tbody>${db.usuarios.map(u => { const vm = vendasValidas().filter(v => v.usuarioId === u.id && v.data.slice(0, 7) === hoje().slice(0, 7)); return `<tr><td>${esc(u.nome)}</td><td>${esc(u.login)}</td><td>${u.perfil === 'admin' ? 'Administrador' : 'Vendedora'}</td><td>${u.ativo ? '<span class="tag ok">Ativo</span>' : '<span class="tag in">Bloqueado</span>'}</td><td>${fmtDH(u.ultimoAcesso)}</td><td class="n">${vm.length} · ${fmtR(vm.reduce((s, v) => s + v.total, 0))}</td><td class="n">${temComissao(u) ? fmtR(comissaoDe(u.id, hoje().slice(0, 8) + '01', hoje()).com) + ' <small>' + esc(textoRegra(u)) + '</small>' : '—'}</td><td class="n"><button class="lnk" data-act="editarUsuario" data-id="${u.id}">Editar / senha</button></td></tr>`; }).join('')}</tbody></table></div>
+  <div class="tabw"><table class="tb"><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th class="n">Vendas (mês)</th><th class="n">Comissão (mês)</th><th></th></tr></thead><tbody>${db.usuarios.map(u => { const vm = vendasValidas().filter(v => v.usuarioId === u.id && v.data.slice(0, 7) === hoje().slice(0, 7)); return `<tr><td>${esc(u.nome)}</td><td>${esc(u.login)}</td><td>${nomePerfil(u.perfil)}</td><td>${u.ativo ? '<span class="tag ok">Ativo</span>' : '<span class="tag in">Bloqueado</span>'}</td><td>${fmtDH(u.ultimoAcesso)}</td><td class="n">${vm.length} · ${fmtR(vm.reduce((s, v) => s + v.total, 0))}</td><td class="n">${temComissao(u) ? fmtR(comissaoDe(u.id, hoje().slice(0, 8) + '01', hoje()).com) + ' <small>' + esc(textoRegra(u)) + '</small>' : '—'}</td><td class="n">${u.perfil === 'master' && !master() ? '<small>só o master altera</small>' : `<button class="lnk" data-act="editarUsuario" data-id="${u.id}">Editar / senha</button>`}</td></tr>`; }).join('')}</tbody></table></div>
   <p class="mut">Vendedoras podem: vender, fazer condicionais, lançar entradas e consultar estoque. Só o administrador cadastra/edita produtos, ajusta estoque, cancela vendas, vê custos e relatórios e cadastra usuários.</p></section>`;
 }
 
@@ -1358,7 +1369,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1976,7 +1987,7 @@ function formUsuario(u) {
   abrirModal(u ? 'Editar ' + esc(u.nome) : 'Nova vendedora / usuário', `<div class="form2">
     <label>Nome<input id="fu-nome" value="${esc(u ? u.nome : '')}"></label>
     <label>Usuário (login)<input id="fu-login" value="${esc(u ? u.login : '')}" ${u ? 'readonly' : ''}></label>
-    <label>Perfil<select id="fu-perfil"><option value="vendedora">Vendedora</option><option value="admin" ${u && u.perfil === 'admin' ? 'selected' : ''}>Administrador</option></select></label>
+    <label>Perfil<select id="fu-perfil"><option value="vendedora">Vendedora</option><option value="admin" ${u && u.perfil === 'admin' ? 'selected' : ''}>Administrador</option>${podeDarMaster() || (u && u.perfil === 'master') ? `<option value="master" ${u && u.perfil === 'master' ? 'selected' : ''}>Master (suporte) – administrador + atualizar o sistema</option>` : ''}</select></label>
     ${u ? `<label class="chk"><input type="checkbox" id="fu-ativo" ${u.ativo ? 'checked' : ''}> Pode entrar no sistema</label>` : '<span></span>'}
     <label>${u ? 'Nova senha (deixe em branco para manter)' : 'Senha inicial'}<input id="fu-senha" type="password" autocomplete="new-password"></label>
     <label class="chk"><input type="checkbox" id="fu-trocar" ${u ? '' : 'checked'}> Pedir para trocar a senha no próximo acesso</label>
@@ -1984,7 +1995,7 @@ function formUsuario(u) {
   </div>${u && u.bloqueadoAte > Date.now() ? `<p class="err">Bloqueado por senhas erradas até ${horaDe(u.bloqueadoAte)}. Clique em Salvar para liberar agora.</p>` : ''}<p class="mut">Senha: pelo menos 6 caracteres, com letras e números.</p>`, `<button class="btn pri" data-act="salvarUsuario" data-id="${u ? u.id : ''}">Salvar</button>`);
 }
 ACT.novoUsuario = () => { formUsuario(null); mostrarRegraCom(); };
-ACT.editarUsuario = el => { formUsuario(db.usuarios.find(u => u.id === +el.dataset.id)); mostrarRegraCom(); };
+ACT.editarUsuario = el => { const u = db.usuarios.find(u => u.id === +el.dataset.id); if (u && u.perfil === 'master' && !master()) return aviso('Somente o usuário master altera este usuário.', 'erro'); formUsuario(u); mostrarRegraCom(); };
 ACT.salvarUsuario = async el => {
   const id = +el.dataset.id || 0, nome = $('#fu-nome').value.trim(), login = $('#fu-login').value.trim().toLowerCase(), perfil = $('#fu-perfil').value, senha = $('#fu-senha').value;
   if (!nome || !login) return aviso('Preencha nome e usuário.', 'erro');
@@ -1992,7 +2003,9 @@ ACT.salvarUsuario = async el => {
   let u = id ? db.usuarios.find(x => x.id === id) : null;
   if (!u && db.usuarios.some(x => x.login === login)) return aviso('Esse login já existe.', 'erro');
   const ativo = u ? $('#fu-ativo').checked : true;
-  if (u && u.perfil === 'admin' && (perfil !== 'admin' || !ativo) && db.usuarios.filter(x => x.perfil === 'admin' && x.ativo).length < 2) return aviso('É preciso ter pelo menos um administrador ativo.', 'erro');
+  if (u && u.perfil === 'master' && !master()) return aviso('Somente o usuário master altera este usuário.', 'erro');
+  if (perfil === 'master' && !(u && u.perfil === 'master') && !podeDarMaster()) return aviso('Somente o usuário master pode criar outro master.', 'erro');
+  if (ehAdm(u) && (!ehAdm({ perfil }) || !ativo) && db.usuarios.filter(x => ehAdm(x) && x.ativo).length < 2) return aviso('É preciso ter pelo menos um administrador ativo.', 'erro');
   if (!u) { u = { id: db.seq.usu++, login, criado: agora() }; db.usuarios.push(u); }
   Object.assign(u, { nome, perfil, ativo });
   if (senha) await definirSenha(u, senha);
@@ -3909,7 +3922,7 @@ function tabelaAuditoria() {
   return l.length ? `<div class="tabw" style="max-height:380px;overflow:auto"><table class="tb"><thead><tr><th>Data e hora</th><th>Usuário</th><th>Atividade</th><th>Detalhe</th></tr></thead><tbody>${l.map(a => `<tr class="${/errad|bloqu|exclu|apag|cancel|estorn|restaur/i.test(a.ev) ? 'baixo' : ''}"><td>${fmtDH(a.q)}</td><td>${esc(a.u)}</td><td>${esc(a.ev)}</td><td>${esc(a.det)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="vazio">Nenhuma atividade registrada.</p>';
 }
 function secaoSeguranca() {
-  const s = seg(), us = db.usuarios.filter(u => u.ativo), antigas = us.filter(u => u.alg !== 'pbkdf2'), adms = us.filter(u => u.perfil === 'admin');
+  const s = seg(), us = db.usuarios.filter(u => u.ativo), antigas = us.filter(u => u.alg !== 'pbkdf2'), adms = us.filter(u => u.perfil === 'admin'), masters = us.filter(u => u.perfil === 'master');
   const bloq = db.usuarios.filter(u => u.bloqueadoAte && u.bloqueadoAte > Date.now()), c = criptoBk(), ub = db.config.ultimoBackup;
   const diasBk = ub ? Math.floor((Date.parse(hoje()) - Date.parse(ub.slice(0, 10))) / 864e5) : 99;
   const item = (ok, t, d) => `<div class="sg-item ${ok === true ? 'ok' : ok === false ? 'mal' : 'at'}"><span class="sg-ic">${ok === true ? '✓' : ok === false ? '!' : '–'}</span><div><b>${t}</b><small>${d}</small></div></div>`;
@@ -3918,6 +3931,7 @@ function secaoSeguranca() {
     <div class="sg-grade">
       ${item(!antigas.length, 'Senhas no padrão forte', antigas.length ? `${antigas.length} usuário(s) ainda com senha no padrão antigo: ${esc(antigas.map(u => u.nome).join(', '))}. Converte sozinho no próximo acesso de cada um.` : 'Todas as senhas guardadas com PBKDF2 (210 mil repetições).')}
       ${item(adms.length >= 1 && adms.length <= 2, 'Administradores', `${adms.length} administrador(es) ativo(s). Deixe o perfil de administrador só para o dono/gerente.`)}
+      ${item(masters.length === 1 ? true : masters.length ? null : false, 'Usuário master (suporte)', masters.length ? `${esc(masters.map(u => u.nome).join(', '))}: só o master instala atualizações e altera o próprio cadastro.` : 'Nenhum: crie o usuário master do suporte em Usuários (enquanto não existir, qualquer administrador pode criá-lo).')}
       ${item(s.bloqueioMin > 0 ? true : false, 'Bloqueio por falta de uso', s.bloqueioMin > 0 ? `A tela bloqueia após ${s.bloqueioMin} minutos sem uso.` : 'Desligado: qualquer pessoa usa o sistema se a vendedora sair do caixa.')}
       ${item(true, 'Proteção contra tentativa de senha', `Após ${s.tentativas} senhas erradas o usuário fica bloqueado (5 min, depois 10, 20…).${bloq.length ? ' Bloqueado agora: ' + esc(bloq.map(u => u.nome).join(', ')) + '.' : ''}`)}
       ${item(diasBk <= 1, 'Backup recente', ub ? `Último arquivo de backup: ${fmtDH(ub)}.` : 'Nenhum arquivo de backup feito.')}
@@ -3960,6 +3974,10 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-08', itens: ['A logo da loja no menu lateral virou atalho: um clique leva para o Painel inicial.'] },
+  { v: '2026.11.03-07', itens: ['Novo perfil Master (suporte): tudo do administrador e, só ele, instala atualizações. O administrador não altera o usuário master.',
+    'A atualização não é mais automática: quando há versão nova na nuvem, os administradores são avisados e o master usa a nova tela "Atualização do sistema": 1) verificar, 2) baixar (confere o SHA-256 e a assinatura digital), 3) instalar com a própria senha (a versão anterior fica guardada) e 4) confirmação ao abrir a versão nova, com histórico.',
+    'O sistema passa a ficar na pasta do usuário do Windows (ControleEstoqueLoja), onde o navegador permite gravar a atualização. Os dados não mudam.'] },
   { v: '2026.11.03-06', itens: ['Atualização pela nuvem (GitHub): o sistema avisa quando há versão nova; basta fechar e abrir pelo atalho para instalar. Cada versão vem com assinatura digital da loja e é recusada se tiver sido alterada.',
     'Configurações → Sobre e atualização: botão "Verificar atualização agora".'] },
   { v: '2026.11.03-05', itens: ['Produtos e estoque com abas: Com estoque, Sem estoque, Abaixo do mínimo, Em condicional, Inativos e Todos, cada uma com a quantidade. Os produtos zerados ficam juntos na aba "Sem estoque" e saem da lista comum.',
@@ -3997,7 +4015,7 @@ function conferirVersao() {
 }
 let modalTravado = false;
 ACT.fecharModal = () => { if (!modalTravado) fecharModal(); };
-const precisaCiente = u => !!u && u.perfil === 'admin' && u.ativo !== false && (u.cienteVersao || '') < VERSAO_APP;
+const precisaCiente = u => ehAdm(u) && u.ativo !== false && (u.cienteVersao || '') < VERSAO_APP;
 function verNovidadesPendentes() {
   if (!eu || !precisaCiente(eu)) return false;
   const vs = historicoVersoes(), anterior = vs.length > 1 ? vs[vs.length - 2].v : '', desde = eu.cienteVersao || anterior || '';
@@ -4037,16 +4055,16 @@ function secaoSobre() {
     <div class="resumo-tit"><div class="rbox ok"><small>Versão instalada</small><b>${esc(VERSAO_APP)}</b><span>${NOVIDADES[0] && NOVIDADES[0].v === VERSAO_APP ? 'com as novidades listadas' : ''}</span></div>
     <div class="rbox"><small>Dados gravados pela versão</small><b>${esc(db._versaoApp || '—')}</b><span>${db._versaoApp === VERSAO_APP ? 'igual ao sistema' : 'diferente do sistema'}</span></div>
     <div class="rbox"><small>Arquivo do sistema</small><b style="font-size:12.5px;word-break:break-all">${esc(local)}</b><span>${/ControleEstoqueLoja/i.test(local) ? 'pasta da instalação' : '<span class="err">fora da pasta da instalação</span>'}</span></div></div>
-    <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn pri" data-act="verificarNuvem">Verificar atualização agora</button><button class="btn" data-act="verNovidades">Ver novidades</button></div>
-    <p class="mut">Atualização pela nuvem: o sistema procura versão nova sozinho (ao abrir e a cada 3 horas). Para instalar, basta fechar e abrir pelo atalho <b>Controle de Estoque</b>: ele baixa do GitHub, confere a assinatura digital da loja e instala. ${versaoNuvem ? 'Última consulta: versão ' + esc(versaoNuvem.versao) + ' na nuvem.' : ''}</p></section>
-  <section class="card"><div class="cfg-cab"><h3>Como atualizar o sistema na loja</h3><p class="mut">Os dados (produtos, vendas, clientes, financeiro) ficam no navegador deste computador e <b>não</b> são apagados ao atualizar.</p></div>
+    <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn pri" data-act="verificarNuvem">Verificar atualização agora</button>${master() ? `<button class="btn ac" data-act="atualizarSistema">Tela de atualização${temVersaoNova() ? ' (versão ' + esc(versaoNuvem.versao) + ' disponível)' : ''}</button>` : ''}<button class="btn" data-act="verNovidades">Ver novidades</button></div>
+    <p class="mut">Atualização pela nuvem: o sistema procura versão nova sozinho (ao abrir e a cada 3 horas) e avisa os administradores. <b>Só o usuário master (suporte) instala</b>, na tela "Atualização do sistema" (verificar, baixar, instalar com a própria senha e confirmação); o arquivo só é aceito com a assinatura digital da loja. ${versaoNuvem ? 'Última consulta: versão ' + esc(versaoNuvem.versao) + ' na nuvem.' : ''}</p></section>
+  <section class="card"><div class="cfg-cab"><h3>Atualizar sem internet (pacote do suporte)</h3><p class="mut">Os dados (produtos, vendas, clientes, financeiro) ficam no navegador deste computador e <b>não</b> são apagados ao atualizar.</p></div>
     <ol class="sg-dicas"><li>Faça <b>Exportar backup</b> (Backup e dados) e guarde o arquivo fora do computador.</li>
     <li>Copie para este computador a pasta <b>Instalar_Controle_Estoque</b> nova (pen drive, e-mail ou rede).</li>
     <li><b>Feche</b> a janela do sistema.</li>
     <li>Dê dois cliques em <b>ATUALIZAR.bat</b>. Ele mostra a versão atual e a nova, guarda a versão anterior e confere se a cópia ficou perfeita.</li>
     <li>Abra pelo atalho <b>Controle de Estoque</b>. Na primeira entrada aparece a lista de novidades, e o sistema guarda sozinho uma cópia interna dos dados.</li>
     <li>Se algo der errado: <b>VOLTAR_VERSAO_ANTERIOR.bat</b> recoloca a versão de antes (os dados continuam).</li></ol></section>
-  <section class="card"><div class="cfg-cab"><h3>Histórico de atualizações neste computador</h3></div>${(() => { const l = (db.auditoria || []).filter(a => a.ev === 'Sistema atualizado').reverse(); return l.length ? tabSimples(['Data', 'De → para'], l.map(a => [fmtDH(a.q), esc(a.det)])) : '<p class="vazio">Nenhuma atualização registrada ainda.</p>'; })()}</section>`;
+  <section class="card"><div class="cfg-cab"><h3>Histórico de atualizações neste computador</h3></div>${(() => { const l = (db.auditoria || []).filter(a => a.ev === 'Sistema atualizado' || a.ev === 'Atualização instalada pelo master').reverse(); return l.length ? tabSimples(['Data', 'De → para'], l.map(a => [fmtDH(a.q), esc(a.det)])) : '<p class="vazio">Nenhuma atualização registrada ainda.</p>'; })()}</section>`;
 }
 
 /* ===== Números de documento clicáveis =====
@@ -4102,35 +4120,239 @@ ACT.abrirDoc = el => {
 };
 
 /* ===== Atualização pela nuvem (GitHub) =====
-   O sistema consulta o arquivo versao.json publicado; se houver versão nova, avisa. Quem instala é o atalho
-   "Controle de Estoque" (iniciar.ps1), que confere a assinatura digital antes de trocar o arquivo. */
+   O sistema consulta o arquivo versao.json publicado e avisa os administradores quando há versão nova. Só o usuário MASTER
+   (suporte) atualiza, na tela "Atualização do sistema", em 4 passos: verificar, baixar (confere SHA-256 e assinatura digital),
+   instalar (confirma a senha; a versão anterior fica em versoes_anteriores) e confirmação (feita ao abrir a versão nova). */
 const URL_ATUALIZACAO = ((document.querySelector('meta[name="atualizacao-url"]') || {}).content || '').replace(/[/]+$/, '');
-let versaoNuvem = null;
+const CHAVE_ATUALIZACAO = { kty: 'RSA', e: 'AQAB', n: 'q8C0z4wUyTMUQQsZoUc97bmBoc6okIjTjLpRbYs9tX3H-Lg3PE5sc9Cj8JehhqhOe1UlgBiI7aEmCE4TCb9It2ZRLkUYUBD0s3RF4abzAbY9iGWqnrwCh4jT1MwVH_IcDEJjYThg2G7Pa2GqTwaezQA-sww7Hhk_am-_-iGN-PjtbDzCbsX8Z5Hs4wSWkTrGX_kShntrKZMY3zGN53i9bM0rFOVrPqDFJ7Pi2rlzApK2itEo4720Mk12p16kCb433ojRjdimfU0F6QDGTivp0m_worZ8vCx5e1mgYdbEhbebhk8iE1cdgZMb1p16GuCbixkbSLCsC2qlF7hryKRsR30VkgtcNt22BXMIuXB5pCbcwNgo-8gkBowNjK6AGqfgibojSWA2h1p4--vBJCkNYsGIneXzEmVy-rpj3famvdqCP265rxqFmFOuyEtD7xN8lMZn0G8rlSvjHTOX-3jgaFchBMuj-JO7dcc15iayytSvcslu3CvuWDbkxi409I2d' };
+const ARQ_SISTEMA = 'Controle_Estoque_Loja.html';
+let versaoNuvem = null, atualizando = false, pacoteBaixado = null, estadoInstalacao = null, atualizacaoConfirmadaAgora = null;
 async function consultarNuvem() {
   if (!URL_ATUALIZACAO) throw new Error('endereço de atualização não configurado');
   const r = await fetch(URL_ATUALIZACAO + '/versao.json?t=' + Date.now(), { cache: 'no-store' });
   if (!r.ok) throw new Error('a nuvem respondeu ' + r.status);
-  versaoNuvem = await r.json(); return versaoNuvem;
+  versaoNuvem = await r.json(); versaoNuvem.consultadaEm = agora(); return versaoNuvem;
 }
+const temVersaoNova = () => !!(versaoNuvem && versaoNuvem.versao > VERSAO_APP);
+const pastaDoSistema = () => { const p = decodeURIComponent(location.pathname.replace(/^[/]/, '')).split('/'); p.pop(); return p.join(String.fromCharCode(92)); };
 function avisoNuvem() {
   const el = $('#alerta-nuvem'); if (!el) return;
-  const v = versaoNuvem && versaoNuvem.versao > VERSAO_APP ? versaoNuvem : null;
-  el.innerHTML = eu && v ? `<div class="alerta alerta-nuvem"><b>Atualização disponível: versão ${esc(v.versao)}.</b> Para instalar, feche esta janela do sistema e abra de novo pelo atalho <b>Controle de Estoque</b> (a venda em andamento deve ser terminada antes). <button class="lnk" data-act="verNovidadesNuvem">Ver o que mudou</button></div>` : '';
+  const v = adm() && temVersaoNova() && view !== 'atualizacao' ? versaoNuvem : null;
+  el.innerHTML = !v ? '' : master()
+    ? `<div class="alerta alerta-nuvem"><b>Atualização disponível: versão ${esc(v.versao)}.</b> Você é o usuário master: instale quando for conveniente (de preferência sem venda em andamento). <button class="lnk" data-act="atualizarSistema">Abrir a tela de atualização</button></div>`
+    : `<div class="alerta alerta-nuvem"><b>Versão ${esc(v.versao)} disponível.</b> A instalação é feita pelo suporte (usuário master). <button class="lnk" data-act="verNovidadesNuvem">Ver o que mudou</button></div>`;
 }
-async function verificarNuvemSilencioso() { try { await consultarNuvem(); } catch (e) { } avisoNuvem(); }
+async function verificarNuvemSilencioso() { try { await consultarNuvem(); } catch (e) { } avisoNuvem(); if (view === 'atualizacao') render(); }
+const listaNovidadesNuvem = v => `<ul class="sg-dicas">${(v.novidades || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
 ACT.verNovidadesNuvem = () => {
   const v = versaoNuvem; if (!v) return;
-  abrirModal('Versão ' + esc(v.versao) + ' disponível', `<p>Publicada em ${esc(v.publicadoEm || '')}. Você está na ${esc(VERSAO_APP)}.</p><ul class="sg-dicas">${(v.novidades || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>
-    <p class="mut">Para instalar: feche o sistema e abra pelo atalho "Controle de Estoque". O atalho baixa, confere a assinatura digital e instala sozinho; os dados da loja não mudam.</p>`, '');
+  abrirModal('Versão ' + esc(v.versao) + ' disponível', `<p>Publicada em ${esc(v.publicadoEm || '')}. Você está na ${esc(VERSAO_APP)}.</p>${listaNovidadesNuvem(v)}
+    <p class="mut">${master() ? 'Para instalar: tela "Atualização do sistema".' : 'A instalação é feita pelo suporte (usuário master). Os dados da loja não mudam.'}</p>`, master() ? '<button class="btn pri" data-act="atualizarSistema">Abrir a tela de atualização</button>' : '');
 };
 ACT.verificarNuvem = async () => {
   try {
     const v = await consultarNuvem(); avisoNuvem();
-    aviso(v.versao > VERSAO_APP ? `Versão ${v.versao} disponível. Feche e abra o sistema pelo atalho para instalar.` : `Você já está na versão mais nova (${VERSAO_APP}).`, 'ok');
+    aviso(v.versao > VERSAO_APP ? `Versão ${v.versao} disponível.${master() ? '' : ' A instalação é feita pelo suporte (usuário master).'}` : `Você já está na versão mais nova (${VERSAO_APP}).`, 'ok');
     registrar('Verificou atualização na nuvem', 'nuvem: ' + v.versao + ' · instalada: ' + VERSAO_APP);
   } catch (e) { aviso('Não foi possível consultar a nuvem: ' + e.message + '. Confira a internet.', 'erro'); }
-  if (view === 'config') render();
+  if (view === 'config' || view === 'atualizacao') render();
 };
+ACT.atualizarSistema = () => {
+  if (!master()) return aviso('Somente o usuário master (suporte) pode atualizar o sistema.', 'erro');
+  fecharModal(); view = 'atualizacao'; render(); window.scrollTo(0, 0);
+};
+async function verificarAssinatura(v, buf) {
+  const hash = hexDe(await crypto.subtle.digest('SHA-256', buf));
+  if (hash !== String(v.sha256 || '').toLowerCase()) throw new Error('o arquivo baixado não confere com o código SHA-256 publicado');
+  const chave = await crypto.subtle.importKey('jwk', CHAVE_ATUALIZACAO, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+  const ass = Uint8Array.from(atob(v.assinatura || ''), c => c.charCodeAt(0));
+  if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', chave, ass, new TextEncoder().encode('lojaRoupas|' + v.versao + '|' + hash)))) throw new Error('ASSINATURA INVÁLIDA: esta versão não foi publicada pela loja e foi recusada');
+  const m = new TextDecoder().decode(buf).match(/name="versao-sistema" content="([^"]+)"/);
+  if (!m || m[1] !== v.versao) throw new Error('o número da versão dentro do arquivo não confere');
+  return hash;
+}
+// pasta onde está o sistema: guardada na 1ª vez; confere se é mesmo a pasta do arquivo aberto (mesma versão)
+async function pastaComPermissao() {
+  let h = await kvLer('pastaSistema').catch(() => null);
+  if (h && (await h.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('sem autorização para gravar na pasta do sistema');
+  if (!h) {
+    if (!window.showDirectoryPicker) throw new Error('este navegador não deixa escolher a pasta do sistema (use o Edge)');
+    try { await navigator.clipboard.writeText(pastaDoSistema()); } catch (e) { }
+    h = await window.showDirectoryPicker({ id: 'sistemaLoja', mode: 'readwrite' });
+  }
+  let txt = '';
+  try { txt = await (await (await h.getFileHandle(ARQ_SISTEMA)).getFile()).text(); } catch (e) { }
+  const m = txt.match(/name="versao-sistema" content="([^"]+)"/);
+  if (!m || m[1] !== VERSAO_APP) { await kvGravar('pastaSistema', null); throw new Error(`a pasta "${h.name}" não é a pasta deste sistema. Escolha: ${pastaDoSistema()}`); }
+  await kvGravar('pastaSistema', h); atualizacaoTemPasta = true;
+  return { h, txt };
+}
+// progresso da atualização (barra de 0 a 100% com as etapas; em erro mostra a causa e como corrigir)
+let progAt = null;
+const pausa = ms => new Promise(r => setTimeout(r, ms));
+const ETAPAS_AT = {
+  baixar: ['Conectar à nuvem (GitHub)', 'Baixar o arquivo da versão nova', 'Conferir o código SHA-256', 'Conferir a assinatura digital da loja', 'Guardar o download neste computador'],
+  instalar: ['Conferir a senha do master', 'Abrir a pasta do sistema', 'Conferir de novo o arquivo baixado', 'Guardar a versão atual em versoes_anteriores', 'Gravar a versão nova', 'Conferir a gravação']
+};
+function progInicio(tipo) { progAt = { tipo, pct: 0, etapas: ETAPAS_AT[tipo].map(t => ({ t, st: '' })), det: '', erro: '', sug: '', ok: false }; progDesenhar(); }
+function progEtapa(i, pct, det) { progAt.etapas.forEach((e, k) => { e.st = k < i ? 'ok' : k === i ? 'run' : ''; }); progAt.pct = Math.max(progAt.pct, Math.round(pct)); progAt.det = det || ''; progDesenhar(); }
+function progOk(det) { progAt.etapas.forEach(e => { e.st = 'ok'; }); progAt.pct = 100; progAt.ok = true; progAt.det = det || ''; progDesenhar(); }
+function progErro(e) {
+  const i = progAt.etapas.findIndex(x => x.st === 'run'); if (i >= 0) progAt.etapas[i].st = 'erro';
+  progAt.erro = String((e && e.message) || e); progAt.sug = sugestaoErro(e); progAt.intacto = progAt.tipo === 'baixar' || i < 4; progDesenhar();
+}
+function sugestaoErro(e) {
+  const m = String((e && e.message) || e), n = e && e.name;
+  if (n === 'AbortError') return 'A escolha da pasta foi cancelada. Clique em "Tentar de novo" e selecione a pasta do sistema.';
+  if (/senha incorreta/.test(m)) return 'Digite a senha do usuário master (a mesma do login) e clique em "Tentar de novo".';
+  if (/não é a pasta deste sistema/.test(m)) return 'Escolha a pasta indicada: ' + pastaDoSistema() + ' (cole o caminho na barra de endereço da janela de pastas).';
+  if (n === 'NotAllowedError' || n === 'SecurityError' || /autoriza/.test(m)) return 'O navegador não recebeu permissão para gravar. Clique em "Tentar de novo" e, na pergunta do navegador, escolha "Editar arquivos".';
+  if (e && e.status === 404) return 'O arquivo não foi encontrado na nuvem (a publicação pode estar em andamento). Aguarde alguns minutos, clique em "Verificar agora" e tente de novo.';
+  if (e && e.status) return 'O GitHub respondeu com erro ' + e.status + '. Aguarde alguns minutos e tente de novo.';
+  if (n === 'TypeError' || /fetch|network|rede/i.test(m)) return 'Sem conexão com a nuvem. Confira a internet deste computador e clique em "Tentar de novo".';
+  if (/SHA-256/.test(m)) return 'O arquivo chegou incompleto ou diferente do publicado. Clique em "Tentar de novo"; se repetir, avise o suporte (a publicação pode estar incompleta).';
+  if (/ASSINATURA/.test(m)) return 'NÃO instale: esta versão não foi assinada pela loja. Descarte o download e avise o suporte imediatamente.';
+  if (/número da versão/.test(m)) return 'O arquivo publicado não corresponde à versão anunciada. Avise o suporte para publicar de novo.';
+  if (/cópia gravada/.test(m)) return 'A gravação não conferiu. Clique em "Tentar de novo"; se o sistema não abrir depois, rode VOLTAR_VERSAO_ANTERIOR.bat.';
+  if (n === 'NoModificationAllowedError' || n === 'InvalidModificationError' || n === 'NotReadableError' || n === 'InvalidStateError') return 'O Windows não deixou gravar o arquivo. Feche outras janelas do sistema (e aguarde o antivírus, se estiver analisando a pasta) e tente de novo.';
+  if (n === 'QuotaExceededError' || /quota|espaço/i.test(m)) return 'Falta espaço no disco. Libere espaço no computador e tente de novo.';
+  if (/sem versão nova|Baixe a versão/.test(m)) return 'Clique em "Verificar agora" e baixe a versão nova antes de instalar.';
+  return 'Clique em "Tentar de novo". Se repetir, anote a mensagem acima e avise o suporte.';
+}
+function htmlProg() {
+  const p = progAt; if (!p) return '';
+  const ic = { ok: '✓', run: '…', erro: '!', '': '' };
+  return `<div class="at-prog ${p.erro ? 'tem-erro' : p.ok ? 'tem-ok' : ''}">
+    <div class="at-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.pct}"><div style="width:${p.pct}%"></div><span>${p.pct}%</span></div>
+    ${p.det ? `<p class="mut at-det">${esc(p.det)}</p>` : ''}
+    <ol class="at-etapas">${p.etapas.map(e => `<li class="${e.st}"><i>${ic[e.st]}</i>${esc(e.t)}</li>`).join('')}</ol>
+    ${p.erro ? `<div class="at-erro"><b>${p.tipo === 'baixar' ? 'Download não concluído' : 'Instalação não concluída'}</b><p><b>Erro:</b> ${esc(p.erro)}</p><p><b>Como corrigir:</b> ${esc(p.sug)}</p>${p.intacto ? '<p class="mut">O sistema instalado não foi alterado.</p>' : ''}
+      <button class="btn pri" data-act="${p.tipo === 'baixar' ? 'atBaixar' : 'atInstalar'}">Tentar de novo</button></div>` : ''}</div>`;
+}
+function progDesenhar() { const el = progAt && $('#at-prog-' + progAt.tipo); if (el) el.innerHTML = htmlProg(); }
+async function baixarComProgresso(url, total, cb) {
+  const r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) { const e = new Error('a nuvem respondeu ' + r.status); e.status = r.status; throw e; }
+  const tot = +total || +r.headers.get('content-length') || 0;
+  if (!r.body || !r.body.getReader) { const b = await r.arrayBuffer(); cb(1, b.byteLength); return b; }
+  const rd = r.body.getReader(), partes = []; let n = 0;
+  for (;;) { const { done, value } = await rd.read(); if (done) break; partes.push(value); n += value.length; cb(tot ? Math.min(n / tot, 1) : 0.5, n); }
+  const out = new Uint8Array(n); let o = 0; for (const x of partes) { out.set(x, o); o += x.length; }
+  return out.buffer;
+}
+ACT.atVerificar = async el => {
+  if (el) el.disabled = true;
+  try { await consultarNuvem(); registrar('Verificou atualização na nuvem', 'nuvem: ' + versaoNuvem.versao + ' · instalada: ' + VERSAO_APP); }
+  catch (e) { aviso('Não foi possível consultar a nuvem: ' + e.message + '. Confira a internet.', 'erro'); }
+  render();
+};
+ACT.atBaixar = async () => {
+  if (!master() || atualizando) return;
+  atualizando = true; progInicio('baixar');
+  try {
+    progEtapa(0, 2, 'Consultando a versão publicada…');
+    await consultarNuvem(); const v = versaoNuvem;
+    if (!temVersaoNova()) throw new Error('sem versão nova: o sistema já está na ' + VERSAO_APP);
+    const kb = n => fmtN(Math.round(n / 1024)) + ' KB';
+    progEtapa(1, 5, 'Baixando a versão ' + v.versao + '…');
+    const buf = await baixarComProgresso(URL_ATUALIZACAO + '/' + encodeURIComponent(v.arquivo || ARQ_SISTEMA) + '?t=' + Date.now(), v.tamanho,
+      (f, n) => progEtapa(1, 5 + f * 75, 'Baixando a versão ' + v.versao + '… ' + kb(n) + (v.tamanho ? ' de ' + kb(v.tamanho) : '')));
+    progEtapa(2, 82, 'Calculando o código SHA-256…'); await pausa(250);
+    const hash = hexDe(await crypto.subtle.digest('SHA-256', buf));
+    if (hash !== String(v.sha256 || '').toLowerCase()) throw new Error('o arquivo baixado não confere com o código SHA-256 publicado');
+    progEtapa(3, 90, 'Conferindo a assinatura digital…'); await pausa(250);
+    await verificarAssinatura(v, buf);
+    progEtapa(4, 96, 'Guardando o download…');
+    pacoteBaixado = { versao: v.versao, publicadoEm: v.publicadoEm || '', novidades: v.novidades || [], sha256: hash, assinatura: v.assinatura, tamanho: buf.byteLength, em: agora(), por: eu.nome, buf };
+    await kvGravar('atualizacaoBaixada', pacoteBaixado).catch(() => { });
+    registrar('Atualização baixada', v.versao + ' · SHA-256 ' + hash.slice(0, 16) + '…'); gravarLog('Sistema', 'Baixou a atualização do sistema', 'versão ' + v.versao + ' · assinatura válida'); salvar();
+    await pausa(200); progOk('Versão ' + v.versao + ' baixada e conferida (' + kb(buf.byteLength) + '). Agora instale no passo 3.');
+    atualizando = false; await pausa(900); progAt = null; render();
+  } catch (e) {
+    atualizando = false; progErro(e);
+    gravarLog('Sistema', 'Download da atualização não concluído', String(e.message || e));
+  }
+};
+ACT.atDescartar = async () => { pacoteBaixado = null; progAt = null; await kvGravar('atualizacaoBaixada', null).catch(() => { }); registrar('Download da atualização descartado'); render(); };
+ACT.atInstalar = async () => {
+  if (!master() || atualizando) return;
+  const p = pacoteBaixado, senha = ($('#at-senha') || {}).value || '', de = VERSAO_APP;
+  if (!senha) return aviso('Digite a sua senha para instalar.', 'erro');
+  atualizando = true; progInicio('instalar');
+  try {
+    if (!p || !(p.versao > VERSAO_APP)) throw new Error('Baixe a versão nova antes de instalar');
+    progEtapa(0, 3, 'Conferindo a senha…');
+    if (!(await conferirSenha(eu, senha))) { gravarLog('Sistema', 'Senha errada ao instalar a atualização', 'versão ' + p.versao); throw new Error('senha incorreta'); }
+    progEtapa(1, 15, 'Abrindo a pasta do sistema…');
+    const { h, txt } = await pastaComPermissao();
+    progEtapa(2, 35, 'Conferindo o SHA-256 e a assinatura do arquivo baixado…'); await pausa(250);
+    const hash = await verificarAssinatura(p, p.buf);
+    progEtapa(3, 55, 'Guardando a versão ' + de + '…'); await pausa(200);
+    const vs = await h.getDirectoryHandle('versoes_anteriores', { create: true }), ag = agora();
+    const bk = await (await vs.getFileHandle(`Controle_Estoque_Loja_${de}_${ag.slice(0, 10)}_${ag.slice(11, 16).replace(':', '')}.html`, { create: true })).createWritable(); await bk.write(txt); await bk.close();
+    const nomes = []; for await (const [n, e] of vs.entries()) if (e.kind === 'file' && n.slice(-5) === '.html') nomes.push(n);
+    nomes.sort(); while (nomes.length > 10) await vs.removeEntry(nomes.shift());
+    progEtapa(4, 75, 'Gravando a versão ' + p.versao + '…'); await pausa(200);
+    const fh = await h.getFileHandle(ARQ_SISTEMA), w = await fh.createWritable(); await w.write(p.buf); await w.close();
+    progEtapa(5, 92, 'Conferindo o arquivo gravado…'); await pausa(250);
+    if (hexDe(await crypto.subtle.digest('SHA-256', await (await fh.getFile()).arrayBuffer())) !== hash) throw new Error('a cópia gravada não ficou igual ao arquivo conferido');
+    db.atualizacaoPendente = { de, para: p.versao, instaladaEm: agora(), por: eu.nome, sha256: hash };
+    registrar('Atualização instalada pelo master', de + ' → ' + p.versao); gravarLog('Sistema', 'Instalou a atualização do sistema', de + ' → ' + p.versao); salvar();
+    progOk('Versão ' + p.versao + ' instalada. Abra a versão nova para concluir.');
+    estadoInstalacao = { para: p.versao, em: agora() }; atualizando = false; await pausa(900); render();
+  } catch (e) {
+    atualizando = false; progErro(e);
+    if (!/senha/.test(String(e.message))) gravarLog('Sistema', 'Instalação da atualização não concluída', String(e.message || e));
+  }
+};
+ACT.abrirVersaoNova = () => { location.reload(); };
+// ao abrir: se o master instalou uma versão, confirma que é ela que está rodando
+function confirmarAtualizacaoPendente() {
+  const p = db && db.atualizacaoPendente; if (!p) return;
+  if (p.para === VERSAO_APP) {
+    const r = Object.assign({}, p, { confirmadaEm: agora() }); delete r.falhaEm;
+    (db.atualizacoes = db.atualizacoes || []).push(r); delete db.atualizacaoPendente;
+    registrar('Atualização confirmada', p.de + ' → ' + p.para, 'sistema'); gravarLog('Sistema', 'Atualização confirmada', p.de + ' → ' + p.para + ' (instalada por ' + p.por + ')', 'sistema');
+    atualizacaoConfirmadaAgora = r; salvar(); kvGravar('atualizacaoBaixada', null).catch(() => { });
+  } else if (VERSAO_APP > p.para) { delete db.atualizacaoPendente; salvar(); }
+  else if (!p.falhaEm) { p.falhaEm = agora(); registrar('Atualização não confirmada', 'esperada ' + p.para + ' · aberta ' + VERSAO_APP, 'sistema'); salvar(); }
+}
+async function carregarPacoteBaixado() { try { const p = await kvLer('atualizacaoBaixada'); if (p && p.buf && p.versao > VERSAO_APP) pacoteBaixado = p; } catch (e) { } }
+function atualizacao() {
+  const v = versaoNuvem, nova = temVersaoNova(), p = pacoteBaixado && (!v || pacoteBaixado.versao === v.versao || !nova) ? pacoteBaixado : null;
+  const pend = db.atualizacaoPendente, conf = atualizacaoConfirmadaAgora, kb = n => fmtN(Math.round(n / 1024)) + ' KB';
+  const passo = (n, titulo, estado, corpo) => `<section class="card at-passo at-${estado}"><div class="at-cab"><span class="at-num">${estado === 'feito' ? '✓' : n}</span><h3>${titulo}</h3>${estado === 'feito' ? '<span class="tag ok">concluído</span>' : estado === 'atual' ? '<span class="tag ab">próximo passo</span>' : ''}</div>${corpo}</section>`;
+  const e1 = v ? 'feito' : 'atual', e2 = !nova ? 'off' : p ? 'feito' : 'atual', e3 = estadoInstalacao ? 'feito' : p ? 'atual' : 'off', e4 = conf ? 'feito' : estadoInstalacao ? 'atual' : 'off';
+  const s1 = `<div class="resumo-tit"><div class="rbox ok"><small>Versão instalada</small><b>${esc(VERSAO_APP)}</b></div>
+      <div class="rbox"><small>Versão na nuvem</small><b>${v ? esc(v.versao) : '—'}</b><span>${v ? 'publicada em ' + esc(v.publicadoEm || '—') : 'ainda não consultada'}</span></div>
+      <div class="rbox"><small>Situação</small><b>${!v ? '—' : nova ? 'Versão nova disponível' : 'Sistema em dia'}</b><span>${v ? 'consulta às ' + esc(String(v.consultadaEm || '').slice(11, 16)) : ''}</span></div></div>
+    ${nova ? `<h4 class="rel-sec">O que muda na versão ${esc(v.versao)}</h4>${listaNovidadesNuvem(v)}` : ''}
+    <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="atVerificar">Verificar agora</button></div>`;
+  const s2 = !nova ? '<p class="mut">Nada para baixar: o sistema já está na versão mais nova.</p>' : p
+    ? `<div class="at-ok"><b>Versão ${esc(p.versao)} baixada e conferida</b><ul class="at-lista"><li>Baixada em ${fmtDH(p.em)} por ${esc(p.por)} · ${kb(p.tamanho)}</li><li>Código SHA-256: <code>${esc(p.sha256)}</code> — confere com o publicado</li><li>Assinatura digital da loja: <b>válida</b></li></ul></div>
+       <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="atDescartar">Descartar o download</button></div>`
+    : `<p>Baixa o arquivo da versão ${esc(v.versao)} do GitHub e confere o código SHA-256 e a assinatura digital. Nada é instalado neste passo.</p>
+       <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="atBaixar">Baixar versão ${esc(v.versao)}</button></div>`;
+  const s3 = estadoInstalacao
+    ? `<div class="at-ok"><b>Versão ${esc(estadoInstalacao.para)} instalada às ${esc(estadoInstalacao.em.slice(11, 16))}.</b> A versão ${esc(VERSAO_APP)} ficou guardada em versoes_anteriores. Abra a versão nova para concluir.</div>
+       <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="abrirVersaoNova">Abrir a versão nova</button></div>`
+    : !p ? '<p class="mut">Disponível depois de baixar a versão nova.</p>'
+    : `<p>Troca o arquivo do sistema pela versão ${esc(p.versao)}. Os dados da loja não mudam. Faça de preferência sem venda em andamento.</p>
+       ${atualizacaoTemPasta ? '' : `<p class="aviso-min">Primeira instalação neste computador: o navegador vai pedir a <b>pasta do sistema</b>. O caminho abaixo será copiado; na janela que abrir, cole (Ctrl+V) na barra de endereço, tecle Enter e clique em <b>Selecionar pasta</b>. Depois confirme <b>Editar arquivos</b>.<br><code style="word-break:break-all">${esc(pastaDoSistema())}</code></p>`}
+       <div class="form2"><label>Sua senha (usuário master ${esc(eu.login)})<input id="at-senha" type="password" autocomplete="current-password" data-enter="atInstalar"></label><span></span></div>
+       <div class="acoes" style="justify-content:flex-start"><button class="btn ac" data-act="atInstalar">Instalar versão ${esc(p.versao)}</button></div>`;
+  const s4 = conf
+    ? `<div class="at-prog tem-ok"><div class="at-barra"><div style="width:100%"></div><span>100%</span></div></div><div class="at-ok at-grande"><b>✓ Atualização concluída com sucesso: o sistema está rodando a versão ${esc(conf.para)}.</b><ul class="at-lista"><li>De ${esc(conf.de)} para ${esc(conf.para)}</li><li>Instalada em ${fmtDH(conf.instaladaEm)} por ${esc(conf.por)}</li><li>Confirmada em ${fmtDH(conf.confirmadaEm)}</li></ul></div>`
+    : pend && pend.falhaEm ? `<p class="err">A versão ${esc(pend.para)} foi instalada em ${fmtDH(pend.instaladaEm)}, mas o sistema abriu na ${esc(VERSAO_APP)}. </p><div class="at-erro"><b>Atualização não confirmada</b><p><b>Erro:</b> a versão aberta (${esc(VERSAO_APP)}) não é a instalada (${esc(pend.para)}).</p><p><b>Como corrigir:</b> feche esta janela e abra pelo atalho "Controle de Estoque" (pode ter sido aberta uma cópia de outra pasta). Se continuar, baixe e instale de novo nesta tela; se o sistema não abrir, use VOLTAR_VERSAO_ANTERIOR.bat.</p></div>`
+    : '<p class="mut">Ao abrir a versão nova, o sistema confere se a versão que está rodando é a instalada e registra a confirmação aqui.</p>';
+  const hist = (db.atualizacoes || []).slice().reverse();
+  return `${cabTela('Atualização do sistema')}<p class="mut" style="margin:-4px 0 12px">Somente o usuário master. Cada versão é conferida pela assinatura digital da loja antes de instalar.</p>
+    <div id="at-status"></div>${conf ? passo(4, 'Confirmação da atualização', 'feito', s4) : ''}
+    ${passo(1, 'Verificar se há versão nova', e1, s1)}${passo(2, 'Baixar a atualização', e2, s2 + `<div id="at-prog-baixar">${progAt && progAt.tipo === 'baixar' ? htmlProg() : ''}</div>`)}${passo(3, 'Instalar', e3, s3 + `<div id="at-prog-instalar">${progAt && progAt.tipo === 'instalar' ? htmlProg() : ''}</div>`)}${conf ? '' : passo(4, 'Confirmação', e4, s4)}
+    <section class="card"><div class="cfg-cab"><h3>Atualizações instaladas por esta tela</h3></div>${hist.length ? tabSimples(['Instalada em', 'De → para', 'Por', 'Confirmada em'], hist.map(a => [fmtDH(a.instaladaEm), esc(a.de + ' → ' + a.para), esc(a.por || ''), a.confirmadaEm ? `<span class="tag ok">${fmtDH(a.confirmadaEm)}</span>` : '—'])) : '<p class="vazio">Nenhuma atualização instalada por esta tela ainda.</p>'}</section>`;
+}
+let atualizacaoTemPasta = false;
+async function conferirPastaGuardada() { try { atualizacaoTemPasta = !!(await kvLer('pastaSistema')); } catch (e) { } }
 
 /* ===== Histórico de logs do sistema =====
    Tudo o que cada pessoa faz fica gravado num banco separado (lojaRoupasLog): entradas no sistema, vendas, estoque,
@@ -4149,7 +4371,7 @@ async function descarregarLog() {
   try { while (filaLog.length) { const l = filaLog.splice(0); await logOp('readwrite', st => { l.forEach(r => st.add(r)); }); } } catch (e) { } finally { gravandoLog = false; }
 }
 function gravarLog(cat, ev, det, quem) {
-  filaLog.push({ ts: Date.now(), q: agora(), u: quem || (eu ? eu.nome : '—'), login: eu ? eu.login : '', perfil: eu ? (eu.perfil === 'admin' ? 'Administrador' : 'Vendedora') : '', cat, ev, det: det || '', tela: eu ? nomeNav(chaveNav()) : 'Tela de entrada' });
+  filaLog.push({ ts: Date.now(), q: agora(), u: quem || (eu ? eu.nome : '—'), login: eu ? eu.login : '', perfil: eu ? nomePerfil(eu.perfil) : '', cat, ev, det: det || '', tela: eu ? nomeNav(chaveNav()) : 'Tela de entrada' });
   logsCache = null; descarregarLog();
 }
 // restauração: soma os registros do backup aos deste computador, sem repetir e sem apagar nada
@@ -4165,6 +4387,7 @@ registrar = function (ev, det, quem) { _registrarBase(ev, det, quem); gravarLog(
 
 /* catálogo das ações: [categoria, descrição, registrar sempre (mesmo sem gravar dados)] */
 const ACOES_LOG = {
+  atualizarSistema: ['Sistema', 'Abriu a tela de atualização'], atBaixar: ['Sistema', 'Pediu o download da atualização'], atInstalar: ['Sistema', 'Pediu a instalação da atualização'], atDescartar: ['Sistema', 'Descartou o download da atualização'], abrirVersaoNova: ['Sistema', 'Abriu a versão nova'],
   finalizarVenda: ['Vendas', 'Venda finalizada'], confirmarCancelamento: ['Vendas', 'Venda cancelada'], verVenda: ['Consultas', 'Recibo de venda consultado', 1],
   saidaCond: ['Condicionais', 'Condicional registrada (saída)'], confirmarAcerto: ['Condicionais', 'Acerto de condicional'], verCond: ['Consultas', 'Termo de condicional consultado', 1], verAcerto: ['Consultas', 'Acerto de condicional consultado', 1],
   confirmarTroca: ['Trocas', 'Troca / devolução registrada'], verTroca: ['Consultas', 'Troca consultada', 1],
@@ -4292,15 +4515,17 @@ ACT.verVersoes = () => {
   const inst = historicoVersoes().slice().reverse(), ja = new Set(inst.map(x => x.v));
   abrirModal('Controle de versões', `<div class="resumo-tit"><div class="rbox ok"><small>Versão em uso</small><b>${esc(VERSAO_APP)}</b><span>dados gravados pela ${esc(db._versaoApp || '—')}</span></div><div class="rbox"><small>Atualizações neste computador</small><b>${inst.filter(x => !x.instalacao).length}</b><span>${inst[0] ? 'última em ' + fmtDH(inst[0].em) : ''}</span></div></div>
     <h4 class="rel-sec">Instaladas neste computador</h4>${inst.length ? tabSimples(['Versão', 'Veio da versão', 'Instalada em'], inst.map(x => [`<b>${esc(x.v)}</b>`, x.instalacao ? 'primeira instalação' : esc(x.de || 'sem número'), fmtDH(x.em)])) : '<p class="vazio">Nenhuma atualização registrada ainda.</p>'}
-    <h4 class="rel-sec">Ciência dos administradores – versão ${esc(VERSAO_APP)}</h4>${tabSimples(['Administrador', 'Situação'], db.usuarios.filter(u => u.perfil === 'admin' && u.ativo !== false).map(u => { const c = (db.cientes || []).filter(x => x.uid === u.id && x.v === VERSAO_APP).pop(); return [esc(u.nome), c ? `<span class="tag ok">Ciente em ${fmtDH(c.em)}</span>` : (u.cienteVersao || '') >= VERSAO_APP ? '<span class="tag ok">Ciente (cadastrado nesta versão)</span>' : '<span class="tag at">Ainda não leu</span>']; }))}
+    <h4 class="rel-sec">Ciência dos administradores – versão ${esc(VERSAO_APP)}</h4>${tabSimples(['Administrador', 'Situação'], db.usuarios.filter(u => ehAdm(u) && u.ativo !== false).map(u => { const c = (db.cientes || []).filter(x => x.uid === u.id && x.v === VERSAO_APP).pop(); return [esc(u.nome), c ? `<span class="tag ok">Ciente em ${fmtDH(c.em)}</span>` : (u.cienteVersao || '') >= VERSAO_APP ? '<span class="tag ok">Ciente (cadastrado nesta versão)</span>' : '<span class="tag at">Ainda não leu</span>']; }))}
     <h4 class="rel-sec">O que mudou em cada versão</h4>${NOVIDADES.map(n => `<div class="ver-bloco"><b>${esc(n.v)}</b>${n.v === VERSAO_APP ? ' <span class="tag ok">em uso</span>' : ja.has(n.v) ? ' <span class="tag ab">instalada</span>' : ''}<ul class="sg-dicas">${n.itens.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}`, '', true);
 };
 
 /* ===== Início ===== */
 (async () => {
-  await carregarDados(); await carregarMinis(); conferirVersao();
+  await carregarDados(); await carregarMinis(); conferirVersao(); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
+  if (eu && atualizacaoConfirmadaAgora && master()) view = 'atualizacao';
   render(); if (eu) verNovidadesPendentes();
+  if (atualizacaoConfirmadaAgora) aviso('Atualização confirmada: o sistema está na versão ' + VERSAO_APP + '.', 'ok');
   // backup automático: confere 4 s depois de abrir e depois a cada minuto
   setTimeout(verificarBackup, 4000); setInterval(verificarBackup, 60000);
   setTimeout(verificarNuvemSilencioso, 8000); setInterval(verificarNuvemSilencioso, 3 * 3600 * 1000);   // procura versão nova na nuvem

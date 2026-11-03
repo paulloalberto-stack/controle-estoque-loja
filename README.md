@@ -1,4 +1,4 @@
 # Controle de Estoque – atualizações
 
-Arquivos baixados automaticamente pelo atalho "Controle de Estoque" das lojas.
+Versões do sistema instaladas pelo usuário master (suporte), dentro do próprio sistema.
 Cada versão tem assinatura digital; versões alteradas são recusadas. Nenhum dado de loja fica aqui.

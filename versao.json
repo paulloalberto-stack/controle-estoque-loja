@@ -1,12 +1,11 @@
 {
- "versao": "2026.11.03-06",
- "publicadoEm": "03/11/2026 14:34",
+ "versao": "2026.11.03-08",
+ "publicadoEm": "03/11/2026 15:09",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "79d0ce0f3f5aeacb1abcdc6128f04de0dcc92c52c2048c5ac62bde4018aad505",
- "assinatura": "GeP/fTA18gj2ZjD9/14RcN/yYwxJQ0hBRX38cPT3vWWQUeZm1ij7yYIEGy7spESYdZA9PJtk+Sygoo6nRzM/WOz6IEJC7K4tj63JYZwwnDs3gD27vjFY6UWZCMH3ae9MWGAfJbe+3H52cU15djPJqlVTU0i4SIWOPhTYP5ItxCzNF8Sg4lfFEiWVmKwrU0a9Wj0Q3EXZhT7rGpazafsQTU9hOpVNf9Q0ek1x7K3TIitu4qt7b+E67NDR00tTSVxbsNWVf2dtZHKE4Pz6jOULXbysF4Bok1n+jwS20snGqZLBh0ueTbekWf5pBegkyaxGN3Y7SUq/S9VklL67+/9DxjS6jKB6DK+GELGx571K8kTIvcylK8QBPsaWXJuhpgZtrabFx0noB8Yw6G8QRa8r8LlsliHaVnfy7eqfPJJBk9w7ZuDvNCF6p+mKkK7wXWu1JMWl/40iOV71rQqDK5nU8WB5VHsAdskjPcCYXo9NepLXuHld5HaofO6dszwtGpHU",
+ "sha256": "6aece62ca3cf4c1c926904cd0036291ca0d7267bd97c920cecf9ff2c1a021e90",
+ "tamanho": 453429,
+ "assinatura": "KKm77PdEbcbhe2i3EKCSnijNTvvsurKepLyb7GSdfutMuldOCOhkxwSh3OsfxNuFBAJX3YUt2EpcrPgJBviOBTMBf6oCK766RfCaolCmT5/Arpmo/MrSCL2XG56J5Sfl8761eFMdwpvQinmQU8juJYfCmvaowBohkZw36fcirG2JNHkkoe0NDLXfTL6Lfu3eELykOAVf0ijoHP/OG02ObikfJA4+eg8fOmj7H3c870K66GZ/M6qncp/aBNgPMc0L7V9oOVj4yUeMhqW763HNPoi+byCXaUcpbH++BgmFavKMjw7vcEisskd7rN22cu6GLNWM3RgPUPj1j7Zucw9YUEHIK26yb67IXf3q5hvtOWQLbA0bnsEFagpvTyBADGd3gHxBVgZSTN05oJXjoFIV4mu3beZvd7mHFlaDrM343EojTGQFacPKLdvI2e4BrzN2G3ab/FOFHIsUr1RUYyyFbgFVcD/vAfDhHGn6bERrWzMv2j3jgFNCaoEWR57lZCq8",
  "novidades": [
-  "2026.11.03-06",
-  "Atualização pela nuvem (GitHub): o sistema avisa quando há versão nova; basta fechar e abrir pelo atalho para instalar. Cada versão vem com assinatura digital da loja e é recusada se tiver sido alterada.",
-  "Configurações → Sobre e atualização: botão \"Verificar atualização agora\"."
+  "A logo da loja no menu lateral virou atalho: um clique leva para o Painel inicial."
  ]
 }
