@@ -1,11 +1,14 @@
 {
- "versao": "2026.11.03-08",
- "publicadoEm": "03/11/2026 15:09",
+ "versao": "2026.11.03-09",
+ "publicadoEm": "03/11/2026 15:55",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "6aece62ca3cf4c1c926904cd0036291ca0d7267bd97c920cecf9ff2c1a021e90",
- "tamanho": 453429,
- "assinatura": "KKm77PdEbcbhe2i3EKCSnijNTvvsurKepLyb7GSdfutMuldOCOhkxwSh3OsfxNuFBAJX3YUt2EpcrPgJBviOBTMBf6oCK766RfCaolCmT5/Arpmo/MrSCL2XG56J5Sfl8761eFMdwpvQinmQU8juJYfCmvaowBohkZw36fcirG2JNHkkoe0NDLXfTL6Lfu3eELykOAVf0ijoHP/OG02ObikfJA4+eg8fOmj7H3c870K66GZ/M6qncp/aBNgPMc0L7V9oOVj4yUeMhqW763HNPoi+byCXaUcpbH++BgmFavKMjw7vcEisskd7rN22cu6GLNWM3RgPUPj1j7Zucw9YUEHIK26yb67IXf3q5hvtOWQLbA0bnsEFagpvTyBADGd3gHxBVgZSTN05oJXjoFIV4mu3beZvd7mHFlaDrM343EojTGQFacPKLdvI2e4BrzN2G3ab/FOFHIsUr1RUYyyFbgFVcD/vAfDhHGn6bERrWzMv2j3jgFNCaoEWR57lZCq8",
+ "sha256": "5cc7b032aa9dd8b8daecb8171783d62dcd745269344745b3f308a3bebf9c5625",
+ "tamanho": 462969,
+ "assinatura": "beMUdhh7jvjuvSvcrFfiIWbFVmzupeKm6zGu3EfXD71iZX772mFqMaRBmWbmwF0VEhgV3IQlqmqd5iLSTaO4b6oWl/7TS+2TKJv7OZxw/b9GIJyToythFL73W+AFCwNbJizUEE8CpTcq9veiYHXhNenR1K7wx+avEtivVtyZ2Yseh/3RS6fyNVhTH+S6zxW/MSdu9Q975qrW0J7c8+q9Q5QtRzhDT0/+A+TD49Z2gGcn1eYxpvHr7FDScgMEhIKZzQFc6CVt56YX0DvQGU7DRoW+H3uk72NYDZ7PpUhV8JeB+Ujdi/ENqLWvgbfQUiolldYV6KR/qeT5ounU/ykkxVNO9c3YkkTRAioMm95Btt0QlMTVwVrNnS5PG+QgjoHQCyXt2rSSzDtxXin8oSGeMjeLnYdXcStGwyMSf7ltfvwo1RD0Vd6Hg9ZZZbcHjk+rUFidWCBexeOPGtM7DEE3heZKPYug0Hdcl25qY0n8sNCvOcYq7IHP03l5Lb48pdiV",
  "novidades": [
-  "A logo da loja no menu lateral virou atalho: um clique leva para o Painel inicial."
+  "Banco de dados SQLite: os dados da loja (produtos, vendas, clientes, financeiro, fotos, logs e cópias internas) passam a ficar no arquivo dados/loja.sqlite, gravado por um servidor local que liga junto com o Windows. Limpar os dados do navegador não apaga mais nada.",
+  "Na primeira abertura, os dados que estavam no navegador são levados sozinhos para o banco SQLite.",
+  "Backup: além dos arquivos de backup, o servidor guarda uma cópia do banco por dia (as últimas 30) e pode copiar também para uma pasta extra (pen drive, rede, OneDrive).",
+  "Atualização pela nuvem continua só com o usuário Master; agora quem grava a versão nova é o servidor, que confere a assinatura digital de novo (o navegador não pede mais a pasta)."
  ]
 }
