@@ -1,11 +1,12 @@
 {
- "versao": "2026.11.03-13",
- "publicadoEm": "03/11/2026 18:19",
+ "versao": "2026.11.03-14",
+ "publicadoEm": "03/11/2026 18:29",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "15cc1a4a627ad2fbabddf9788ada549b48efe71d58f93f07820c41ef052228f4",
- "tamanho": 485606,
- "assinatura": "PEbo42rollmcgVBJDdTTt9QL9HSxceUXLdhPm5L5UbwR4vxJzzJM6YgXPCGzzc16x5k3jbWor8MDo+lM3VJDvH+0J7AYzAel3RrWsDWzwnbolRtHQdFuNn0nol5O+3ZEVikwLhhH2Kw35COJAmQO5YCfc5hId5dlvYuj+Dk2fo7KkKwf2iZVKEd+K6bHbm5TMCxcequEEAkCzJUxdDFJwESCdjGdb/Lx9m8EK0ZDvET3kY4HJClqxzXJZig14u3AfIuuU0cPslY/zExTIMpgmphvBzTu0cDBYtCc9PjqtrgHn1UQ/vWz20AuGQoPZp0N/hW8u09liTJdSXpGPwXAReWwCow7FNYC55xiE6OZHuZstdiGLl47DJZosdw6hl2Ngok9gBZaU+wHVqXNDhUTPpAuTykZKa/pW2WkIK8mk+ONLdav3uGOkItKFrbRe405LfjWrwh3IR0rByY4sHzVwfXYD5baDhxgD4XlwAlBxw4wZpNNIhFhwfizeke8ySnO",
+ "sha256": "3ec3406b69dca9fcf448b9d727f1c8204e9f4729301ca05abaf940858d4c936c",
+ "tamanho": 489403,
+ "assinatura": "JPjsPVAgbQJvUGx+W2kS8IeAA6fNYFtufzpGw8lpIrx+UOcXPm2y+z9w6bSuFsRjvZjWuHnfyI6v/7qz+cEXWr+XWhpbPQVh4b8VK+e065cVRyv9b396uNUl95p/yg12dV2582XZ1DjAxSVOw9JWBgjIJ439mJ2aWPuKL0/11jeylq+R3szA3RuZWadCZevH61wxp7tFrI46ZcloAi3igNJjEWEz+9vLMjQwnXZfvxxsSNRVgWP+OGEgBUPL6AmLG2aDkg8OR5HxjFvjuts6OYuDNYPjKq7pUfZwLS4cZysaIrFfPvfN6uZeTsCCV5f98bxaRTfi2IBxtRQYhk4kW0ePXibjCWAnodYxoPDQ4EmL7IJVSFl1hxG6TrX9xkSuEXIiOuNTIn6AR14WreBW4rAe6Z6JqG/N5d0OCGvF1RJO8Xi95IAv7y862APEXN+PgdPxurC4tRtwZVf2QPR5DxpwSppcKUKuHzyfHYiDzSfJb1dcUmKIZKyK+F2H5dUK",
  "novidades": [
-  "O ícone da janela do sistema na barra de tarefas do Windows (e na aba do navegador) passa a ser a logo da loja, no lugar do globo. Trocou a logo e salvou, o ícone muda junto."
+  "Ícone próprio do sistema: em Configurações → Empresa dá para enviar uma imagem só para o ícone da barra de tarefas e do atalho da área de trabalho (de preferência PNG quadrado de 512 × 512 px), com prévia em 256, 48, 32 e 16 px. Sem ícone próprio, continua usando a logo.",
+  "Ícone mais nítido: a janela recebe a versão grande do ícone e os tamanhos pequenos são reduzidos em etapas."
  ]
 }

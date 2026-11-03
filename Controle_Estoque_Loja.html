@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-13">
+<meta name="versao-sistema" content="2026.11.03-14">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -514,6 +514,7 @@ input[data-maiusc]::placeholder{text-transform:none}
 .kpi-link:hover::after{opacity:1}
 .anal-dias{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 10px;font-size:12.5px}
 .alerta-nuvem{background:#eef4ff;border-color:#bcd0f7;color:#1d3a7a}
+.ic-prev{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:10px;border:1px dashed var(--line);border-radius:10px;background:repeating-conic-gradient(#f1f2f4 0 25%,#fff 0 50%) 0 0/16px 16px}.ic-prev>span:not(.mut){display:flex;flex-direction:column;align-items:center;gap:4px}.ic-prev small{color:var(--mut);font-size:11px}.ic-prev img{image-rendering:auto}
 .aj-busca label{display:block;font-weight:700}.aj-busca input{margin-top:6px;font-size:15px;padding:10px 12px}
 .aj-mapa{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.aj-tela{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px}.aj-tela>div:nth-child(2){flex:1}.aj-tela p{margin:4px 0 0;color:var(--mut);font-size:13px}
 .aj-ic svg{width:24px;height:24px;fill:none;stroke:var(--ac);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1381,7 +1382,7 @@ const OPCOES_VIAS = [['1', '1 via (só a do cliente)'], ['2', '2 vias (cliente e
 const ABAS_SALVAR = ['empresa', 'recibo', 'operacao'];
 function config() {
   const c = db.config, aba = filtros.cfg.aba || 'empresa';
-  logoTemp = c.logo;
+  logoTemp = c.logo; iconeTemp = c.icone || '';
   setTimeout(previaCfg);
   const sel = (id, ops, v) => `<select id="cf-${id}">${ops.map(([k, t]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
   const pane = (k, html) => `<div class="cfg-pane${k === aba ? ' on' : ''}" data-aba="${k}">${html}</div>`;
@@ -1397,7 +1398,8 @@ function config() {
       ${CFG_CAMPOS.map(([k, t, ph]) => `<label>${t}<input id="cf-${k}" value="${esc(c[k])}" placeholder="${ph || ''}" ${MASCARA_CFG[k] || ''}></label>`).join('')}
     </div></section>
     <section class="card">${cab('Logo da empresa', 'Usada nos documentos impressos. PNG ou JPG; fundo transparente fica melhor.')}
-    <div class="form2"><label class="full">Arquivo da logo<input type="file" id="cf-logo-arq" accept="image/*"></label><div class="full" id="cf-logo-info"></div>${MODO_SERVIDOR ? '<div class="full"><button class="btn" data-act="criarAtalho">Criar atalho na área de trabalho com esta logo</button> <span class="mut">O ícone do atalho "Controle de Estoque" usa a logo e muda sozinho quando a logo for trocada e salva.</span></div>' : ''}</div></section>`)}
+    <div class="form2"><label class="full">Arquivo da logo<input type="file" id="cf-logo-arq" accept="image/*"></label><div class="full" id="cf-logo-info"></div>
+      <label class="full">Ícone do sistema (barra de tarefas e atalho da área de trabalho) <span class="mut">– opcional; imagem quadrada, PNG de 512 × 512 px de preferência, com fundo transparente</span><input type="file" id="cf-icone-arq" accept="image/png,image/jpeg,image/webp"></label><div class="full" id="cf-icone-info"></div>${MODO_SERVIDOR ? '<div class="full"><button class="btn" data-act="criarAtalho">Criar atalho na área de trabalho com esta logo</button> <span class="mut">O ícone do atalho "Controle de Estoque" usa a logo e muda sozinho quando a logo for trocada e salva.</span></div>' : ''}</div></section>`)}
   ${pane('recibo', `<div class="grid2"><section class="card">${cab('Recibos e impressão', 'Como saem o recibo de venda, o termo de condicional, o vale-troca e os recibos de parcela.')}
     <div class="form2">
       <label>Papel do recibo${sel('papel', [['A4', 'Folha A4'], ['80', 'Bobina 80 mm (impressora térmica)'], ['58', 'Bobina 58 mm (impressora térmica)']], c.papel)}</label>
@@ -2086,9 +2088,9 @@ ACT.salvarUsuario = async el => {
 /* configurações e backup */
 const CFG_CAMPOS = [['loja', 'Nome fantasia', 'Ex.: Estilo Masculino'], ['razao', 'Razão social'], ['cnpj', 'CNPJ (ou CPF)'], ['ie', 'Inscrição estadual'], ['endereco', 'Endereço (rua, número)'], ['bairro', 'Bairro'], ['cidade', 'Cidade / UF'], ['cep', 'CEP (preenche o endereço)'], ['telefone', 'Telefone'], ['whatsapp', 'WhatsApp', '(00) 00000-0000'], ['email', 'E-mail'], ['instagram', 'Instagram', '@sualoja'], ['site', 'Site']];
 const MASCARA_CFG = { cnpj: 'data-mask="doc" inputmode="numeric" placeholder="00.000.000/0000-00"', cep: 'data-mask="cep" inputmode="numeric" placeholder="00000-000" data-rua="cf-endereco" data-bairro="cf-bairro" data-cidade="cf-cidade"', telefone: 'data-mask="tel" inputmode="tel"', whatsapp: 'data-mask="tel" inputmode="tel"' };
-let logoTemp = '';
+let logoTemp = '', iconeTemp = '';
 function lerCfg() {
-  const o = { logo: logoTemp, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
+  const o = { logo: logoTemp, icone: iconeTemp, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
   CFG_CAMPOS.forEach(([k]) => o[k] = $('#cf-' + k).value.trim());
   return o;
 }
@@ -2100,9 +2102,33 @@ function previaCfg() {
     itens: [{ codigo: 'CAM00001', nome: 'Camisa Polo piquet', marca: 'Marca', tamanho: 'M', cor: 'Azul', qtd: 1, preco: 149.9 }, { codigo: 'CAL00004', nome: 'Calça Jeans slim', marca: 'Marca', tamanho: '42', cor: '', qtd: 1, preco: 299 }] };
   $('#cfg-prev').innerHTML = abreDoc() + reciboHTML(v)('VIA DO CLIENTE') + '</div>';
   db.config = velho;
+  previaIcone();
   $('#cf-logo-info').innerHTML = logoTemp ? `<img src="${logoTemp}" style="max-height:50px;vertical-align:middle"> <button class="lnk perigo" data-act="tirarLogo">remover logo</button>` : '<span class="mut">Sem logo.</span>';
 }
 ACT.tirarLogo = () => { logoTemp = ''; previaCfg(); };
+ACT.tirarIcone = () => { iconeTemp = ''; previaIcone(); };
+// ícone próprio do sistema: guardado quadrado (512 px), fundo transparente, sem esticar
+function carregarIcone(arq) {
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const t = 512, cv = document.createElement('canvas'); cv.width = cv.height = t;
+      desenharNitido(cv.getContext('2d'), img, 0, 0, t, t);
+      iconeTemp = cv.toDataURL('image/png'); previaIcone();
+      if (img.width !== img.height) aviso('A imagem não é quadrada: ela foi centralizada no quadrado do ícone. Para ficar perfeita, use uma imagem quadrada (ex.: 512 × 512 px).', 'ok');
+    };
+    img.onerror = () => aviso('Não foi possível ler a imagem.', 'erro');
+    img.src = r.result;
+  };
+  r.readAsDataURL(arq);
+}
+async function previaIcone() {
+  const el = $('#cf-icone-info'); if (!el) return;
+  const p = await pngsIcone(Object.assign({}, db.config, { logo: logoTemp, icone: iconeTemp }));
+  el.innerHTML = `<div class="ic-prev">${[[0, 64, '256 px'], [1, 48, '48 px'], [2, 32, '32 px'], [3, 16, '16 px']].map(([i, w, t]) => `<span><img src="data:image/png;base64,${p[i]}" width="${w}" height="${w}" alt=""><small>${t}</small></span>`).join('')}
+    <span class="mut" style="align-self:center">${iconeTemp ? 'Ícone próprio. <button class="lnk perigo" data-act="tirarIcone">remover (volta a usar a logo)</button>' : 'Usando a logo da loja. Envie uma imagem própria para ficar mais nítido.'}</span></div>`;
+}
 function carregarLogo(arq, cb) {
   const r = new FileReader();
   r.onload = () => {
@@ -3874,6 +3900,7 @@ function onCampo(e) {
   if (d.filtro === 'cfg.aud' && $('#tb-aud')) $('#tb-aud').innerHTML = tabelaAuditoria();
   if (d.filtro && d.filtro.indexOf('fin.') === 0) $('#fin-res').innerHTML = resultadoFin();
   if (el.id === 'cf-logo-arq') { if (e.type === 'change' && el.files[0]) carregarLogo(el.files[0]); return; }
+  if (el.id === 'cf-icone-arq') { if (e.type === 'change' && el.files[0]) carregarIcone(el.files[0]); return; }
   if (el.closest && el.closest('#cfg')) { previaCfg(); if ($('#cfg-sujo')) $('#cfg-sujo').textContent = 'Há alterações não salvas.'; }
 }
 document.addEventListener('input', onCampo);
@@ -4056,6 +4083,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-14', itens: ['Ícone próprio do sistema: em Configurações → Empresa dá para enviar uma imagem só para o ícone da barra de tarefas e do atalho da área de trabalho (de preferência PNG quadrado de 512 × 512 px), com prévia em 256, 48, 32 e 16 px. Sem ícone próprio, continua usando a logo.', 'Ícone mais nítido: a janela recebe a versão grande do ícone e os tamanhos pequenos são reduzidos em etapas.'] },
   { v: '2026.11.03-13', itens: ['O ícone da janela do sistema na barra de tarefas do Windows (e na aba do navegador) passa a ser a logo da loja, no lugar do globo. Trocou a logo e salvou, o ícone muda junto.'] },
   { v: '2026.11.03-12', itens: ['Direitos autorais: marca d’água discreta © 2026 P.A.S Soluções Tecnológicas no canto da tela (não aparece na impressão).'] },
   { v: '2026.11.03-11', itens: ['Nova tela Ajuda no menu: mapa do sistema (cada tela, para que serve e botão para abrir), passo a passo das principais tarefas (venda, Pix, crediário, condicional, troca, entrada, etiquetas, backup…) e perguntas e respostas, com busca. Cada pessoa vê só o que o perfil dela permite.'] },
@@ -4460,29 +4488,43 @@ async function conferirPastaGuardada() { try { atualizacaoTemPasta = !!(await kv
 /* ===== Ícone da loja no atalho da área de trabalho =====
    Feito a partir da logo das Configurações (sem logo: as iniciais da loja na cor do sistema). O servidor grava o .ico
    e troca o ícone do atalho "Controle de Estoque"; quando a logo muda, o ícone muda junto. */
-async function pngsIcone() {
-  const logo = db.config.logo, img = logo ? await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = logo; }) : null;
+// desenha reduzindo pela metade a cada etapa: imagem pequena sai nítida, sem serrilhado
+function desenharNitido(g, img, x, y, w, h) {
+  const k = Math.min(w / img.width, h / img.height), lw = img.width * k, lh = img.height * k;
+  let src = img, sw = img.width, sh = img.height;
+  while (sw / 2 >= lw && sh / 2 >= lh) {
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(sw / 2)); c.height = Math.max(1, Math.round(sh / 2));
+    const cg = c.getContext('2d'); cg.imageSmoothingQuality = 'high'; cg.drawImage(src, 0, 0, c.width, c.height);
+    src = c; sw = c.width; sh = c.height;
+  }
+  g.imageSmoothingQuality = 'high'; g.drawImage(src, x + (w - lw) / 2, y + (h - lh) / 2, lw, lh);
+}
+const carregarImg = u => u ? new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = u; }) : Promise.resolve(null);
+async function pngsIcone(cfg) {
+  cfg = cfg || db.config;
+  const proprio = await carregarImg(cfg.icone);
+  if (proprio) return [256, 48, 32, 16].map(t => { const c = document.createElement('canvas'); c.width = c.height = t; desenharNitido(c.getContext('2d'), proprio, 0, 0, t, t); return c.toDataURL('image/png').split(',')[1]; });
+  const logo = cfg.logo, img = await carregarImg(logo);
   return [256, 48, 32, 16].map(t => {
     const c = document.createElement('canvas'); c.width = c.height = t; const g = c.getContext('2d'), r = t * .18;
-    g.fillStyle = img ? '#ffffff' : (db.config.cor || '#1e3a5f');
+    g.fillStyle = img ? '#ffffff' : (cfg.cor || '#1e3a5f');
     g.beginPath(); g.moveTo(r, 0); g.arcTo(t, 0, t, t, r); g.arcTo(t, t, 0, t, r); g.arcTo(0, t, 0, 0, r); g.arcTo(0, 0, t, 0, r); g.closePath(); g.fill();
     if (img) {
-      const m = t * (t <= 32 ? .03 : .08), w = t - 2 * m, k = Math.min(w / img.width, w / img.height), lw = img.width * k, lh = img.height * k;
-      g.imageSmoothingQuality = 'high'; g.drawImage(img, (t - lw) / 2, (t - lh) / 2, lw, lh);
+      const m = t * (t <= 32 ? .03 : .08); desenharNitido(g, img, m, m, t - 2 * m, t - 2 * m);
     } else {
       g.fillStyle = '#fff'; g.font = `700 ${Math.round(t * .42)}px "Segoe UI", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(iniciais(db.config.loja || 'Loja'), t / 2, t * .53);
+      g.fillText(iniciais(cfg.loja || 'Loja'), t / 2, t * .53);
     }
     return c.toDataURL('image/png').split(',')[1];
   });
 }
 // ícone da janela (barra de tarefas e aba do Edge) com a logo da loja
 async function aplicarFavicon() {
-  try { const p = await pngsIcone(); $('#favicon').href = 'data:image/png;base64,' + p[1]; } catch (e) { }
+  try { const p = await pngsIcone(); $('#favicon').href = 'data:image/png;base64,' + p[0]; } catch (e) { }
 }
 async function atualizarIconeLoja(forcar) {
   if (!MODO_SERVIDOR || !srvInfo) return null;
-  const h = (await hashTxt([db.config.logo || '', db.config.loja || '', db.config.cor || ''].join('|'))).slice(0, 12);
+  const h = (await hashTxt([db.config.icone || '', db.config.logo || '', db.config.loja || '', db.config.cor || ''].join('|'))).slice(0, 12);
   if (!forcar && srvInfo.iconeHash === h && srvInfo.icone) return null;
   const r = await apiJson('icone', 'POST', { hash: h, pngs: await pngsIcone() });
   srvInfo.iconeHash = h; srvInfo.icone = r.icone; return r;
