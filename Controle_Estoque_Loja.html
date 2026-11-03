@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-14">
+<meta name="versao-sistema" content="2026.11.03-15">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -514,6 +514,7 @@ input[data-maiusc]::placeholder{text-transform:none}
 .kpi-link:hover::after{opacity:1}
 .anal-dias{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 10px;font-size:12.5px}
 .alerta-nuvem{background:#eef4ff;border-color:#bcd0f7;color:#1d3a7a}
+.alerta-lic-erro{background:#fff1ec;border-color:#f6c6b4;color:#7a2810}
 .ic-prev{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:10px;border:1px dashed var(--line);border-radius:10px;background:repeating-conic-gradient(#f1f2f4 0 25%,#fff 0 50%) 0 0/16px 16px}.ic-prev>span:not(.mut){display:flex;flex-direction:column;align-items:center;gap:4px}.ic-prev small{color:var(--mut);font-size:11px}.ic-prev img{image-rendering:auto}
 .aj-busca label{display:block;font-weight:700}.aj-busca input{margin-top:6px;font-size:15px;padding:10px 12px}
 .aj-mapa{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.aj-tela{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px}.aj-tela>div:nth-child(2){flex:1}.aj-tela p{margin:4px 0 0;color:var(--mut);font-size:13px}
@@ -572,6 +573,7 @@ input[data-maiusc]::placeholder{text-transform:none}
     <div id="alerta"></div>
     <div id="alerta-bk"></div>
     <div id="alerta-nuvem"></div>
+    <div id="alerta-lic"></div>
     <div id="view"></div>
   </main>
 </div>
@@ -1075,7 +1077,7 @@ function render() {
   $('#side-logo').hidden = !logoTela(); if (logoTela()) $('#side-logo').src = logoTela();
   document.title = (db.config.loja || 'Loja') + ' – Controle de Estoque';
   $('#alerta').innerHTML = nb ? `<div class="alerta">⚠ <b>${nb} produto(s) abaixo do estoque mínimo</b> — é preciso comprar mais mercadoria. <button class="lnk" data-act="verAbaixo">Ver lista de compra</button></div>` : '';
-  alertaBackup(); avisoNuvem();
+  alertaBackup(); avisoNuvem(); avisoLicenca();
   $('#view').innerHTML = VIEWS[view]();
   ['venda', 'cond', 'entrada'].forEach(totais);
   $('#dl-prod').innerHTML = ordenar(ativos()).map(p => `<option value="${esc(rotulo(p))}"></option>`).join('');
@@ -1376,6 +1378,7 @@ const CFG_ABAS = [
   ['operacao', 'Vendas e estoque', 'Condicional, preços e reposição', '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'],
   ['seguranca', 'Segurança', 'Senhas, bloqueio e registro', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>'],
   ['sobre', 'Sobre e atualização', 'Versão, novidades e como atualizar', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'],
+  ['licenca', 'Licença', 'Plano, validade e ativação', '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M11.4 11.6L21 2"/><path d="M16 7l3 3"/><path d="M19 4l2 2"/>'],
   ['backup', 'Backup e dados', 'Cópia de segurança e restauração', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>']
 ];
 const OPCOES_VIAS = [['1', '1 via (só a do cliente)'], ['2', '2 vias (cliente e loja)'], ['3', '3 vias'], ['4', '4 vias']];
@@ -1428,6 +1431,7 @@ function config() {
   ${pane('aparencia', secaoTema())}
   ${pane('seguranca', secaoSeguranca())}
   ${pane('sobre', secaoSobre())}
+  ${pane('licenca', secaoLicenca())}
   ${pane('backup', `<section class="card">${cab('Backup', 'Os dados ficam guardados <b>neste computador, neste navegador</b>. Guarde cópias fora dele (pen drive, e-mail, nuvem).')}
     <div class="resumo-tit"><div class="rbox ${nb ? (diasBk > 7 ? 'err' : 'ok') : 'err'}"><small>Último backup</small><b>${nb ? fmtDia(nb) : 'Nunca'}</b><span>${nb ? (diasBk === 0 ? 'hoje' : 'há ' + diasBk + ' dia(s)') : 'faça o primeiro agora'}</span></div><div class="rbox"><small>Produtos</small><b>${fmtN(db.produtos.length)}</b><span>${fmtN(ativos().reduce((s, p) => s + p.estoque, 0))} peça(s)</span></div><div class="rbox"><small>Vendas</small><b>${fmtN(db.vendas.length)}</b><span>${db.clientes.length} cliente(s)</span></div><div class="rbox"><small>Movimentações</small><b>${fmtN(db.movs.length)}</b><span>${db.condicionais.length} condicional(is) · ${db.entradas.length} entrada(s)</span></div></div>
     <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="exportar">Exportar backup</button><button class="btn" data-act="importar">Restaurar backup…</button></div></section>
@@ -4083,6 +4087,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-15', itens: ['Licença de uso por loja (P.A.S Soluções Tecnológicas): Configurações → Licença mostra plano, validade e dias restantes e recebe o código de ativação. Os administradores são avisados 15 dias antes do vencimento.', 'Sem licença ativada, o sistema funciona por 30 dias de avaliação. Vencida a licença e o prazo de tolerância, entra em modo consulta: dá para consultar e fazer backup, mas não registrar vendas e movimentações. Nenhum dado é apagado.'] },
   { v: '2026.11.03-14', itens: ['Ícone próprio do sistema: em Configurações → Empresa dá para enviar uma imagem só para o ícone da barra de tarefas e do atalho da área de trabalho (de preferência PNG quadrado de 512 × 512 px), com prévia em 256, 48, 32 e 16 px. Sem ícone próprio, continua usando a logo.', 'Ícone mais nítido: a janela recebe a versão grande do ícone e os tamanhos pequenos são reduzidos em etapas.'] },
   { v: '2026.11.03-13', itens: ['O ícone da janela do sistema na barra de tarefas do Windows (e na aba do navegador) passa a ser a logo da loja, no lugar do globo. Trocou a logo e salvou, o ícone muda junto.'] },
   { v: '2026.11.03-12', itens: ['Direitos autorais: marca d’água discreta © 2026 P.A.S Soluções Tecnológicas no canto da tela (não aparece na impressão).'] },
@@ -4554,7 +4559,7 @@ const AJUDA_MAPA = [
   ['relatorios', 'adm', 'Vendas do período por vendedora, forma de pagamento, tipo e marca, e estoque por tipo e tamanho (sintético ou analítico, em PDF ou Excel).'],
   ['usuarios', 'adm', 'Cadastro de vendedoras e administradores: perfil, senha e regra de comissão.'],
   ['logs', 'adm', 'Histórico de logs: quem fez o quê e quando no sistema.'],
-  ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, backup e dados.'],
+  ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, licença, backup e dados.'],
   ['atualizacao', 'master', 'Atualização do sistema pela internet: verificar, baixar, instalar com a senha do master e confirmar.'],
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
@@ -4599,6 +4604,8 @@ const AJUDA_PERGUNTAS = [
   { p: 'Onde ficam os dados da loja? Limpar o navegador apaga?', quem: 'adm', r: 'Ficam no banco de dados SQLite (pasta ControleEstoqueLoja/dados), gravado pelo servidor local. Limpar o navegador não apaga nada. O servidor guarda uma cópia do banco por dia na pasta backups. Nunca apague a pasta dados.' },
   { p: 'Como vejo quem fez uma alteração?', quem: 'adm', r: 'Histórico de logs: filtre por usuário, tipo ou data. Tudo o que cada pessoa faz fica gravado e ninguém apaga pelo sistema.' },
   { p: 'O atalho da área de trabalho sumiu ou está sem a logo.', quem: 'adm', r: 'Configurações → Empresa → Criar atalho na área de trabalho com esta logo.' },
+  { p: 'Apareceu "Licença vencida: o sistema está em modo consulta".', quem: 'todos', r: 'A licença de uso venceu e passou o prazo de tolerância. Dá para consultar tudo e fazer backup, mas não registrar vendas e movimentações. Avise o administrador: ele renova com a P.A.S Soluções Tecnológicas e ativa o código novo. Nenhum dado é apagado.' },
+  { p: 'Como ativo ou renovo a licença?', quem: 'adm', r: 'Configurações → Licença: cole o código enviado pela P.A.S Soluções Tecnológicas e clique em Ativar licença. O código vale para o CNPJ cadastrado em Empresa.' },
   { p: 'Como mudo a chave Pix do QR Code?', quem: 'adm', r: 'Configurações → Recibos e impressão: chave Pix, nome e cidade do recebedor.' }
 ];
 const semAcento = s => [...String(s || '').toLowerCase().normalize('NFD')].filter(c => { const k = c.charCodeAt(0); return k < 0x300 || k > 0x36f; }).join('');
@@ -4624,6 +4631,81 @@ document.addEventListener('input', e => {
   document.querySelectorAll('#view [data-busca]').forEach(el => { const ok = q.every(w => el.dataset.busca.indexOf(w) >= 0); el.hidden = !ok; if (ok) vis++; if (el.tagName === 'DETAILS') el.open = ok && q.length > 0; });
   $('#aj-nada').hidden = vis > 0;
 });
+
+/* ===== Licença de uso (P.A.S Soluções Tecnológicas) =====
+   Código "PAS1-dados.assinatura" emitido pela P.A.S (ferramentas/gerar_licenca.ps1): cliente, CNPJ, plano, computadores e validade,
+   assinado com a chave privada de licença. Vale só para o CNPJ cadastrado em Empresa. Sem licença: 30 dias de avaliação.
+   Vencida: aviso; passada a tolerância, modo consulta (consulta e backup funcionam; vendas e movimentações, não). */
+const CHAVE_LICENCA = { kty: 'RSA', e: 'AQAB', n: 'qbet-0TUmPfrrp_GwlJxr0y21dI-potwikhBg5Yv80RkGVWjGGu0tDAbB5uqM5UOa12CeBrZcxlJ_Y1-0ikcsDR_kIgEW2S-B2cjsSffD3RwoRinf1Xf1QInKeqYnSAMMpuvoAwoAMG2LXZ-fpMwAWQ--18msZycFDNi7l_rxlBbutkrygxElabD-7PvTlek8Fkx-l8Jdq60gGRMk2gNjc9yy7KppSsl1mtGgpN5eBF-hFNor1dnBjLIYDjLF3urKRKpWyhABNdGddLaECjXqrDyX_UAsPUjE5TL1nuTwOdUS5vl7yLGt4FhOCW2Pg7mRHBBDrqr4ipQ9cFTrzm0HQAr_qB8sxhu6IirMn26ZjUWalNdvr_Yy3huAxO6P1oWuB6eCrye13hCZBHUPaKGM2Vq6hspxuo8PxAvAIXqpk04NAr9OnWomcur0qxzwdDfYra26XJOJF291pjjhZgvN8PEiESgvqSVbsB_NsCa9lGFFRiHOcc3kpUrc0exH5q9' };
+const DIAS_AVALIACAO = 30, DIAS_AVISO_LIC = 15;
+let licInfo = null;
+const b64uBytes = s => Uint8Array.from(atob(String(s).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+const difDias = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
+const somaDiasDe = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+async function lerLicenca(codigo) {
+  const m = String(codigo || '').replace(/[^A-Za-z0-9_.-]/g, '').match(/^PAS1-([A-Za-z0-9_-]+)[.]([A-Za-z0-9_-]+)$/);
+  if (!m) throw new Error('código de licença inválido (confira se copiou o código inteiro)');
+  const dados = b64uBytes(m[1]), ass = b64uBytes(m[2]);
+  const k = await crypto.subtle.importKey('jwk', CHAVE_LICENCA, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+  if (!(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', k, ass, dados))) throw new Error('assinatura inválida: este código não foi emitido pela P.A.S ou foi alterado');
+  return JSON.parse(new TextDecoder().decode(dados));
+}
+// situação: ok | vencendo | tolerancia | bloqueada | avaliacao
+async function conferirLicenca() {
+  const c = db.config, h = hoje(); let l = null, erro = '';
+  if (c.licenca) {
+    try { l = await lerLicenca(c.licenca); if (soDig(l.cnpj) !== soDig(c.cnpj)) { erro = `a licença é do CNPJ/CPF ${l.cnpj} e o cadastrado em Empresa é ${soDig(c.cnpj) || '(vazio)'}`; l = null; } }
+    catch (e) { erro = e.message; }
+  }
+  if (l) {
+    const resta = difDias(l.validade, h), tol = +l.tolerancia || 0;
+    licInfo = { l, resta, fimTol: somaDiasDe(l.validade, tol), sit: resta < -tol ? 'bloqueada' : resta < 0 ? 'tolerancia' : resta <= DIAS_AVISO_LIC ? 'vencendo' : 'ok' };
+  } else {
+    if (!c.licencaInicio) { c.licencaInicio = h; salvar(); }
+    const resta = DIAS_AVALIACAO - difDias(h, c.licencaInicio);
+    licInfo = { l: null, erro, resta, fimTol: somaDiasDe(c.licencaInicio, DIAS_AVALIACAO), sit: resta >= 0 ? 'avaliacao' : 'bloqueada' };
+  }
+  avisoLicenca(); return licInfo;
+}
+const licencaBloqueada = () => !!licInfo && licInfo.sit === 'bloqueada';
+function avisoLicenca() {
+  const el = $('#alerta-lic'); if (!el) return;
+  const i = licInfo, ver = adm() ? ' <button class="lnk" data-act="irLicenca">Ver licença</button>' : '';
+  let t = '', cls = 'alerta';
+  if (!eu || !i) t = '';
+  else if (i.sit === 'bloqueada') { t = `<b>Licença vencida: o sistema está em modo consulta.</b> Dá para consultar e fazer backup, mas não registrar vendas, condicionais, trocas, entradas nem lançamentos. Fale com a P.A.S Soluções Tecnológicas para renovar.${ver}`; cls = 'alerta alerta-lic-erro'; }
+  else if (!adm()) t = '';
+  else if (i.sit === 'tolerancia') { t = `<b>Licença vencida em ${fmtDia(i.l.validade)}.</b> O sistema funciona normalmente até ${fmtDia(i.fimTol)}; depois entra em modo consulta. Fale com a P.A.S para renovar.${ver}`; cls = 'alerta alerta-lic-erro'; }
+  else if (i.sit === 'vencendo') t = `<b>A licença vence em ${i.resta} dia(s) (${fmtDia(i.l.validade)}).</b> Fale com a P.A.S Soluções Tecnológicas para renovar.${ver}`;
+  else if (i.sit === 'avaliacao') { t = `<b>Período de avaliação: falta(m) ${i.resta} dia(s).</b> Para continuar usando depois de ${fmtDia(i.fimTol)}, ative a licença em Configurações → Licença.${i.erro ? ' <span class="err">Licença não aceita: ' + esc(i.erro) + '.</span>' : ''}${ver}`; cls = 'alerta alerta-nuvem'; }
+  el.innerHTML = t ? `<div class="${cls}">${t}</div>` : '';
+}
+ACT.irLicenca = () => { view = 'config'; filtros.cfg.aba = 'licenca'; render(); window.scrollTo(0, 0); };
+function secaoLicenca() {
+  const i = licInfo || {}, l = i.l;
+  const SIT = { ok: ['ok', 'Ativa'], vencendo: ['at', 'Vence em breve'], tolerancia: ['bx', 'Vencida (em tolerância)'], bloqueada: ['bx', 'Vencida – modo consulta'], avaliacao: ['ab', 'Avaliação'] }[i.sit] || ['in', '—'];
+  return `<section class="card"><div class="cfg-cab"><h3>Licença de uso</h3><p class="mut">O Controle de Estoque é licenciado por loja (CNPJ) pela P.A.S Soluções Tecnológicas.</p></div>
+    <div class="resumo-tit">
+      <div class="rbox ${i.sit === 'ok' ? 'ok' : ''}"><small>Situação</small><b><span class="tag ${SIT[0]}">${SIT[1]}</span></b><span>${l ? (i.resta >= 0 ? 'falta(m) ' + i.resta + ' dia(s)' : 'vencida há ' + (-i.resta) + ' dia(s)') : i.sit === 'avaliacao' ? 'falta(m) ' + i.resta + ' dia(s) de avaliação' : 'avaliação terminou em ' + fmtDia(i.fimTol || hoje())}</span></div>
+      <div class="rbox"><small>Cliente</small><b style="font-size:14px">${l ? esc(l.cliente) : '—'}</b><span>${l ? 'CNPJ/CPF ' + esc(l.cnpj) : 'sem licença ativada'}</span></div>
+      <div class="rbox"><small>Plano</small><b>${l ? esc(l.plano) : '—'}</b><span>${l ? l.pcs + ' computador(es) · código ' + esc(l.id) : ''}</span></div>
+      <div class="rbox"><small>Validade</small><b>${l ? fmtDia(l.validade) : fmtDia(i.fimTol || hoje())}</b><span>${l ? 'tolerância até ' + fmtDia(i.fimTol) : 'fim da avaliação'}</span></div></div>
+    ${i.erro ? `<p class="err">A licença gravada não foi aceita: ${esc(i.erro)}.</p>` : ''}
+    <div class="form2" style="margin-top:12px"><label class="full">Código da licença (enviado pela P.A.S Soluções Tecnológicas)<textarea id="lic-cod" rows="3" placeholder="PAS1-…" spellcheck="false"></textarea></label></div>
+    <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="ativarLicenca">${l ? 'Renovar / trocar licença' : 'Ativar licença'}</button></div>
+    <p class="mut">A licença vale para o CNPJ/CPF cadastrado em Empresa: <b>${esc(db.config.cnpj || '(preencha em Empresa)')}</b>. Quando faltar ${DIAS_AVISO_LIC} dias, os administradores são avisados. Depois do vencimento há um prazo de tolerância; passado o prazo, o sistema entra em modo consulta (nenhum dado é apagado).</p></section>`;
+}
+ACT.ativarLicenca = async () => {
+  const cod = ($('#lic-cod') || {}).value || '';
+  try {
+    const l = await lerLicenca(cod);
+    if (soDig(l.cnpj) !== soDig(db.config.cnpj)) throw new Error(`esta licença é do CNPJ/CPF ${l.cnpj}, mas o cadastrado em Empresa é ${soDig(db.config.cnpj) || '(vazio)'}`);
+    if (difDias(l.validade, hoje()) < -(+l.tolerancia || 0)) throw new Error('esta licença já venceu em ' + fmtDia(l.validade));
+    db.config.licenca = cod.replace(/[^A-Za-z0-9_.-]/g, ''); salvar();
+    registrar('Licença ativada', `${l.cliente} · ${l.plano} · válida até ${fmtDia(l.validade)} · código ${l.id}`);
+    await conferirLicenca(); render(); aviso(`Licença ativada: ${l.plano}, válida até ${fmtDia(l.validade)}.`, 'ok');
+  } catch (e) { aviso('Licença não ativada: ' + e.message + '.', 'erro'); }
+};
 
 /* ===== Histórico de logs do sistema =====
    Tudo o que cada pessoa faz fica gravado num banco separado (lojaRoupasLog): entradas no sistema, vendas, estoque,
@@ -4738,6 +4820,11 @@ Object.keys(ACT).forEach(k => {
     const r = f(el); if (r && typeof r.then === 'function') return r.then(x => { fim(); return x; }); fim(); return r;
   };
 });
+// modo consulta (licença vencida): bloqueia o que grava vendas e movimentações; consultas, backup e configurações continuam
+Object.keys(ACOES_LOG).filter(k => ['Vendas', 'Condicionais', 'Trocas', 'Clientes', 'Estoque', 'Financeiro', 'Comissões'].indexOf(ACOES_LOG[k][0]) >= 0 && !ACOES_LOG[k][2] && ACT[k]).forEach(k => {
+  const f = ACT[k];
+  ACT[k] = el => licencaBloqueada() ? aviso('Licença vencida: o sistema está em modo consulta e não registra vendas nem movimentações. Fale com a P.A.S Soluções Tecnológicas para renovar.', 'erro') : f(el);
+});
 
 /* tela Histórico de logs */
 const CATS_LOG = ['Acesso', 'Vendas', 'Condicionais', 'Trocas', 'Clientes', 'Estoque', 'Financeiro', 'Comissões', 'Usuários', 'Configurações', 'Backup e dados', 'Documentos', 'Consultas', 'Navegação', 'Sistema', 'Outros'];
@@ -4803,6 +4890,7 @@ ACT.verVersoes = () => {
   await carregarDados(); if (MODO_SERVIDOR && !srvOk) return telaSemServidor();
   await carregarMinis(); conferirVersao(); aplicarFavicon(); if (MODO_SERVIDOR) setTimeout(() => atualizarIconeLoja().catch(() => { }), 3000); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
+  await conferirLicenca(); setInterval(conferirLicenca, 3600 * 1000);
   if (eu && atualizacaoConfirmadaAgora && master()) view = 'atualizacao';
   render(); if (eu) verNovidadesPendentes();
   if (atualizacaoConfirmadaAgora) aviso('Atualização confirmada: o sistema está na versão ' + VERSAO_APP + '.', 'ok');

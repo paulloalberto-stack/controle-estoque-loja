@@ -1,12 +1,12 @@
 {
- "versao": "2026.11.03-14",
- "publicadoEm": "03/11/2026 18:29",
+ "versao": "2026.11.03-15",
+ "publicadoEm": "03/11/2026 18:39",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "3ec3406b69dca9fcf448b9d727f1c8204e9f4729301ca05abaf940858d4c936c",
- "tamanho": 489403,
- "assinatura": "JPjsPVAgbQJvUGx+W2kS8IeAA6fNYFtufzpGw8lpIrx+UOcXPm2y+z9w6bSuFsRjvZjWuHnfyI6v/7qz+cEXWr+XWhpbPQVh4b8VK+e065cVRyv9b396uNUl95p/yg12dV2582XZ1DjAxSVOw9JWBgjIJ439mJ2aWPuKL0/11jeylq+R3szA3RuZWadCZevH61wxp7tFrI46ZcloAi3igNJjEWEz+9vLMjQwnXZfvxxsSNRVgWP+OGEgBUPL6AmLG2aDkg8OR5HxjFvjuts6OYuDNYPjKq7pUfZwLS4cZysaIrFfPvfN6uZeTsCCV5f98bxaRTfi2IBxtRQYhk4kW0ePXibjCWAnodYxoPDQ4EmL7IJVSFl1hxG6TrX9xkSuEXIiOuNTIn6AR14WreBW4rAe6Z6JqG/N5d0OCGvF1RJO8Xi95IAv7y862APEXN+PgdPxurC4tRtwZVf2QPR5DxpwSppcKUKuHzyfHYiDzSfJb1dcUmKIZKyK+F2H5dUK",
+ "sha256": "99bce585a085ce067756bbf86110b1229d0d57936f6d042bdfa29767520a40db",
+ "tamanho": 499233,
+ "assinatura": "cNbrGbHy4ETk7F4Ha/aTlxHiP7sxEYvar4aUykP4GYYp/7DZ8+3oUwmF4gGPI0ZIY2yyy0AjL2+FDeC02QRh/x80ol//XpRjfv5Stq62rSFHAPnTeT3YRMP7NijKIsYf8qWheyN52Jf+mzWbdSHHQNSVPrJWPZptm5f0E1/CmB9hOyX6o70ypELUsfMCYwlk/EDnMaHikg4E1PHlUU74VuCcNpE4o6ONQ0jHIIKkB4rhChzIEmiT9//Q1HgYrFiYPANMdOLUA8fDIB2wKK0wKmHLarYAqYRp/f/zrdid8TeuaDM09ggMFJZlWDSow9QcLo9QqN6in3MV7piBYqbxjysRFYIpXb9n07ha8H+qtBKtVr4sZOhVOQy8DcE0lHBRXYbQEM2bZHEPVv0LQtfVVl7Ta2EyZJ84K5osUe80OwuCyLbrVvt3ZTDmOxC+GPAuDo6eKeb7tuz81HO1doyWROqPBcqkUaUES5lteYetbXHpZoQB78cj0g1j4l/tFPvB",
  "novidades": [
-  "Ícone próprio do sistema: em Configurações → Empresa dá para enviar uma imagem só para o ícone da barra de tarefas e do atalho da área de trabalho (de preferência PNG quadrado de 512 × 512 px), com prévia em 256, 48, 32 e 16 px. Sem ícone próprio, continua usando a logo.",
-  "Ícone mais nítido: a janela recebe a versão grande do ícone e os tamanhos pequenos são reduzidos em etapas."
+  "Licença de uso por loja (P.A.S Soluções Tecnológicas): Configurações → Licença mostra plano, validade e dias restantes e recebe o código de ativação. Os administradores são avisados 15 dias antes do vencimento.",
+  "Sem licença ativada, o sistema funciona por 30 dias de avaliação. Vencida a licença e o prazo de tolerância, entra em modo consulta: dá para consultar e fazer backup, mas não registrar vendas e movimentações. Nenhum dado é apagado."
  ]
 }
