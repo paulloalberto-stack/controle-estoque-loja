@@ -1,14 +1,12 @@
 {
- "versao": "2026.11.03-09",
- "publicadoEm": "03/11/2026 15:55",
+ "versao": "2026.11.03-10",
+ "publicadoEm": "03/11/2026 17:06",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "5cc7b032aa9dd8b8daecb8171783d62dcd745269344745b3f308a3bebf9c5625",
- "tamanho": 462969,
- "assinatura": "beMUdhh7jvjuvSvcrFfiIWbFVmzupeKm6zGu3EfXD71iZX772mFqMaRBmWbmwF0VEhgV3IQlqmqd5iLSTaO4b6oWl/7TS+2TKJv7OZxw/b9GIJyToythFL73W+AFCwNbJizUEE8CpTcq9veiYHXhNenR1K7wx+avEtivVtyZ2Yseh/3RS6fyNVhTH+S6zxW/MSdu9Q975qrW0J7c8+q9Q5QtRzhDT0/+A+TD49Z2gGcn1eYxpvHr7FDScgMEhIKZzQFc6CVt56YX0DvQGU7DRoW+H3uk72NYDZ7PpUhV8JeB+Ujdi/ENqLWvgbfQUiolldYV6KR/qeT5ounU/ykkxVNO9c3YkkTRAioMm95Btt0QlMTVwVrNnS5PG+QgjoHQCyXt2rSSzDtxXin8oSGeMjeLnYdXcStGwyMSf7ltfvwo1RD0Vd6Hg9ZZZbcHjk+rUFidWCBexeOPGtM7DEE3heZKPYug0Hdcl25qY0n8sNCvOcYq7IHP03l5Lb48pdiV",
+ "sha256": "30a6a2d75e9282586dda09bb4e2d03b08058d35d63547a5ef10282df0a3cf391",
+ "tamanho": 466167,
+ "assinatura": "SxJ8bz6jcbK4sTBQKDV35jabFF51Df4I2tv9koJro0qMTap9v70emiaBbDYF4qB9HMVB5Rka3eVJZGO+6B/iRaWJRVFmTDSAkYvqC7vPrXuAkYXpVM+lZgEymGvA7yTD0p5FRzTXTrbqyC0DNBqXEgF2i0nkzE1b8WlT0wjqZISfXr/HiYxRvSAf6aQzhrsR/kFZnI/I6yaVMSKXUQNcrF2N0+7RgdnziMOJoNv8RwU7zCd3NcoNroj5as1xtawPoqXgcDL3BnNFsBU9sXe4EkolTmOiK/DMfFvHHW7j3DofNl53obYOwrarjx9zQF2UyAiDcP3kJyvZjQ47ZaXeXtlvufQBPC/e5JsU2gcxkBmWlIbDc+fodhnteDVGeygwJSoemvK1DI0VyJUd1cBQ4KVNWFEDAcqGqiLjjeeFN0vJF2z5KqXGxXyres/lFpKmI9F0fw1o7ls7hisKIb5bXHKC/rS8yEKW4Fqy9+QcTv7MBRI2tURqbHRr/RastcL8",
  "novidades": [
-  "Banco de dados SQLite: os dados da loja (produtos, vendas, clientes, financeiro, fotos, logs e cópias internas) passam a ficar no arquivo dados/loja.sqlite, gravado por um servidor local que liga junto com o Windows. Limpar os dados do navegador não apaga mais nada.",
-  "Na primeira abertura, os dados que estavam no navegador são levados sozinhos para o banco SQLite.",
-  "Backup: além dos arquivos de backup, o servidor guarda uma cópia do banco por dia (as últimas 30) e pode copiar também para uma pasta extra (pen drive, rede, OneDrive).",
-  "Atualização pela nuvem continua só com o usuário Master; agora quem grava a versão nova é o servidor, que confere a assinatura digital de novo (o navegador não pede mais a pasta)."
+  "O atalho \"Controle de Estoque\" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.",
+  "Botão \"Criar atalho na área de trabalho com esta logo\" em Configurações → Empresa, para recriar o atalho se alguém apagar."
  ]
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-09">
+<meta name="versao-sistema" content="2026.11.03-10">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Controle de Estoque – Loja Masculina</title>
@@ -1383,7 +1383,7 @@ function config() {
       ${CFG_CAMPOS.map(([k, t, ph]) => `<label>${t}<input id="cf-${k}" value="${esc(c[k])}" placeholder="${ph || ''}" ${MASCARA_CFG[k] || ''}></label>`).join('')}
     </div></section>
     <section class="card">${cab('Logo da empresa', 'Usada nos documentos impressos. PNG ou JPG; fundo transparente fica melhor.')}
-    <div class="form2"><label class="full">Arquivo da logo<input type="file" id="cf-logo-arq" accept="image/*"></label><div class="full" id="cf-logo-info"></div></div></section>`)}
+    <div class="form2"><label class="full">Arquivo da logo<input type="file" id="cf-logo-arq" accept="image/*"></label><div class="full" id="cf-logo-info"></div>${MODO_SERVIDOR ? '<div class="full"><button class="btn" data-act="criarAtalho">Criar atalho na área de trabalho com esta logo</button> <span class="mut">O ícone do atalho "Controle de Estoque" usa a logo e muda sozinho quando a logo for trocada e salva.</span></div>' : ''}</div></section>`)}
   ${pane('recibo', `<div class="grid2"><section class="card">${cab('Recibos e impressão', 'Como saem o recibo de venda, o termo de condicional, o vale-troca e os recibos de parcela.')}
     <div class="form2">
       <label>Papel do recibo${sel('papel', [['A4', 'Folha A4'], ['80', 'Bobina 80 mm (impressora térmica)'], ['58', 'Bobina 58 mm (impressora térmica)']], c.papel)}</label>
@@ -2109,7 +2109,7 @@ function carregarLogo(arq, cb) {
 ACT.salvarConfig = () => {
   if (!conferirCampos('#cfg')) return;
   Object.assign(db.config, lerCfg());
-  if (salvar()) { render(); aviso('Configurações salvas.', 'ok'); }
+  if (salvar()) { render(); aviso('Configurações salvas.', 'ok'); atualizarIconeLoja().then(r => { if (r && (r.atalhos || []).length) aviso('Ícone do atalho da área de trabalho atualizado.', 'ok'); }).catch(() => { }); }
 };
 /* apagar todos os dados para começar do zero */
 ACT.zerarSistema = () => abrirModal('Apagar todos os dados', `<div class="aviso-min"><b>Isto apaga de vez</b> produtos, estoque, entradas, vendas, condicionais, trocas, clientes, créditos, contas a receber, contas a pagar e movimentações. A numeração dos documentos volta para 000001.</div>
@@ -4042,6 +4042,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-10', itens: ['O atalho "Controle de Estoque" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.', 'Botão "Criar atalho na área de trabalho com esta logo" em Configurações → Empresa, para recriar o atalho se alguém apagar.'] },
   { v: '2026.11.03-09', itens: ['Banco de dados SQLite: os dados da loja (produtos, vendas, clientes, financeiro, fotos, logs e cópias internas) passam a ficar no arquivo dados/loja.sqlite, gravado por um servidor local que liga junto com o Windows. Limpar os dados do navegador não apaga mais nada.',
     'Na primeira abertura, os dados que estavam no navegador são levados sozinhos para o banco SQLite.',
     'Backup: além dos arquivos de backup, o servidor guarda uma cópia do banco por dia (as últimas 30) e pode copiar também para uma pasta extra (pen drive, rede, OneDrive).',
@@ -4439,6 +4440,41 @@ function atualizacao() {
 let atualizacaoTemPasta = false;
 async function conferirPastaGuardada() { try { atualizacaoTemPasta = !!(await kvLer('pastaSistema')); } catch (e) { } }
 
+/* ===== Ícone da loja no atalho da área de trabalho =====
+   Feito a partir da logo das Configurações (sem logo: as iniciais da loja na cor do sistema). O servidor grava o .ico
+   e troca o ícone do atalho "Controle de Estoque"; quando a logo muda, o ícone muda junto. */
+async function pngsIcone() {
+  const logo = db.config.logo, img = logo ? await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = logo; }) : null;
+  return [256, 48, 32, 16].map(t => {
+    const c = document.createElement('canvas'); c.width = c.height = t; const g = c.getContext('2d'), r = t * .18;
+    g.fillStyle = img ? '#ffffff' : (db.config.cor || '#1e3a5f');
+    g.beginPath(); g.moveTo(r, 0); g.arcTo(t, 0, t, t, r); g.arcTo(t, t, 0, t, r); g.arcTo(0, t, 0, 0, r); g.arcTo(0, 0, t, 0, r); g.closePath(); g.fill();
+    if (img) {
+      const m = t * (t <= 32 ? .03 : .08), w = t - 2 * m, k = Math.min(w / img.width, w / img.height), lw = img.width * k, lh = img.height * k;
+      g.imageSmoothingQuality = 'high'; g.drawImage(img, (t - lw) / 2, (t - lh) / 2, lw, lh);
+    } else {
+      g.fillStyle = '#fff'; g.font = `700 ${Math.round(t * .42)}px "Segoe UI", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(iniciais(db.config.loja || 'Loja'), t / 2, t * .53);
+    }
+    return c.toDataURL('image/png').split(',')[1];
+  });
+}
+async function atualizarIconeLoja(forcar) {
+  if (!MODO_SERVIDOR || !srvInfo) return null;
+  const h = (await hashTxt([db.config.logo || '', db.config.loja || '', db.config.cor || ''].join('|'))).slice(0, 12);
+  if (!forcar && srvInfo.iconeHash === h && srvInfo.icone) return null;
+  const r = await apiJson('icone', 'POST', { hash: h, pngs: await pngsIcone() });
+  srvInfo.iconeHash = h; srvInfo.icone = r.icone; return r;
+}
+ACT.criarAtalho = async () => {
+  if (!MODO_SERVIDOR) return aviso('Abra o sistema pelo atalho para criar o atalho com a logo.', 'erro');
+  try {
+    await atualizarIconeLoja(true); const r = await apiJson('atalho', 'POST', {});
+    registrar('Atalho da área de trabalho criado', (r.atalhos || []).join(', '));
+    aviso('Atalho "Controle de Estoque" com a logo da loja criado na área de trabalho e no menu Iniciar.', 'ok');
+  } catch (e) { aviso('Não foi possível criar o atalho: ' + e.message, 'erro'); }
+};
+
 /* ===== Histórico de logs do sistema =====
    Tudo o que cada pessoa faz fica gravado num banco separado (lojaRoupasLog): entradas no sistema, vendas, estoque,
    financeiro, configurações, impressões, PDFs, WhatsApp, exportações e telas abertas. */
@@ -4615,7 +4651,7 @@ ACT.verVersoes = () => {
 (async () => {
   if (!MODO_SERVIDOR && sistemaMigrado()) return;
   await carregarDados(); if (MODO_SERVIDOR && !srvOk) return telaSemServidor();
-  await carregarMinis(); conferirVersao(); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
+  await carregarMinis(); conferirVersao(); if (MODO_SERVIDOR) setTimeout(() => atualizarIconeLoja().catch(() => { }), 3000); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
   if (eu && atualizacaoConfirmadaAgora && master()) view = 'atualizacao';
   render(); if (eu) verNovidadesPendentes();
