@@ -3,9 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-11">
+<meta name="versao-sistema" content="2026.11.03-12">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="P.A.S Soluções Tecnológicas">
+<meta name="copyright" content="© 2026 P.A.S Soluções Tecnológicas. Todos os direitos reservados.">
+<!-- Controle de Estoque – © 2026 P.A.S Soluções Tecnológicas. Todos os direitos reservados. -->
 <title>Controle de Estoque – Loja Masculina</title>
 <style>
 :root{--bg:#f3f4f6;--card:#fff;--ink:#1f2937;--mut:#6b7280;--pri:#1e3a5f;--pri2:#2b5283;--ac:#b45309;--ok:#15803d;--err:#b91c1c;--line:#e5e7eb;--soft:#f9fafb}
@@ -289,7 +292,9 @@ main{padding:0 32px 48px}
 .l-arte p{color:#b8c1d6;max-width:420px;margin:0}
 .l-arte ul{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:10px;color:#d5dbea}
 .l-arte li::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#4a73e0;margin-right:10px;vertical-align:middle}
-.l-lado{flex:1;display:flex;align-items:center;justify-content:center;background:#f4f5f7;padding:24px}
+.l-lado{flex:1;display:flex;align-items:center;justify-content:center;background:#f4f5f7;padding:24px;position:relative}
+.marca-dagua{position:fixed;right:14px;bottom:8px;z-index:1;font-size:11px;letter-spacing:.04em;color:#6b7385;opacity:.28;pointer-events:none;user-select:none}
+@media print{.marca-dagua{display:none}}
 .lbox{max-width:400px;border-radius:20px;padding:34px;box-shadow:var(--sh2);border:1px solid var(--line)}
 .lbox h1{font-size:23px;letter-spacing:-.02em;color:var(--ink)}
 .lbox .btn{justify-content:center;padding:11px}
@@ -541,6 +546,7 @@ input[data-maiusc]::placeholder{text-transform:none}
 </head>
 <body>
 
+<div class="marca-dagua" aria-hidden="true">© 2026 P.A.S Soluções Tecnológicas</div>
 <div id="login" class="login" hidden>
   <div class="l-arte" id="l-arte"></div>
   <div class="l-lado">
@@ -4049,6 +4055,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.03-12', itens: ['Direitos autorais: marca d’água discreta © 2026 P.A.S Soluções Tecnológicas no canto da tela (não aparece na impressão).'] },
   { v: '2026.11.03-11', itens: ['Nova tela Ajuda no menu: mapa do sistema (cada tela, para que serve e botão para abrir), passo a passo das principais tarefas (venda, Pix, crediário, condicional, troca, entrada, etiquetas, backup…) e perguntas e respostas, com busca. Cada pessoa vê só o que o perfil dela permite.'] },
   { v: '2026.11.03-10', itens: ['O atalho "Controle de Estoque" da área de trabalho passa a ter a logo da loja como ícone (vinda de Configurações → Empresa). Trocou a logo e salvou, o ícone muda junto.', 'Botão "Criar atalho na área de trabalho com esta logo" em Configurações → Empresa, para recriar o atalho se alguém apagar.'] },
   { v: '2026.11.03-09', itens: ['Banco de dados SQLite: os dados da loja (produtos, vendas, clientes, financeiro, fotos, logs e cópias internas) passam a ficar no arquivo dados/loja.sqlite, gravado por um servidor local que liga junto com o Windows. Limpar os dados do navegador não apaga mais nada.',
