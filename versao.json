@@ -1,14 +1,14 @@
 {
- "versao": "2026.11.04-14",
- "publicadoEm": "04/11/2026 15:11",
+ "versao": "2026.11.04-15",
+ "publicadoEm": "04/11/2026 15:32",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "6d2a15ac85eb52bf04d669f4752cd18b581502b3b138fd4ecd9aaf853dccd698",
- "tamanho": 626548,
- "assinatura": "cw02/9xP4q+uMpTnrrHe7QcnK6jvp7UxxQiGl4vC33i1MO9+4yZFlc6qt/0sPJkFbEgY6Aq4l6TvpK4kh5oyuAJakoWGFk+hoR/61h4rA1TcyGJRWV6mmfkGvjp7MqiAsXK73Er19suhmPQ4cmDfwfICdPkMWNup9Ua5z2crJjtHICShWAnJbANYnDS0W9GmWwtJ93Nuo+Bfx+yc3+X4BL213uN1RNCk8cE/cTJriojnpkPOVB0GtqMefnPIxk0N+3Y1+zDMXJpFyoNDG7ZErrBuW5o8AoSSjkynTp22vl2ToYiQcS0hDLT4coEXlHDd4aaRrbOXfXVYqxzmIpTwHQCOUs+daBBmj7C1WFZk5jwWDI5uTD8GC8mtgNxvnaTrqJwQyHYdh7qoY955Ux9A2W2rxO0wkccm1Qfh2seasthbmbWrmiVN2S52mctQtH7eFJc46MaJskkxiZLpUr0IKBkqd6P9RE+1jfYIu8sSfswt6aD91gY3P7JnywR3wGoA",
+ "sha256": "2e602748e7cde998de8c724f57c497be0069d023e469be066e145144a8c081ea",
+ "tamanho": 640870,
+ "assinatura": "Cb+eVw7ScCYTIXqMmQ6JvkZmVDY8E6PJM/xH2cLeDCf7dEUZMmm8zyuI54y0e4jTlP9CNRLs3g7+2e9qMj13Fu5KX+0yMfs58i1BumVKUhwBbqrNAOry5AExS3bvS697r0En5x/LyG3KudWVAZY6yUFOj5APPITJQxHnJVVyNyi/s/Jn2GXJI+qx+YOcVCO2nwKV6jueg7jFcgMhFv9sHFuWUgZlVQTps5rNGt1V3vEkP45yvBJy0mswbLdqu2XmDLRWogdPC02TfaUHuV9VnuC53hnh46oToD8TzH7LETOmo7HGEUC6Z3yGaCXxxboD7jJG/PJijTpNqopqKIe81Lv0Q5s8JI7xIVOUaOk1AR93x8bnAZfbzrk2tMcqUYZbS4ckntE5hAPDf4h3DqArW8h4FVYdJO7YOrUFDfczR2Kqa2PMpKhmPSQyTV3RZZE8xBBSuxB/lpU7eC/0B7ByLz7JqI31lf8NQUWyJQW0DOxEAyoglhBdfayAcQtDCHIO",
  "novidades": [
-  "Recurso Premium \"Inventário em lote com leitor\": novo menu Inventário. O administrador abre o inventário da loja toda ou de um tipo, marca ou coleção; a equipe conta passando o leitor, digitando o código ou pela câmera do celular (vários celulares ao mesmo tempo).",
-  "Durante a contagem: produtos contados, peças, sobras e faltas na hora, lista de não contados, desfazer leitura e corrigir contagem.",
-  "Ao finalizar, o estoque é ajustado de uma vez (respeitando vendas e entradas feitas durante a contagem), com opção de zerar o que não foi encontrado, e fica o relatório com a diferença a preço de custo (PDF e Excel)."
+  "Recurso Premium \"Promoções programadas\": novo menu Promoções. Desconto em % para a loja toda, um tipo, marca, coleção ou modelos escolhidos, com data de início e fim.",
+  "Na data, o preço já sai com o desconto na venda e na condicional (com a etiqueta \"promoção\" no carrinho e \"de R$ … por R$ …\" no recibo); depois do fim volta ao normal sozinho. Promoções de hoje aparecem no topo de Vendas.",
+  "Resultado de cada promoção: peças vendidas, faturado e desconto dado, com a lista das vendas em PDF e Excel."
  ],
  "servidor": {
   "versao": "2026.11.04-11",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-14">
+<meta name="versao-sistema" content="2026.11.04-15">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -549,6 +549,7 @@ input[data-maiusc]::placeholder{text-transform:none}
   .grid2{grid-template-columns:1fr}
 }
 /* recursos premium */
+.promo-faixa{background:#ecfdf3;border:1px solid #abefc6;color:#05603a;border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13px}
 .mq-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fafbfc}
 .mq-parc{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}.mq-parc input{width:100%}
 .pr-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
@@ -864,7 +865,7 @@ function novoDb() {
       markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: ''
     },
     usuarios: [], produtos: [], entradas: [], vendas: [], condicionais: [], movs: [],
-    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: []
+    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: [], promocoes: []
   };
 }
 function normalizar() {
@@ -1212,6 +1213,7 @@ const ICONES = {
   comissoes: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
   inventario: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
+  promocoes: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
   cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -1222,7 +1224,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1231,8 +1233,9 @@ function render() {
   if (MODO_REDE && VIEWS_REDE.indexOf(view) < 0) view = 'vendas';
   if (view === 'cartoes' && !temRecurso('taxas')) view = 'premium';
   if (view === 'inventario' && !temRecurso('inventario')) view = MODO_REDE ? 'vendas' : 'premium';
+  if (view === 'promocoes' && !temRecurso('promocoes')) view = 'premium';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1277,7 +1280,7 @@ function tabelaCarrinho(tipo) {
   const ent = tipo === 'entrada';
   return `<div class="tabw"><table class="tb"><thead><tr><th>Código</th><th>Produto</th><th>Marca</th><th>Tam.</th><th class="n">Estoque</th><th class="n">Qtd</th><th class="n">${ent ? 'Custo unit.' : 'Preço unit.'}</th><th class="n">Total</th><th></th></tr></thead><tbody>${c.map((it, i) => {
     const p = prod(it.prod);
-    return `<tr><td><span class="cod-foto">${miniHTML(p)}${esc(p.codigo)}</span></td><td>${esc(nomeProd(p))}${p.cor ? ' <span class="mut">' + esc(p.cor) + '</span>' : ''}</td><td>${esc(p.marca)}</td><td>${esc(p.tamanho)}</td><td class="n">${p.estoque}</td><td class="n"><input class="qtd" type="number" min="1" step="1" value="${it.qtd}" data-cart="${tipo}" data-i="${i}" data-campo="qtd"></td><td class="n">${ent ? `<input class="val" value="${fmtDec(it.valor)}" data-cart="${tipo}" data-i="${i}" data-campo="valor">` : fmtR(it.valor)}</td><td class="n" id="lt-${tipo}-${i}">${fmtR(it.qtd * it.valor)}</td><td><button class="lnk perigo" data-act="tirarItem" data-tipo="${tipo}" data-i="${i}">remover</button></td></tr>`;
+    return `<tr><td><span class="cod-foto">${miniHTML(p)}${esc(p.codigo)}</span></td><td>${esc(nomeProd(p))}${tipo !== 'entrada' && promoDe(p) ? ` <span class="tag ok">promoção −${fmtDec(promoDe(p).pct)}%</span>` : ''}${p.cor ? ' <span class="mut">' + esc(p.cor) + '</span>' : ''}</td><td>${esc(p.marca)}</td><td>${esc(p.tamanho)}</td><td class="n">${p.estoque}</td><td class="n"><input class="qtd" type="number" min="1" step="1" value="${it.qtd}" data-cart="${tipo}" data-i="${i}" data-campo="qtd"></td><td class="n">${ent ? `<input class="val" value="${fmtDec(it.valor)}" data-cart="${tipo}" data-i="${i}" data-campo="valor">` : fmtR(it.valor)}</td><td class="n" id="lt-${tipo}-${i}">${fmtR(it.qtd * it.valor)}</td><td><button class="lnk perigo" data-act="tirarItem" data-tipo="${tipo}" data-i="${i}">remover</button></td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
 function calcDesconto(sub, desc, tipo) { const d = tipo === 'P' ? sub * num(desc) / 100 : num(desc); return r2(Math.min(Math.max(d, 0), sub)); }
@@ -1326,7 +1329,7 @@ function painel() {
 function vendas() {
   const f = form.venda;
   if (!filtros.vh.de) filtros.vh.de = filtros.vh.ate = hoje();
-  return `<h2>Vendas</h2>
+  return `<h2>Vendas</h2>${bannerPromo()}
   <section class="card"><h3>Nova venda</h3>
     ${picker('venda')}
     <div id="cart-venda">${tabelaCarrinho('venda')}</div>
@@ -1611,7 +1614,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, cartoes, inventario, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, cartoes, inventario, promocoes, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1646,7 +1649,7 @@ function rodDoc(qr) {
   if (!svg && !c.rodape) return '';
   return `<div class="doc-rod"><div class="doc-msg">${esc(c.rodape).replace(/\n/g, '<br>')}</div>${svg ? `<div class="doc-qr">${svg}<small>${LEGENDA_QR[c.qr] || ''}</small></div>` : ''}</div>`;
 }
-const linhaItem = i => `<td class="c-cod">${esc(i.codigo)}</td><td>${esc(i.nome)}${i.cor ? ' – ' + esc(i.cor) : ''}</td><td class="c-marca">${esc(i.marca)}</td><td style="text-align:center">${esc(i.tamanho)}</td>`;
+const linhaItem = i => `<td class="c-cod">${esc(i.codigo)}</td><td>${esc(i.nome)}${i.cor ? ' – ' + esc(i.cor) : ''}${i.promo ? `<br><small>Promoção ${esc(i.promo)}: de ${fmtR(i.precoDe)} por ${fmtR(i.preco)}</small>` : ''}</td><td class="c-marca">${esc(i.marca)}</td><td style="text-align:center">${esc(i.tamanho)}</td>`;
 const TH_ITEM = '<th class="c-cod">Código</th><th>Produto</th><th class="c-marca">Marca</th><th>Tam.</th>';
 function reciboHTML(v) {
   return via => `${cabDoc('RECIBO DE VENDA E ENTREGA', v.id, v.data, via)}
@@ -1789,7 +1792,7 @@ ACT.addItem = el => {
   if (!p) return aviso('Produto não encontrado. Digite o código ou escolha na lista.', 'erro');
   const c = carrinho[tipo], ex = c.find(i => i.prod === p.id), nova = (ex ? ex.qtd : 0) + q;
   if (tipo !== 'entrada' && nova > p.estoque) return aviso(`Estoque insuficiente: ${nomeCompleto(p)} — disponível: ${p.estoque}${emCond(p.id) ? ' (há ' + emCond(p.id) + ' em condicional)' : ''}.`, 'erro');
-  if (ex) ex.qtd = nova; else c.push({ prod: p.id, qtd: q, valor: tipo === 'entrada' ? p.custo : p.preco });
+  if (ex) ex.qtd = nova; else c.push({ prod: p.id, qtd: q, valor: tipo === 'entrada' ? p.custo : precoVenda(p) });
   render(); const pi = $('#pk-' + tipo); if (pi) { pi.value = ''; pi.focus(); }
 };
 /* lista de sugestões da busca de produto (mostra o item completo) */
@@ -1803,7 +1806,7 @@ function itemLista(p, tipo, i) {
   const ec = emCond(p.id), sem = tipo !== 'entrada' && p.estoque <= 0;
   return `<div class="pk-it${sem ? ' sem' : ''}" data-pk="${tipo}" data-id="${p.id}" data-i="${i}" title="${esc(nomeCompleto(p))}">${miniHTML(p)}<span class="pk-tam">${esc(p.tamanho)}</span>
     <div class="pk-info"><div class="pk-nome">${esc(nomeProd(p))} <span class="pk-marca">· ${esc(p.marca)}</span></div><div class="pk-det">${esc(p.codigo)}${p.barras ? ' · ' + esc(p.barras) : ''}${p.cor ? ' · Cor: <b>' + esc(p.cor) + '</b>' : ''}${p.colecao ? ' · ' + esc(p.colecao) : ''}</div></div>
-    <div class="pk-dir"><b>${fmtR(tipo === 'entrada' ? p.custo : p.preco)}</b><small class="${p.estoque <= 0 ? 'err' : ''}">${tipo === 'entrada' ? 'custo · ' : ''}estoque ${p.estoque}${ec ? ` · ${ec} em cond.` : ''}</small></div></div>`;
+    <div class="pk-dir"><b>${fmtR(tipo === 'entrada' ? p.custo : precoVenda(p))}</b>${tipo !== 'entrada' && promoDe(p) ? ' <span class="tag ok">promoção</span>' : ''}<small class="${p.estoque <= 0 ? 'err' : ''}">${tipo === 'entrada' ? 'custo · ' : ''}estoque ${p.estoque}${ec ? ` · ${ec} em cond.` : ''}</small></div></div>`;
 }
 function mostrarLista(inp) {
   const tipo = inp.dataset.tipo, box = $('#pkl-' + tipo), txt = inp.value.trim();
@@ -1850,7 +1853,7 @@ ACT.finalizarVenda = () => {
   const c = carrinho.venda; if (!c.length) return aviso('Adicione pelo menos um produto.', 'erro');
   if (!conferirEstoque(c)) return;
   const f = form.venda;
-  const itens = c.map(it => itemDoc(prod(it.prod), it.qtd, prod(it.prod).preco));
+  const itens = c.map(it => itemVenda(prod(it.prod), it.qtd));
   const subtotal = r2(itens.reduce((s, i) => s + i.qtd * i.preco, 0)), desconto = calcDesconto(subtotal, f.desc, f.desct), total = r2(subtotal - desconto);
   const cl = acharCliente(f.cliente);
   const pg = validarPags(f.pags, total, cl, f.parc, f.venc1);
@@ -1950,7 +1953,7 @@ ACT.saidaCond = () => {
   if (!conferirCampos('#view')) return;
   if (!conferirEstoque(c)) return;
   const cl = clientePorDados(f.cliente.trim(), f.tel.trim(), f.doc.trim(), f.end.trim());
-  const cd = { id: db.seq.cond++, data: agora(), usuario: eu.nome, usuarioId: eu.id, clienteId: cl.id, cliente: cl.nome, telefone: f.tel.trim(), doc: f.doc.trim(), endereco: MAIUSC(f.end), prazo: f.prazo, status: 'aberta', itens: c.map(it => Object.assign(itemDoc(prod(it.prod), it.qtd, prod(it.prod).preco), { devolvido: 0, comprado: 0 })) };
+  const cd = { id: db.seq.cond++, data: agora(), usuario: eu.nome, usuarioId: eu.id, clienteId: cl.id, cliente: cl.nome, telefone: f.tel.trim(), doc: f.doc.trim(), endereco: MAIUSC(f.end), prazo: f.prazo, status: 'aberta', itens: c.map(it => Object.assign(itemVenda(prod(it.prod), it.qtd), { devolvido: 0, comprado: 0 })) };
   cd.itens.forEach(i => { const p = prod(i.prod); p.estoque -= i.qtd; mov(p, 'CONDICIONAL SAÍDA', -i.qtd, 'Condicional nº ' + nDoc(cd.id) + ' – ' + cd.cliente); });
   db.condicionais.push(cd);
   if (!salvar()) return;
@@ -4262,6 +4265,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-15', itens: ['Recurso Premium "Promoções programadas": novo menu Promoções. Desconto em % para a loja toda, um tipo, marca, coleção ou modelos escolhidos, com data de início e fim.',
+    'Na data, o preço já sai com o desconto na venda e na condicional (com a etiqueta "promoção" no carrinho e "de R$ … por R$ …" no recibo); depois do fim volta ao normal sozinho. Promoções de hoje aparecem no topo de Vendas.',
+    'Resultado de cada promoção: peças vendidas, faturado e desconto dado, com a lista das vendas em PDF e Excel.'] },
   { v: '2026.11.04-14', itens: ['Recurso Premium "Inventário em lote com leitor": novo menu Inventário. O administrador abre o inventário da loja toda ou de um tipo, marca ou coleção; a equipe conta passando o leitor, digitando o código ou pela câmera do celular (vários celulares ao mesmo tempo).',
     'Durante a contagem: produtos contados, peças, sobras e faltas na hora, lista de não contados, desfazer leitura e corrigir contagem.',
     'Ao finalizar, o estoque é ajustado de uma vez (respeitando vendas e entradas feitas durante a contagem), com opção de zerar o que não foi encontrado, e fica o relatório com a diferença a preço de custo (PDF e Excel).'] },
@@ -4787,6 +4793,16 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Criar uma promoção com data', quem: 'adm', rec: 'promocoes', ir: 'promocoes', p: [
+    'Abra <b>Promoções</b> e clique em <b>+ Nova promoção</b>.',
+    'Dê um <b>nome</b> (aparece no recibo), informe o <b>desconto em %</b> e as datas de <b>início</b> e <b>fim</b>. A promoção vale o dia inteiro do início até o dia do fim.',
+    'Em <b>Vale para</b>, escolha a loja toda (deixe tudo em branco), um <b>Tipo</b>, uma <b>Marca</b> ou uma <b>Coleção</b>. Para peças específicas, digite os <b>códigos</b> separados por vírgula: vale para todos os tamanhos daquele modelo.',
+    'Confira a prévia (quantos produtos entram e um exemplo de preço) e clique em <b>Salvar promoção</b>.',
+    'No dia do início o preço já sai com o desconto em Vendas e Condicionais; depois do fim volta ao normal sozinho. Se duas promoções valem para a mesma peça, vale a de maior desconto.',
+    'Para parar antes do fim, clique em <b>encerrar</b>. Uma promoção agendada que ainda não começou pode ser editada ou excluída.'] },
+  { t: 'Ver o resultado de uma promoção', quem: 'adm', rec: 'promocoes', ir: 'promocoes', p: [
+    'Em <b>Promoções</b>, cada linha mostra as peças vendidas, o faturado e o desconto dado.',
+    'Clique em <b>vendas</b> para ver cada venda (vendedora, produto, preço normal e de promoção) e tirar em PDF ou Excel.'] },
   { t: 'Fazer o inventário (contagem do estoque)', quem: 'adm', rec: 'inventario', ir: 'inventario', p: [
     'Abra <b>Inventário</b>. Escolha se é a loja toda ou só um <b>Tipo</b>, <b>Marca</b> ou <b>Coleção</b> e clique em <b>Iniciar inventário</b>.',
     'A equipe conta as peças: no computador, passe o leitor na etiqueta de cada peça (cada leitura conta 1; para várias peças iguais, digite a quantidade antes). No celular, abra <b>Inventário</b> e toque em <b>Contar pela câmera</b>. Várias pessoas podem contar ao mesmo tempo.',
@@ -4840,6 +4856,8 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'O desconto da promoção soma com o desconto da venda?', quem: 'todos', rec: 'promocoes', r: 'Sim. A peça já entra no carrinho com o preço da promoção, e o campo Desconto da venda é aplicado em cima do total, como sempre. Use com cuidado.' },
+  { p: 'A promoção não apareceu no preço.', quem: 'todos', rec: 'promocoes', r: 'Confira em Promoções se ela está Ativa (a data de hoje está entre o início e o fim) e se o produto entra no filtro (tipo, marca, coleção ou códigos). Peças que já estavam no carrinho antes da promoção começar precisam ser tiradas e passadas de novo.' },
   { p: 'Posso vender enquanto faço o inventário?', quem: 'adm', rec: 'inventario', r: 'Pode. Para cada produto, o sistema considera o que foi contado mais as vendas e entradas feitas depois da contagem dele. O ideal é não vender uma peça que ainda não foi contada; se vender, conte o produto de novo depois ou corrija a contagem.' },
   { p: 'Li um código e apareceu "não faz parte deste inventário".', quem: 'todos', rec: 'inventario', r: 'O inventário foi aberto só para um tipo, marca ou coleção, e essa peça é de outro. Separe a peça e não conte.' },
   { p: 'A taxa da maquininha mudou. O que eu faço?', quem: 'adm', rec: 'taxas', r: 'Em Cartões a receber → Maquininhas e taxas, troque a taxa e clique em Salvar taxas. A taxa nova vale a partir das próximas vendas; as vendas já feitas continuam com a taxa da época.' },
@@ -5423,7 +5441,7 @@ const PREMIUM = [
     desc: 'Taxas da maquininha por bandeira e parcela, quanto cai na conta e quando, e conferência com o extrato da operadora.' },
   { k: 'inventario', nome: 'Inventário em lote com leitor', pronto: true, ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
     desc: 'Conte o estoque passando o leitor (ou a câmera do celular) peça por peça; o sistema mostra as diferenças e ajusta tudo de uma vez.' },
-  { k: 'promocoes', nome: 'Promoções programadas', ic: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+  { k: 'promocoes', nome: 'Promoções programadas', pronto: true, ic: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
     desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
   { k: 'cashback', nome: 'Aniversariantes e cashback', ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
     desc: 'Aniversariantes do mês com mensagem pronta para o WhatsApp e crédito de cashback que o cliente usa na próxima compra.' },
@@ -5765,6 +5783,111 @@ ACT.invExportar = () => {
   modalAnalitico('Inventário nº ' + nDoc(inv.id) + ' (em andamento)', `${escopoTxt(inv)} · ${{ dif: 'diferenças', nao: 'não contados', todos: 'todos os produtos' }[invAba]} · posição de ${fmtDH(agora())}`, colsInv(), linhas);
 };
 ACT.ajudaInv = () => ajudaRecurso('inventario', 'Passo a passo – inventário');
+/* ===== Premium: promoções programadas =====
+   Desconto em % para a loja toda, um tipo, marca ou coleção, ou modelos escolhidos pelo código (todos os tamanhos),
+   com data de início e fim. Dentro do período, o preço da venda e da condicional já sai com o desconto; no dia seguinte
+   ao fim volta ao normal sozinho. Se duas promoções valem para a mesma peça, vale a de maior desconto. */
+const sitPromo = (x, h) => { h = h || hoje(); return x.encerrada ? 'encerrada' : h < x.inicio ? 'agendada' : h > x.fim ? 'encerrada' : 'ativa'; };
+const SIT_PROMO = { ativa: ['ok', 'Ativa'], agendada: ['ab', 'Agendada'], encerrada: ['in', 'Encerrada'] };
+function promoValePara(x, p) {
+  const a = x.alvo || {};
+  if (a.codigos && a.codigos.length) { const ms = new Set(db.produtos.filter(q => a.codigos.indexOf(q.codigo.toUpperCase()) >= 0).map(chaveModelo)); return ms.has(chaveModelo(p)); }
+  return (!a.tipo || p.tipo === a.tipo) && (!a.marca || p.marca === a.marca) && (!a.colecao || p.colecao === a.colecao);
+}
+function promoDe(p) {
+  if (!p || !temRecurso('promocoes')) return null;
+  let m = null; (db.promocoes || []).forEach(x => { if (sitPromo(x) === 'ativa' && promoValePara(x, p) && (!m || x.pct > m.pct)) m = x; });
+  return m;
+}
+const precoVenda = p => { const x = promoDe(p); return x ? r2(p.preco * (1 - x.pct / 100)) : p.preco; };
+function itemVenda(p, qtd) {
+  const x = promoDe(p), it = itemDoc(p, qtd, precoVenda(p));
+  if (x) Object.assign(it, { precoDe: p.preco, promo: x.nome, promoId: x.id });
+  return it;
+}
+const alvoTxt = x => { const a = x.alvo || {}; return a.codigos && a.codigos.length ? 'modelos: ' + a.codigos.join(', ') : [a.tipo && 'tipo ' + a.tipo, a.marca && 'marca ' + a.marca, a.colecao && 'coleção ' + a.colecao].filter(Boolean).join(' · ') || 'loja toda'; };
+function resultadoPromo(x) {
+  const r = { vendas: 0, pecas: 0, fat: 0, desc: 0 };
+  vendasValidas().forEach(v => { let tem = false; v.itens.forEach(i => { if (i.promoId !== x.id) return; tem = true; r.pecas += i.qtd; r.fat = r2(r.fat + i.qtd * i.preco); r.desc = r2(r.desc + i.qtd * ((i.precoDe || i.preco) - i.preco)); }); if (tem) r.vendas++; });
+  return r;
+}
+function bannerPromo() {
+  if (!temRecurso('promocoes')) return '';
+  const at = (db.promocoes || []).filter(x => sitPromo(x) === 'ativa');
+  return at.length ? `<div class="promo-faixa"><b>Promoções de hoje:</b> ${at.map(x => `${esc(x.nome)} <span class="tag ok">−${fmtDec(x.pct)}%</span> <span class="mut">(${esc(alvoTxt(x))}, até ${fmtDia(x.fim)})</span>`).join(' · ')}</div>` : '';
+}
+let promoEdit = null;
+function promocoes() {
+  const l = (db.promocoes || []).slice().reverse(), ord = { ativa: 0, agendada: 1, encerrada: 2 };
+  l.sort((a, b) => ord[sitPromo(a)] - ord[sitPromo(b)]);
+  return `<h2>Promoções</h2>
+  <section class="card"><div class="rel-cab"><p class="mut" style="margin:0">Desconto com data para começar e terminar. Na data, o preço da venda já sai com o desconto; depois do fim volta ao normal sozinho.</p>
+    <div class="rel-bts"><button class="btn" data-act="ajudaPromo">Passo a passo</button><button class="btn pri" data-act="promoNova">+ Nova promoção</button></div></div>
+    ${l.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Promoção</th><th>Vale para</th><th class="n">Desconto</th><th>Período</th><th>Situação</th><th class="n">Peças vendidas</th><th class="n">Faturado</th><th class="n">Desconto dado</th><th></th></tr></thead><tbody>
+      ${l.map(x => { const s = sitPromo(x), r = resultadoPromo(x); return `<tr><td><b>${esc(x.nome)}</b></td><td>${esc(alvoTxt(x))}<br><small class="mut">${db.produtos.filter(p => p.ativo !== false && promoValePara(x, p)).length} produto(s)</small></td><td class="n">${fmtDec(x.pct)}%</td>
+        <td>${fmtDia(x.inicio)} a ${fmtDia(x.fim)}${x.encerrada ? '<br><small class="mut">encerrada em ' + fmtDH(x.encerrada) + '</small>' : ''}</td><td><span class="tag ${SIT_PROMO[s][0]}">${SIT_PROMO[s][1]}</span></td>
+        <td class="n">${r.pecas}</td><td class="n">${fmtR(r.fat)}</td><td class="n">${fmtR(r.desc)}</td>
+        <td class="n">${s !== 'encerrada' ? `<button class="lnk" data-act="promoEditar" data-id="${x.id}">editar</button> ` : ''}${s === 'ativa' ? `<button class="lnk perigo" data-act="promoEncerrar" data-id="${x.id}">encerrar</button>` : ''}${s === 'agendada' ? `<button class="lnk perigo" data-act="promoExcluir" data-id="${x.id}">excluir</button>` : ''}${r.pecas ? ` <button class="lnk" data-act="promoVendas" data-id="${x.id}">vendas</button>` : ''}</td></tr>`; }).join('')}</tbody>
+      <tfoot><tr><td colspan="5">Total · ${l.length} promoção(ões)</td><td class="n">${l.reduce((s, x) => s + resultadoPromo(x).pecas, 0)}</td><td class="n">${fmtR(r2(l.reduce((s, x) => s + resultadoPromo(x).fat, 0)))}</td><td class="n">${fmtR(r2(l.reduce((s, x) => s + resultadoPromo(x).desc, 0)))}</td><td></td></tr></tfoot></table></div>`
+      : '<p class="vazio">Nenhuma promoção cadastrada.</p>'}</section>`;
+}
+function formPromo(x) {
+  const a = x.alvo || {}, op = (l, v, t) => `<option value="">${t}</option>` + l.map(k => `<option ${k === v ? 'selected' : ''}>${esc(k)}</option>`).join('');
+  const marcas = [...new Set(ativos().map(p => p.marca).filter(Boolean))].sort(), cols = [...new Set(ativos().map(p => p.colecao).filter(Boolean))].sort();
+  abrirModal(x.id ? 'Editar promoção' : 'Nova promoção', `<div class="form3">
+      <label class="full">Nome da promoção<input id="pr-nome" value="${esc(x.nome || '')}" placeholder="ex.: Queima de verão" data-maiusc></label>
+      <label>Desconto (%)<input id="pr-pct" class="val" value="${x.pct ? fmtDec(x.pct) : ''}" placeholder="ex.: 20"></label>
+      <label>Começa em<input id="pr-ini" type="date" value="${x.inicio || hoje()}"></label><label>Termina em<input id="pr-fim" type="date" value="${x.fim || somaDias(7)}"></label></div>
+    <h4 class="rel-sec">Vale para</h4>
+    <div class="form3"><label>Tipo<select id="pr-tipo">${op(TIPOS, a.tipo, 'Todos')}</select></label><label>Marca<select id="pr-marca">${op(marcas, a.marca, 'Todas')}</select></label><label>Coleção<select id="pr-col">${op(cols, a.colecao, 'Todas')}</select></label>
+      <label class="full">Ou só estes modelos (códigos separados por vírgula; vale para todos os tamanhos do modelo)<input id="pr-cods" value="${esc((a.codigos || []).join(', '))}" placeholder="ex.: CAM00012, BER00387"></label></div>
+    <p class="mut" id="pr-previa"></p>`, `<button class="btn pri" data-act="promoSalvar" data-id="${x.id || ''}">Salvar promoção</button>`, true);
+  setTimeout(previaPromo);
+}
+function lerPromoTela() {
+  const cods = $('#pr-cods').value.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+  return { nome: MAIUSC($('#pr-nome').value.trim()), pct: r2(num($('#pr-pct').value)), inicio: $('#pr-ini').value, fim: $('#pr-fim').value,
+    alvo: cods.length ? { codigos: cods } : { tipo: $('#pr-tipo').value, marca: $('#pr-marca').value, colecao: $('#pr-col').value } };
+}
+function previaPromo() {
+  const el = $('#pr-previa'); if (!el) return;
+  const x = lerPromoTela(), ps = ativos().filter(p => promoValePara(x, p)), semCod = (x.alvo.codigos || []).filter(c => !db.produtos.some(p => p.codigo.toUpperCase() === c));
+  el.innerHTML = `Vale para <b>${ps.length}</b> produto(s) (${fmtN(ps.reduce((s, p) => s + p.estoque, 0))} peça(s) em estoque).${ps[0] && x.pct > 0 ? ` Exemplo: ${esc(nomeCompleto(ps[0]))} de ${fmtR(ps[0].preco)} por <b>${fmtR(r2(ps[0].preco * (1 - x.pct / 100)))}</b>.` : ''}${semCod.length ? ` <span class="err">Códigos não encontrados: ${semCod.map(esc).join(', ')}.</span>` : ''}`;
+}
+document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#modal') && /^pr-/.test(e.target.id || '')) previaPromo(); });
+document.addEventListener('change', e => { if (e.target && e.target.closest && e.target.closest('#modal') && /^pr-/.test(e.target.id || '')) previaPromo(); });
+ACT.promoNova = () => { if (!adm()) return aviso('Somente administradores criam promoções.', 'erro'); formPromo({}); };
+ACT.promoEditar = el => { const x = (db.promocoes || []).find(p => p.id === +el.dataset.id); if (x) formPromo(x); };
+ACT.promoSalvar = el => {
+  const d = lerPromoTela();
+  if (!d.nome) return aviso('Dê um nome à promoção.', 'erro');
+  if (!(d.pct > 0 && d.pct <= 90)) return aviso('O desconto precisa estar entre 1% e 90%.', 'erro');
+  if (!d.inicio || !d.fim || d.fim < d.inicio) return aviso('Confira as datas: o fim precisa ser igual ou depois do início.', 'erro');
+  if (d.fim < hoje()) return aviso('A data de fim já passou.', 'erro');
+  if (!ativos().some(p => promoValePara(d, p))) return aviso('Nenhum produto ativo entra nesta promoção. Confira o filtro ou os códigos.', 'erro');
+  db.promocoes = db.promocoes || [];
+  let x = db.promocoes.find(p => p.id === +el.dataset.id);
+  if (x) { Object.assign(x, d, { alterada: agora(), alteradaPor: eu.nome }); registrar('Promoção alterada', `${x.nome}: ${fmtDec(x.pct)}% de ${fmtDia(x.inicio)} a ${fmtDia(x.fim)} (${alvoTxt(x)})`); }
+  else { x = Object.assign({ id: db.seq.promo = (db.seq.promo || 0) + 1, criado: agora(), por: eu.nome }, d); db.promocoes.push(x); registrar('Promoção criada', `${x.nome}: ${fmtDec(x.pct)}% de ${fmtDia(x.inicio)} a ${fmtDia(x.fim)} (${alvoTxt(x)})`); }
+  salvar(); fecharModal(); render(); aviso(sitPromo(x) === 'ativa' ? 'Promoção salva e já valendo.' : 'Promoção agendada para ' + fmtDia(x.inicio) + '.', 'ok');
+};
+ACT.promoEncerrar = el => {
+  const x = (db.promocoes || []).find(p => p.id === +el.dataset.id); if (!x) return;
+  x.encerrada = agora(); x.encerradaPor = eu.nome; registrar('Promoção encerrada antes do fim', x.nome); salvar(); render(); aviso('Promoção encerrada: os preços voltaram ao normal.', 'ok');
+};
+ACT.promoExcluir = el => {
+  const x = (db.promocoes || []).find(p => p.id === +el.dataset.id); if (!x || sitPromo(x) !== 'agendada') return;
+  db.promocoes = db.promocoes.filter(p => p !== x); registrar('Promoção agendada excluída', x.nome); salvar(); render();
+};
+ACT.promoVendas = el => {
+  const x = (db.promocoes || []).find(p => p.id === +el.dataset.id); if (!x) return;
+  const linhas = [];
+  vendasValidas().forEach(v => v.itens.forEach(i => { if (i.promoId === x.id) linhas.push({ c: [nDoc(v.id), fmtDH(v.data), v.usuario, i.codigo, i.nome + ' ' + i.tamanho, i.qtd, i.precoDe || i.preco, i.preco, r2(i.qtd * i.preco), r2(i.qtd * ((i.precoDe || i.preco) - i.preco))] }); }));
+  const r = resultadoPromo(x); linhas.push({ forte: true, c: ['Total', r.vendas + ' venda(s)', '', '', '', r.pecas, '', '', r.fat, r.desc] });
+  modalAnalitico('Promoção ' + x.nome, `${fmtDec(x.pct)}% · ${alvoTxt(x)} · ${fmtDia(x.inicio)} a ${fmtDia(x.fim)}`,
+    [C('Venda', 's'), C('Data', 's'), C('Vendedora', 's'), C('Código', 's'), C('Produto', 's'), C('Qtd', 'i'), C('Preço normal', 'r'), C('Preço promoção', 'r'), C('Total', 'r'), C('Desconto dado', 'r')], linhas);
+};
+ACT.ajudaPromo = () => ajudaRecurso('promocoes', 'Passo a passo – promoções');
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
