@@ -1,12 +1,14 @@
 {
- "versao": "2026.11.04-20",
- "publicadoEm": "04/11/2026 18:05",
+ "versao": "2026.11.04-21",
+ "publicadoEm": "04/11/2026 18:12",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "b81cec2ddc28b8acf54571e27d4dfb846dda7bf9ce2852d8531254518e709f27",
- "tamanho": 693358,
- "assinatura": "llJvaA7rNh7JSCYKg1zT8JhoTtWY4DI/X4yr0KQfoSJYUGs84LV21RrvcTHYGEvNi7+V/PC64KZkoiXh7cvguxGDmtdhZFVMSDw0EbfCsIepgqT2oYKC8BmWHcxSt11D/ctzdjCKSIpcjuCR5y3TrJzlHADxDNXcb4lsdBtyP+JU51tjz3lCdEQTAqPqV6OeBVUnUuGyNJidC1X9zQ6VBaKaG+xwep6EcimdxAsD4Qi2KgDrnQfer+tG4IzLcfvIrA2bLuWwSSs9JM3Js3lid6/ytNes/n7VxhtrPxiNRjqLcq9ApPbY+ZRTvAadwIWnTD9O0f+8f/d39yFmEQHzY+tGvMa69Yo1XAxTXYns9+1cqckcRewYx+hVBR/mgM9DpLPabLU5Qnh7lhDvT7h3w987ImxbkLFZmbipBvfpKo+ZYUL0ixJIXRvaL+uf3FVHOwCTZ7nWdVwTeTZXuNdWnFMY05NLh80IJ0P3tCHGYPnzo5psKaiHJ0zAsuudWBRo",
+ "sha256": "e80eecc95a536e631e0b28281a307af79267161bcd32a21af50dca5c7b6c5047",
+ "tamanho": 695193,
+ "assinatura": "NA2Uy+rSiKmjWrJpJOLZcOVgyVcJ8NgjlJ+FkkWJn9OP/IgdUGTpATiP7li2TNM5ZoqSO654kr+ubBzev1k8ihuVQa9du33WKPInbce75CeXST1EQwjY9Qvc4KVYFJaA92IGupH6untyVo7FmB7mgtCB5BGDQmTA6FmG54Bof9NHs9OD1w5zmMCQ1FSgbN47Mbk/S9DrY6gOrbrOatUlGyGuus6sv3W/ecA+M2VbcNgWq5wrE999FFW/QbcIys2wy1l7WrL7YMkoVqymIQZ5XKLzknEVujmQ5r1bgI6UYMg+Z3WcBdqyZ8YTSf0HaUIsuncjHwXeG0xVXFX6e5pAUZ/kKv1jkjT3/MuLvTQQAYWqD5Sb8GCb89QXVUy6TcXtD79e4SFgN2MybI+T08Wsq93wTAJg/V5iW/QDPFAquNFxooFI6yfkYelq/jddqT3NKQn7GOHB88oOOPR9xRexagEo+H6uF9pPtx/EovvKwArjyiuw7fI6AYWT/e67Zxet",
  "novidades": [
-  "PIN de vendedora mais fácil de achar: botão próprio (teclado numérico) ao lado do seu nome, link \"cadastrar meu PIN\" embaixo do campo Vendedora e aviso no Painel para quem ainda não cadastrou."
+  "Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.",
+  "Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.",
+  "O histórico registra como a vendedora confirmou (PIN ou senha) em cada venda e condicional."
  ],
  "servidor": {
   "versao": "2026.11.04-19",

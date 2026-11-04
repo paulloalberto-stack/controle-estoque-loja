@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-20">
+<meta name="versao-sistema" content="2026.11.04-21">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -4283,6 +4283,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-21', itens: ['Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.',
+    'Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.',
+    'O histórico registra como a vendedora confirmou (PIN ou senha) em cada venda e condicional.'] },
   { v: '2026.11.04-20', itens: ['PIN de vendedora mais fácil de achar: botão próprio (teclado numérico) ao lado do seu nome, link "cadastrar meu PIN" embaixo do campo Vendedora e aviso no Painel para quem ainda não cadastrou.'] },
   { v: '2026.11.04-19', itens: ['Vendedora da venda: em Vendas e Condicionais há o campo "Vendedora (quem atendeu)". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.',
     'Se a vendedora escolhida não for a logada, ela confirma com o PIN dela (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada uma entra com o próprio usuário, sem PIN.',
@@ -6256,19 +6259,34 @@ const precisaPin = tipo => { if (MODO_REDE) return null; const v = vendDe(tipo);
 });
 function pedirPin(u, acao, tipo) {
   abrirModal('Confirmar a vendedora', `<p>${tipo === 'venda' ? 'Esta venda' : 'Esta condicional'} vai ficar no nome de <b>${esc(u.nome)}</b>${u.id !== eu.id ? ` (está logado: ${esc(eu.nome)})` : ''}.</p>
+    ${!u.pinHash && u.trocarSenha ? `<p class="err">${esc(u.nome.split(' ')[0])} ainda não cadastrou o PIN e só tem a senha provisória criada pelo administrador. Para a venda ficar no nome dela, ela precisa entrar uma vez no sistema com o próprio usuário (trocando a senha) ou cadastrar o PIN. Enquanto isso, escolha outra vendedora.</p>` : ''}
     <label>${esc(u.nome.split(' ')[0])}, digite o seu PIN${u.pinHash ? '' : ' (ainda não cadastrado: use a sua senha)'}<input id="pin-v" type="password" inputmode="${u.pinHash ? 'numeric' : 'text'}" autocomplete="off" data-enter="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}" autofocus></label>
     <p class="mut">Pode usar o PIN ou a senha do sistema. O PIN é cadastrado em Minha senha (cadeado, embaixo do nome).</p>`,
     `<button class="btn pri" data-act="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}">Confirmar</button>`);
   setTimeout(() => { const i = $('#pin-v'); if (i) i.focus(); }, 50);
 }
+// devolve 'PIN', 'senha' ou '' (não confere). A senha provisória definida pelo administrador não vale: ele a conhece.
 async function conferePin(u, v) {
-  if (!v) return false;
-  if (u.pinHash && (await pbkdf2Hex(v, u.pinSal, ITER_PIN)) === u.pinHash) return true;
-  return !!u.hash && conferirSenha(u, v);
+  if (!v) return '';
+  if (u.pinHash && (await pbkdf2Hex(v, u.pinSal, ITER_PIN)) === u.pinHash) return 'PIN';
+  if (!u.hash || u.trocarSenha) return '';
+  const s = Object.assign({}, u);   // confere numa cópia: não converte nem altera a senha de outra pessoa
+  return (await conferirSenha(s, v)) ? 'senha' : '';
 }
+const ERROS_PIN = {};
 ACT.pinConfirmar = async el => {
   const u = db.usuarios.find(x => x.id === +el.dataset.id), v = ($('#pin-v') || {}).value || ''; if (!u) return;
-  if (!(await conferePin(u, v))) { registrar('PIN/senha errada ao confirmar vendedora', u.nome); salvar(); const i = $('#pin-v'); if (i) { i.value = ''; i.focus(); } return aviso('PIN ou senha incorreto.', 'erro'); }
+  const e = ERROS_PIN[u.id] || { n: 0, ate: 0 };
+  if (e.ate > Date.now()) return aviso(`Muitas tentativas erradas para ${u.nome}. Tente de novo em ${Math.ceil((e.ate - Date.now()) / 60000)} minuto(s).`, 'erro');
+  const como = await conferePin(u, v);
+  if (!como) {
+    e.n++; if (e.n >= 5) { e.n = 0; e.ate = Date.now() + 5 * 60000; registrar('Confirmação de vendedora bloqueada por 5 minutos', u.nome + ' (5 tentativas erradas)'); }
+    ERROS_PIN[u.id] = e; registrar('PIN/senha errada ao confirmar vendedora', u.nome); salvar();
+    const i = $('#pin-v'); if (i) { i.value = ''; i.focus(); }
+    return aviso(!u.pinHash && u.trocarSenha ? `${u.nome} ainda não tem PIN nem senha própria: a senha provisória não vale.` : 'PIN ou senha incorreto.', 'erro');
+  }
+  delete ERROS_PIN[u.id];
+  registrar('Vendedora confirmada', `${u.nome} com ${como}${u.id !== eu.id ? ' (logado: ' + eu.nome + ')' : ''}`);
   pinOk = { uid: u.id, tipo: el.dataset.tipo, em: Date.now() }; fecharModal(); ACT[el.dataset.acao]();
 };
 // PIN da própria vendedora
