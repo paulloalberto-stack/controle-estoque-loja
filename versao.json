@@ -1,12 +1,12 @@
 {
- "versao": "2026.11.04-04",
- "publicadoEm": "04/11/2026 10:40",
+ "versao": "2026.11.04-05",
+ "publicadoEm": "04/11/2026 11:06",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "18f78c35d9b76f4cdda409c6c48a7dcc4591d9e2b748d92fa9848c6d0625fe80",
- "tamanho": 542960,
- "assinatura": "RCxVhWKUch40qKZqrRePfKfq8lg2fiiGZZd2PFkg7ws0Il3vGR4nWhqvCY7b1nIpJ+dKBhtHFiYYaR5DQ1tWkWUWEL8iiSwhWq7SA0qCdvpQWNm3O8LkXvPZJcDj6oMLmGft9zZxvAEsBibytyFMbt5RHZ71WOsdzXdLQtPCougLWpuWCZVSbjNDpTTVlRya13tnBk+3dkBBpkvcxNDG8qnL9K5/SAAvTbAwIQN2DiLXNjZbdKzVuW/qO+G5G7qucE77UnSBgM8IDEEN7BKodfyHgK6fD4+gFe7OmXuJqN8dkEiw7kXNZBPlWv7j2ybhlVoTMhC0pJ+GKcJTfZTfbsS+UcZubrlra98Hu9JYwZ114edDjEt+jlEEey99G/bT1bjOW3UKrnTMYLy3Vj39073vZEWR8J0k3aiDq61tQ/MR/6hPwhTlyXCGQz0KPm8K88BFI1vz4ULMJj30DmUwFbUEsIy1BX9pt31hW4lbmPr6Dmlr6lDf956W8B3wF5pV",
+ "sha256": "91b0937c2e8ee33e7e03b7b5a5ee96577ed87371c0dd67777d23d7a9aa75f4e9",
+ "tamanho": 546434,
+ "assinatura": "JdJ7lahG+OY1yZ+hBdW0OHF9ZpzOr20rFHH77FZaeQJsY0GbvVuPvWXaErbliI/msAhZXcdg9UJDVxO3cG+lDBib3xX+KQ+M7fHmDjHliQB0TwFmv5IO7ro9g60q4t4L0ksZyRNlXtDK6dkApHYhKbdLyiQsmGi3Bd7PuB+f9YPZH7+wGt9Sc0nzS83qxHj3FcuZwi7CMLPcku7YgFVoe8qlHeihO2asIeK9OU/CpGfKxX89G20nqP1Ux3zyleeqUrpcwtda30NaGYO0a8rtkVdiAiNqsn5zR3UK7Fx/vZan0CKMrjik29NqeZHDMRhEc5Yw3TFbuL90tYPEEp4/XFuCo6gZSuY/ireQIwLW8mlsLyY1gnLtjt7DtezYmuI2UDT3GQcCq5vHTCMoEind/8GK0qfiZKMiT+vNWShq5tT2hM0mOVgozQfSZYoB3blIo/7IdWIx+fPOgEBdjLYk/ozXlQ+2Tzb8i9Fx/gVxoDpPawOmMa9P9L0aPCEABHnZ",
  "novidades": [
-  "Totais em todos os relatórios: caixa (comprovante, leitura parcial, movimentação com entradas, saídas e saldo, sangrias e suprimentos, histórico de caixas), vendas por forma de pagamento, tipo e marca, coleções, sugestão e lista de compra, comissões, contas a pagar por categoria e fornecedor, condicionais, entradas, trocas, clientes, movimentações de estoque e produtos abaixo do mínimo."
+  "Caixa: novo Extrato (débito e crédito), como um extrato bancário: saldo inicial (troco), cada lançamento com entrada, saída e saldo, total de entradas e saídas e saldo final; no caixa fechado, também o contado e a diferença. Filtra por forma (todas, dinheiro, Pix, débito, crédito) e sai em PDF ou Excel. Também no histórico de caixas e ao clicar no card do dinheiro."
  ],
  "servidor": {
   "versao": "2026.11.04-01",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-04">
+<meta name="versao-sistema" content="2026.11.04-05">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -3896,6 +3896,7 @@ function onCampo(e) {
   if (el.id === 'fp-tipo' && $('#fp-tams')) $('#fp-tams').innerHTML = checksTam(el.value);
   if (el.classList && el.classList.contains('tp-gp') && el.value) { el.closest('.tp-linha').querySelector('.tp-grade').value = el.value; el.value = ''; }
   if (el.id === 'tp-pronto' && el.value) { tiposProntos(el.value); el.value = ''; }
+  if (el.id === 'cx-ext-forma') ACT.cxExtrato({ dataset: { id: el.dataset.id, forma: el.value } });
   if (el.closest && el.closest('#acerto')) calcAcerto();
   if (el.closest && el.closest('#modal') && (el.id === 'etq-fmt' || el.id === 'etq-np' || el.classList.contains('etq-q') || el.classList.contains('etq-c') || el.classList.contains('etq-o'))) previaEtq();
   if (el.closest && el.closest('#troca')) calcTroca();
@@ -4100,6 +4101,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-05', itens: ['Caixa: novo Extrato (débito e crédito), como um extrato bancário: saldo inicial (troco), cada lançamento com entrada, saída e saldo, total de entradas e saídas e saldo final; no caixa fechado, também o contado e a diferença. Filtra por forma (todas, dinheiro, Pix, débito, crédito) e sai em PDF ou Excel. Também no histórico de caixas e ao clicar no card do dinheiro.'] },
   { v: '2026.11.04-04', itens: ['Totais em todos os relatórios: caixa (comprovante, leitura parcial, movimentação com entradas, saídas e saldo, sangrias e suprimentos, histórico de caixas), vendas por forma de pagamento, tipo e marca, coleções, sugestão e lista de compra, comissões, contas a pagar por categoria e fornecedor, condicionais, entradas, trocas, clientes, movimentações de estoque e produtos abaixo do mínimo.'] },
   { v: '2026.11.04-03', itens: ['Caixa: os cards do caixa aberto mostram o detalhe ao clicar (vendas, cada entrada e saída de dinheiro com o saldo, sangrias e suprimentos), com PDF e Excel, e há o botão Relatório parcial para imprimir a posição atual.',
     'Ao fechar o caixa, sai o comprovante e, em seguida, o relatório de movimentação completo (em ordem de horário, com o saldo de dinheiro linha a linha). No histórico, os dois ficam disponíveis separados.',
@@ -4605,7 +4607,7 @@ const AJUDA_MAPA = [
 ];
 const AJUDA_PASSOS = [
   { t: 'Fazer uma venda', quem: 'todos', ir: 'vendas', p: ['Abra <b>Vendas</b>.', 'Passe o leitor de código de barras na etiqueta, ou digite o código, a descrição, a marca, a cor ou o tamanho e clique em <b>Adicionar</b>. Repita para cada peça.', 'Se quiser, escolha o <b>Cliente</b> na lista (ou digite o nome) e informe CPF ou telefone.', 'Escolha a forma de <b>Pagamento</b>. Para usar duas formas, clique em <b>+ dividir com outra forma de pagamento</b>.', 'Desconto: informe em <b>R$</b> ou <b>%</b> no campo Desconto.', 'Confira o total e clique em <b>Finalizar venda e emitir recibo</b>.', 'No recibo: imprima, ou envie pelo <b>WhatsApp (PDF)</b>.'] },
-  { t: 'Abrir e fechar o caixa', quem: 'todos', ir: 'caixa', p: ['No começo do dia, abra <b>Caixa</b>, informe o troco que está na gaveta e clique em <b>Abrir caixa</b>.', 'Durante o dia: <b>Sangria (retirar dinheiro)</b> para tirar dinheiro da gaveta e <b>Suprimento (colocar dinheiro)</b> para colocar, sempre com o motivo.', 'Durante o dia, clique nos cards para ver o detalhe (vendas, dinheiro, sangrias) ou em <b>Relatório parcial</b> para imprimir a posição atual.', 'No fim do dia, clique em <b>Fechar caixa</b>, conte e informe o dinheiro da gaveta e o total do Pix e de cada cartão.', 'O sistema gera o comprovante (esperado, contado e diferença de cada forma) e, em seguida, a movimentação completa do caixa. Imprima e assine.', 'Fechou com erro? O administrador pode <b>Reabrir</b> o último caixa em Caixas fechados, informando o motivo.'] },
+  { t: 'Abrir e fechar o caixa', quem: 'todos', ir: 'caixa', p: ['No começo do dia, abra <b>Caixa</b>, informe o troco que está na gaveta e clique em <b>Abrir caixa</b>.', 'Durante o dia: <b>Sangria (retirar dinheiro)</b> para tirar dinheiro da gaveta e <b>Suprimento (colocar dinheiro)</b> para colocar, sempre com o motivo.', 'Durante o dia, clique nos cards para ver o detalhe, em <b>Extrato (débito e crédito)</b> para ver saldo inicial, entradas, saídas e saldo final (por forma, com PDF e Excel) ou em <b>Relatório parcial</b> para imprimir a posição atual.', 'No fim do dia, clique em <b>Fechar caixa</b>, conte e informe o dinheiro da gaveta e o total do Pix e de cada cartão.', 'O sistema gera o comprovante (esperado, contado e diferença de cada forma) e, em seguida, a movimentação completa do caixa. Imprima e assine.', 'Fechou com erro? O administrador pode <b>Reabrir</b> o último caixa em Caixas fechados, informando o motivo.'] },
   { t: 'Receber com Pix (QR Code)', quem: 'todos', ir: 'vendas', p: ['Monte a venda normalmente.', 'Em Pagamento escolha <b>Pix</b>: aparece o botão <b>QR Code Pix</b>.', 'Clique nele e mostre o QR Code ao cliente: ele já vem com a chave da loja e o valor.', 'Depois que o cliente pagar, clique em <b>Finalizar venda e emitir recibo</b>.'] },
   { t: 'Vender no crediário (a prazo)', quem: 'todos', ir: 'vendas', p: ['Monte a venda e informe o <b>Cliente</b>.', 'Em Pagamento escolha <b>Crediário / a prazo</b>.', 'Informe as <b>Parcelas do crediário</b> e o <b>1º vencimento</b>.', 'Finalize: as parcelas aparecem no recibo e em Financeiro → Contas a receber, onde o administrador registra cada pagamento.'] },
   { t: 'Usar o vale-troca do cliente', quem: 'todos', ir: 'vendas', p: ['Monte a venda e escolha o <b>Cliente</b> que tem o crédito.', 'Em Pagamento escolha <b>Crédito do cliente (vale-troca)</b>.', 'Se o crédito não cobrir tudo, use <b>+ dividir com outra forma de pagamento</b> para o restante.'] },
@@ -4862,10 +4864,10 @@ function caixa() {
       <div class="rbox" data-act="cxCard" data-k="movs" title="Ver as sangrias e suprimentos"><small>Sangrias / suprimentos</small><b>${fmtR(r.sangria)} / ${fmtR(r.suprimento)}</b><span>${(c.movs || []).length} lançamento(s)</span></div></div>
       ${ve ? tabSimples(['Forma', 'Vendas', 'Recebimentos', 'Esperado'], FORMAS_CAIXA.map(f => [f, fmtR(r.vendas[f]), fmtR(r.receb[f]), '<b>' + fmtR(r.esperado[f]) + '</b>']), ['Total', fmtR(somar(FORMAS_CAIXA, f => r.vendas[f])), fmtR(somar(FORMAS_CAIXA, f => r.receb[f])), fmtR(somar(FORMAS_CAIXA, f => r.esperado[f]))]) + (Object.keys(r.outras).length ? `<p class="mut">Fora do caixa: ${Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(' · ')}.</p>` : '') + (r.devol || r.pagas ? `<p class="mut">Saídas em dinheiro: devoluções ${fmtR(r.devol)} · contas pagas ${fmtR(r.pagas)}.</p>` : '') : ''}
       ${(c.movs || []).length ? `<h4 class="rel-sec">Sangrias e suprimentos</h4>${tabSimples(['Hora', 'Tipo', 'Valor', 'Motivo', 'Por'], c.movs.map(m => [fmtDH(m.em), m.tipo === 'sangria' ? 'Sangria (retirada)' : 'Suprimento (entrada)', fmtR(m.valor), esc(m.motivo || ''), esc(m.por)]), ['Total', 'sangrias ' + fmtR(r.sangria) + ' · suprimentos ' + fmtR(r.suprimento), fmtR(r.suprimento - r.sangria), 'líquido', ''])}` : ''}
-      <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="movCaixa" data-t="sangria">Sangria (retirar dinheiro)</button><button class="btn" data-act="movCaixa" data-t="suprimento">Suprimento (colocar dinheiro)</button>${ve ? '<button class="btn" data-act="cxParcial">Relatório parcial</button><button class="btn" data-act="verMovCaixa">Movimentação até agora</button>' : ''}<button class="btn pri" data-act="fecharCaixa">Fechar caixa</button></div>${(c.reaberturas || []).length ? `<p class="mut">Reaberto ${c.reaberturas.length}×: último em ${fmtDH(c.reaberturas[c.reaberturas.length - 1].em)} por ${esc(c.reaberturas[c.reaberturas.length - 1].por)} · motivo: ${esc(c.reaberturas[c.reaberturas.length - 1].motivo)}</p>` : ''}</section>`;
+      <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="movCaixa" data-t="sangria">Sangria (retirar dinheiro)</button><button class="btn" data-act="movCaixa" data-t="suprimento">Suprimento (colocar dinheiro)</button>${ve ? '<button class="btn" data-act="cxExtrato">Extrato (débito e crédito)</button><button class="btn" data-act="cxParcial">Relatório parcial</button><button class="btn" data-act="verMovCaixa">Movimentação até agora</button>' : ''}<button class="btn pri" data-act="fecharCaixa">Fechar caixa</button></div>${(c.reaberturas || []).length ? `<p class="mut">Reaberto ${c.reaberturas.length}×: último em ${fmtDH(c.reaberturas[c.reaberturas.length - 1].em)} por ${esc(c.reaberturas[c.reaberturas.length - 1].por)} · motivo: ${esc(c.reaberturas[c.reaberturas.length - 1].motivo)}</p>` : ''}</section>`;
   }
   return `${cabTela('Caixa')}${topo}
-    <section class="card"><div class="cfg-cab"><h3>Caixas fechados</h3></div>${hist.length ? tabSimples(['Nº', 'Aberto', 'Fechado', 'Por', 'Vendas'].concat(adm() ? ['Diferença'] : []).concat(['']), hist.map(x => { const dif = r2(FORMAS_CAIXA.reduce((s, f) => s + (x.fechamento.diferenca[f] || 0), 0)); return [nDoc(x.id), fmtDH(x.abertura.em), fmtDH(x.fechamento.em), esc(x.fechamento.por), fmtR(x.fechamento.resumo.total)].concat(adm() ? [`<span class="${Math.abs(dif) >= 0.01 ? 'err' : 'ok'}">${dif > 0 ? '+' : ''}${fmtR(dif)}</span>`] : []).concat([`<button class="lnk" data-act="verCaixa" data-id="${x.id}">Comprovante</button> · <button class="lnk" data-act="verMovCaixa" data-id="${x.id}">Movimentação</button>${podeReabrir(x) ? ` · <button class="lnk perigo" data-act="reabrirCaixa" data-id="${x.id}">Reabrir</button>` : ''}${(x.reaberturas || []).length ? ` <span class="tag at" title="${esc(x.reaberturas.map(r => fmtDH(r.em) + ' ' + r.por + ': ' + r.motivo).join(' | '))}">reaberto ${x.reaberturas.length}×</span>` : ''}`]); }), ['Total', hist.length + ' caixa(s)', '', '', fmtR(somar(hist, x => x.fechamento.resumo.total))].concat(adm() ? [fmtR(somar(hist, x => FORMAS_CAIXA.reduce((s, f) => s + (x.fechamento.diferenca[f] || 0), 0)))] : []).concat([''])) : '<p class="vazio">Nenhum caixa fechado ainda.</p>'}</section>`;
+    <section class="card"><div class="cfg-cab"><h3>Caixas fechados</h3></div>${hist.length ? tabSimples(['Nº', 'Aberto', 'Fechado', 'Por', 'Vendas'].concat(adm() ? ['Diferença'] : []).concat(['']), hist.map(x => { const dif = r2(FORMAS_CAIXA.reduce((s, f) => s + (x.fechamento.diferenca[f] || 0), 0)); return [nDoc(x.id), fmtDH(x.abertura.em), fmtDH(x.fechamento.em), esc(x.fechamento.por), fmtR(x.fechamento.resumo.total)].concat(adm() ? [`<span class="${Math.abs(dif) >= 0.01 ? 'err' : 'ok'}">${dif > 0 ? '+' : ''}${fmtR(dif)}</span>`] : []).concat([`<button class="lnk" data-act="verCaixa" data-id="${x.id}">Comprovante</button> · <button class="lnk" data-act="verMovCaixa" data-id="${x.id}">Movimentação</button> · <button class="lnk" data-act="cxExtrato" data-id="${x.id}">Extrato</button>${podeReabrir(x) ? ` · <button class="lnk perigo" data-act="reabrirCaixa" data-id="${x.id}">Reabrir</button>` : ''}${(x.reaberturas || []).length ? ` <span class="tag at" title="${esc(x.reaberturas.map(r => fmtDH(r.em) + ' ' + r.por + ': ' + r.motivo).join(' | '))}">reaberto ${x.reaberturas.length}×</span>` : ''}`]); }), ['Total', hist.length + ' caixa(s)', '', '', fmtR(somar(hist, x => x.fechamento.resumo.total))].concat(adm() ? [fmtR(somar(hist, x => FORMAS_CAIXA.reduce((s, f) => s + (x.fechamento.diferenca[f] || 0), 0)))] : []).concat([''])) : '<p class="vazio">Nenhum caixa fechado ainda.</p>'}</section>`;
 }
 ACT.abrirCaixa = () => {
   if (caixaAberto()) return aviso('O caixa já está aberto.', 'erro');
@@ -4955,6 +4957,7 @@ ACT.cxCard = el => {
   }
   if (k === 'dinheiro') {
     if (!veEsperado()) return aviso('Fechamento cego: o detalhe do dinheiro é só para o administrador.', 'erro');
+    return ACT.cxExtrato({ dataset: { id: c.id, forma: 'Dinheiro' } });
     const l = movimentosCaixa(c).filter(x => x.forma === 'Dinheiro');
     return modalAnalitico('Dinheiro na gaveta – caixa nº ' + nDoc(c.id), 'Cada entrada e saída de dinheiro, com o saldo esperado depois de cada uma.', [C('Hora', 's'), C('Tipo', 's'), C('Descrição', 's'), C('Valor', 'r'), C('Saldo', 'r')],
       l.map(x => ({ c: [fmtDH(x.ts), x.tipo, x.desc, x.valor, x.saldo] })).concat([{ forte: true, c: ['Esperado na gaveta', '', '', '', l.length ? l[l.length - 1].saldo : 0] }]));
@@ -4964,6 +4967,27 @@ ACT.cxCard = el => {
     m.map(x => ({ c: [fmtDH(x.em), x.tipo === 'sangria' ? 'Sangria' : 'Suprimento', x.motivo, x.por, x.tipo === 'sangria' ? -x.valor : x.valor] })).concat([
       { forte: true, c: ['Total de sangrias', '', '', '', -somar(m.filter(x => x.tipo === 'sangria'), x => x.valor)] }, { forte: true, c: ['Total de suprimentos', '', '', '', somar(m.filter(x => x.tipo !== 'sangria'), x => x.valor)] },
       { forte: true, c: ['Líquido', '', '', '', somar(m, x => x.tipo === 'sangria' ? -x.valor : x.valor)] }]));
+};
+// extrato do caixa (débito e crédito): saldo inicial, cada entrada e saída com o saldo, totais e saldo final; por forma ou todas
+ACT.cxExtrato = el => {
+  const ds = (el && el.dataset) || {}, c = ds.id ? (db.caixas || []).find(x => x.id === +ds.id) : caixaAberto(); if (!c) return;
+  if (!c.fechamento && !veEsperado()) return aviso('Fechamento cego: o extrato do caixa aberto é só para o administrador.', 'erro');
+  const forma = ds.forma || 'Todas', todas = forma === 'Todas';
+  const l = movimentosCaixa(c).filter(x => !x.info && FORMAS_CAIXA.indexOf(x.forma) >= 0 && (todas || x.forma === forma));
+  const ab = l.find(x => x.tipo === 'Abertura'), ini = ab ? ab.valor : 0, mov = l.filter(x => x.tipo !== 'Abertura');
+  let saldo = ini, ent = 0, sai = 0;
+  const linhas = [{ forte: true, c: [fmtDH(c.abertura.em), 'Saldo inicial', 'Troco da abertura', 'Dinheiro', '', '', ini] }];
+  mov.forEach(x => { const e = x.valor > 0 ? x.valor : 0, s = x.valor < 0 ? -x.valor : 0; ent = r2(ent + e); sai = r2(sai + s); saldo = r2(saldo + x.valor); linhas.push({ c: [fmtDH(x.ts), x.tipo, x.desc, x.forma, e || '', s || '', saldo] }); });
+  linhas.push({ forte: true, c: ['', 'Total de entradas e saídas', mov.length + ' lançamento(s)', '', ent, sai, ''] });
+  linhas.push({ forte: true, c: [fmtDH(c.fechamento ? c.fechamento.em : agora()), 'Saldo final', c.fechamento ? 'no fechamento' : 'até agora', '', '', '', saldo] });
+  if (c.fechamento) {
+    const fs = todas ? FORMAS_CAIXA : [forma];
+    linhas.push({ forte: true, c: ['', 'Contado no fechamento', '', '', '', '', r2(somar(fs, f => c.fechamento.contado[f] || 0))] }, { forte: true, c: ['', 'Diferença (contado − saldo final)', '', '', '', '', r2(somar(fs, f => c.fechamento.diferenca[f] || 0))] });
+  }
+  const sel = `<div class="form3" style="margin-bottom:8px"><label>Forma<select id="cx-ext-forma" data-id="${c.id}">${['Todas'].concat(FORMAS_CAIXA).map(f => `<option value="${f}" ${f === forma ? 'selected' : ''}>${f === 'Todas' ? 'Todas as formas' : f}</option>`).join('')}</select></label></div>`;
+  modalAnalitico(`Extrato do caixa nº ${nDoc(c.id)} – ${todas ? 'todas as formas' : forma}`,
+    `Saldo inicial ${fmtR(ini)} · entradas ${fmtR(ent)} · saídas ${fmtR(sai)} · saldo final ${fmtR(saldo)}${c.fechamento ? '' : ' (caixa aberto)'}. C = crédito (entrada), D = débito (saída). Crediário e vale-troca ficam fora do caixa.`,
+    [C('Data e hora', 's'), C('Tipo', 's'), C('Histórico', 's'), C('Forma', 's'), C('Entrada (C)', 'r'), C('Saída (D)', 'r'), C('Saldo', 'r')], linhas, sel);
 };
 ACT.cxParcial = () => { const c = caixaAberto(); if (!c) return; if (!veEsperado()) return aviso('Fechamento cego: a leitura parcial é só para o administrador.', 'erro'); mostrarDoc('Leitura parcial do caixa nº ' + nDoc(c.id), relParcialHTML(c)); };
 ACT.verMovCaixa = el => { const c = (db.caixas || []).find(x => x.id === +el.dataset.id) || caixaAberto(); if (!c) return; if (!c.fechamento && !veEsperado()) return aviso('Fechamento cego: a movimentação do caixa aberto é só para o administrador.', 'erro'); mostrarDoc('Movimentação do caixa nº ' + nDoc(c.id), relMovCaixaHTML(c)); };
@@ -5029,6 +5053,7 @@ registrar = function (ev, det, quem) { _registrarBase(ev, det, quem); gravarLog(
 
 /* catálogo das ações: [categoria, descrição, registrar sempre (mesmo sem gravar dados)] */
 const ACOES_LOG = {
+  cxExtrato: ['Consultas', 'Extrato do caixa consultado', 1],
   verCaixa: ['Consultas', 'Comprovante de caixa consultado', 1], verMovCaixa: ['Consultas', 'Movimentação do caixa consultada', 1], cxParcial: ['Consultas', 'Leitura parcial do caixa', 1], cxCard: ['Consultas', 'Detalhe do caixa consultado', 1],
   atualizarSistema: ['Sistema', 'Abriu a tela de atualização'], atBaixar: ['Sistema', 'Pediu o download da atualização'], atInstalar: ['Sistema', 'Pediu a instalação da atualização'], atDescartar: ['Sistema', 'Descartou o download da atualização'], abrirVersaoNova: ['Sistema', 'Abriu a versão nova'],
   finalizarVenda: ['Vendas', 'Venda finalizada'], confirmarCancelamento: ['Vendas', 'Venda cancelada'], verVenda: ['Consultas', 'Recibo de venda consultado', 1],
