@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-07">
+<meta name="versao-sistema" content="2026.11.04-08">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -4225,6 +4225,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-08', itens: ['Venda pelo celular: o QR Code da tela de liberação aparecia minúsculo; agora sai em tamanho legível para a câmera do celular.'] },
   { v: '2026.11.04-07', itens: ['Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.',
     'Leitura do código de barras pela câmera do celular: etiquetas do sistema (Code 128) e código do fabricante (EAN-13). Lê um item atrás do outro, com bipe.',
     'No celular aparecem só Vendas, Produtos, Clientes e Ajuda. Backup, atualização, configurações e senhas ficam só no computador do caixa; o celular não recebe as senhas de ninguém.',
@@ -5368,7 +5369,7 @@ function secaoCelular() {
   return `<section class="card"><div class="cfg-cab"><h3>Venda pelo celular <span class="tag ${ligado ? 'ok' : 'in'}">${ligado ? 'liberada' : 'bloqueada'}</span></h3>
       <p class="mut">Recurso adicional: as vendedoras vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Só o usuário master libera ou bloqueia.</p></div>
     ${r.erro ? `<p class="err">Não foi possível ligar: ${esc(r.erro)}</p>` : ''}
-    ${ligado ? `<div class="cel-qr"><div>${qrSVG(r.instalar, 4)}<small>1. No celular, leia este QR Code (câmera) para instalar o certificado da loja e abrir o sistema</small></div>
+    ${ligado ? `<div class="cel-qr"><div>${qrSVG(r.instalar, 200)}<small>1. No celular, leia este QR Code (câmera) para instalar o certificado da loja e abrir o sistema</small></div>
       <div class="cel-end"><p><b>Instalar no celular:</b><br><code>${esc(r.instalar)}</code></p><p><b>Endereço do sistema no celular:</b><br><code>${esc(r.endereco)}</code></p>
       <p class="mut">${r.sessoes || 0} celular(es) conectado(s) agora · computador: ${esc(r.host || '')}${r.ips && r.ips.length > 1 ? ' · outros IPs: ' + esc(r.ips.slice(1).join(', ')) : ''}</p></div></div>
       <ul class="sg-dicas"><li>Na primeira vez, o Windows pode perguntar se permite o acesso à rede: marque <b>Redes privadas</b> e clique em <b>Permitir</b> (precisa da senha de administrador do computador). Se o celular não abrir, o suporte roda <b>LIBERAR_CELULAR_NO_FIREWALL.bat</b> do pacote de instalação.</li>

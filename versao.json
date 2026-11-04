@@ -1,15 +1,12 @@
 {
- "versao": "2026.11.04-07",
- "publicadoEm": "04/11/2026 12:36",
+ "versao": "2026.11.04-08",
+ "publicadoEm": "04/11/2026 13:31",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "2e3000d430070eb4584c4c9c03bc167886de3cd7c5a48ecb7baa7dbc197b424f",
- "tamanho": 572695,
- "assinatura": "cJzTO701Z05qBzEmlO/E/A9nbTluXajpFSVZTXG5MsPuPln1jgdcUqJRwSfJW/BH9QZKUVp0a05BP2RDKuktySngPbereKhb3JKYUluOPSs2rEZ3FGkpux1qralBnL5DP3EkerK8ZcPpp+ZIiZxiC/DAfN58YDZml9X5yFq7hO0jN879lYn5cYTos13E8z5lu7dnq+5Pil4jCFPbFbwl80L3W30NFIP4OnmzpW8IC0tUoFXQp1A0HdMkzv6a5pxO78N3x3zO1hY6VNTPtXPpYYcakB/WxiTDDUCytSU/L0lcmL5kP/WrLl6uZ9YQHZuAtlCct+sXDSdPKiKsCFVDR03elyzpdh/w7jf53H9ZvoLLwfpAGFisJL5bgVYGirITNhttk49n+KrWwJsDkyg4r9IjIv+RvW8T+YmXxAsTzSqTLsqsImCqoJwb9Wd0wVBjSXHyqjgHSpDJgwX8oD5YGW2BAnTyrBMd+WYFv0pfeip0h87zE/pW7KFlMl2sHvuZ",
+ "sha256": "da3641419be61d4f4e8fd6ec7394599763e1a1d8757f0d2fe9b82d41be47c2d6",
+ "tamanho": 572866,
+ "assinatura": "pFkt6nBB2l/myaF+axeWQ/i+WOkidGJuWANrGrSPZ8tUckYFaIKg+wv9agSvBSzTs3SzN99AHmD4bDunVh96wt0si4Ikz+q3cSHgjjVG32hcPQPA/ZMrPq6oUja01ugWwHLVeB/R6Tc24Mmh4ejXB3D2NEnUPTE8XJhW9LJOO+m1GhIlKstcNC+4ZpI2VQ42XOqH7lx5p/M5j1fPKZTlT9baEn7Xpe0v9JBKynSR4IQP4FzLjTZvTsaMowU0fVicDWzkRmSGncEg6FeFkJQWxjlIJ89aJkzc9bF5uqTGtsKbXt2oRa89EV6uMUQuoUQxyUiAMf7GUxLLTvkKMD8Gc40wbF1z9Gq5fC5JfUsDJLmK413lxMCKHQg/lYvBaZ2Dw6H2e4PmRsoNyjwmLA/biUyCFGmXcdXibYtUUdWIaA+xRRO8+Oel6UQYJ2zJAG7COGWpU/4f6lJgQjlBfHSKiPeMb2LGSPOlc/rCTdd/krWuwE5Fnvl5QAHADjdOlTsb",
  "novidades": [
-  "Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.",
-  "Leitura do código de barras pela câmera do celular: etiquetas do sistema (Code 128) e código do fabricante (EAN-13). Lê um item atrás do outro, com bipe.",
-  "No celular aparecem só Vendas, Produtos, Clientes e Ajuda. Backup, atualização, configurações e senhas ficam só no computador do caixa; o celular não recebe as senhas de ninguém.",
-  "Conexão segura (HTTPS) com certificado próprio da loja, instalado uma vez em cada celular pelo QR Code da tela de liberação."
+  "Venda pelo celular: o QR Code da tela de liberação aparecia minúsculo; agora sai em tamanho legível para a câmera do celular."
  ],
  "servidor": {
   "versao": "2026.11.04-07",
