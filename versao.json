@@ -1,14 +1,12 @@
 {
- "versao": "2026.11.04-03",
- "publicadoEm": "04/11/2026 10:29",
+ "versao": "2026.11.04-04",
+ "publicadoEm": "04/11/2026 10:40",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "f063d0ef5b622f0ed2816e5cb8cd686ba64d036b8541329d3ca4f94adaa4ebe1",
- "tamanho": 535883,
- "assinatura": "I6acBIA47J1PdOJ8fSumZAysPig/05pQobVJ7q31ngEcAc6ocSqVjPH2okEopahkXtDPjfV8MQqHg2vULNfFhIYpIkkw9izdbNn1XH2iPlwe5D2eQKqNBtrXnpqXT0FlXTbC1Wb4EBIt7MYVAWuCF43hbSbl9suM0qHW19ntVesO1+iysCU0L4+plSGN4TJJ3jjIOMETij5VIQUHL8s0+JYrFsOpWucTd4mIfwsRXXlZ3y+vWPCenOikAbzILdCVb1IVK24RUEmMG4MkHm+zBAY7N2tBXRB5P6wW4qv0UQJhoE69rpa2G6Ow/vajOSLe9m6iMWWvAGn6CTBAB5Jqgkeb5L+lZjurduNoonLrtRCldUgIXXJ/68mqgt4e8HVFRkNTd3M7VwD08w/Nu6cRO3noiz+f/bOp73Pl9QGZBELjA60EQkqyapBbUUv0uZTsEUxhhn0xxUOdhF4EWvfr082xPsbfxk0efJ0c0fhyAaQniPO1bTZyMc0t7wHb8N7a",
+ "sha256": "18f78c35d9b76f4cdda409c6c48a7dcc4591d9e2b748d92fa9848c6d0625fe80",
+ "tamanho": 542960,
+ "assinatura": "RCxVhWKUch40qKZqrRePfKfq8lg2fiiGZZd2PFkg7ws0Il3vGR4nWhqvCY7b1nIpJ+dKBhtHFiYYaR5DQ1tWkWUWEL8iiSwhWq7SA0qCdvpQWNm3O8LkXvPZJcDj6oMLmGft9zZxvAEsBibytyFMbt5RHZ71WOsdzXdLQtPCougLWpuWCZVSbjNDpTTVlRya13tnBk+3dkBBpkvcxNDG8qnL9K5/SAAvTbAwIQN2DiLXNjZbdKzVuW/qO+G5G7qucE77UnSBgM8IDEEN7BKodfyHgK6fD4+gFe7OmXuJqN8dkEiw7kXNZBPlWv7j2ybhlVoTMhC0pJ+GKcJTfZTfbsS+UcZubrlra98Hu9JYwZ114edDjEt+jlEEey99G/bT1bjOW3UKrnTMYLy3Vj39073vZEWR8J0k3aiDq61tQ/MR/6hPwhTlyXCGQz0KPm8K88BFI1vz4ULMJj30DmUwFbUEsIy1BX9pt31hW4lbmPr6Dmlr6lDf956W8B3wF5pV",
  "novidades": [
-  "Caixa: os cards do caixa aberto mostram o detalhe ao clicar (vendas, cada entrada e saída de dinheiro com o saldo, sangrias e suprimentos), com PDF e Excel, e há o botão Relatório parcial para imprimir a posição atual.",
-  "Ao fechar o caixa, sai o comprovante e, em seguida, o relatório de movimentação completo (em ordem de horário, com o saldo de dinheiro linha a linha). No histórico, os dois ficam disponíveis separados.",
-  "Reabrir caixa: só administrador e master, só o último caixa fechado e sempre com o motivo, que aparece no histórico, no comprovante e na movimentação."
+  "Totais em todos os relatórios: caixa (comprovante, leitura parcial, movimentação com entradas, saídas e saldo, sangrias e suprimentos, histórico de caixas), vendas por forma de pagamento, tipo e marca, coleções, sugestão e lista de compra, comissões, contas a pagar por categoria e fornecedor, condicionais, entradas, trocas, clientes, movimentações de estoque e produtos abaixo do mínimo."
  ],
  "servidor": {
   "versao": "2026.11.04-01",
