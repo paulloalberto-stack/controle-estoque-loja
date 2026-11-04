@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-09'
+VERSAO_SERVIDOR = '2026.11.04-10'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -1174,7 +1174,8 @@ class AtendenteRede(Atendente):
         permitido = caminho.startswith('/api/fotos/') if self.command == 'GET' else False
         if self.command == 'GET' and caminho not in API_REDE_GET and not permitido:
             return 'função disponível só no computador do caixa'
-        if self.command in ('POST', 'PUT') and caminho not in API_REDE_POST:
+        foto = caminho.startswith('/api/fotos/') and caminho not in ('/api/fotos/lote', '/api/fotos/limpar')   # foto de produto tirada no celular
+        if self.command in ('POST', 'PUT') and caminho not in API_REDE_POST and not foto:
             return 'função disponível só no computador do caixa'
         if self.command in ('POST', 'PUT') and self.headers.get(MARCA) != '1':
             return 'pedido sem a marca do sistema recusado'
@@ -1189,7 +1190,14 @@ class AtendenteRede(Atendente):
 
     def _corpo(self):
         corpo = Atendente._corpo(self)
-        if self.path.split('?')[0] != '/api/gravar':
+        caminho = self.path.split('?')[0]
+        if caminho.startswith('/api/fotos/'):   # só aceita imagem JPEG/PNG em data URL, até 3 MB
+            d = json.loads(corpo.decode('utf-8') or '{}')
+            ok = isinstance(d, dict) and all(isinstance(d.get(k), str) and re.match(r'data:image/(jpeg|png);base64,[A-Za-z0-9+/=]+$', d.get(k)) for k in ('img', 'mini')) and len(corpo) < 3 * 1024 * 1024
+            if not ok or not re.match(r'[A-Za-z0-9_-]{1,40}$', urllib.parse.unquote(caminho[11:])):
+                raise ValueError('foto inválida')
+            return json.dumps({'img': d['img'], 'mini': d['mini']}).encode('utf-8')
+        if caminho != '/api/gravar':
             return corpo
         d = json.loads(corpo.decode('utf-8') or '{}')   # o celular não grava usuários (senhas) nem configurações
         for nome in SO_CAIXA:

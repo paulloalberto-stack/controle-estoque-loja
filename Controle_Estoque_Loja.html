@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-09">
+<meta name="versao-sistema" content="2026.11.04-10">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -3107,7 +3107,7 @@ async function aplicarFoto(produtos, foto) {
   if (foto) { const id = 'F' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); await fotoGravar(id, foto); fotoMini[id] = foto.mini; alvo.forEach(x => { x.foto = id; }); }
   else alvo.forEach(x => { delete x.foto; });
   registrar(foto ? 'Foto do produto alterada' : 'Foto do produto removida', [...alvo].map(x => x.codigo).slice(0, 6).join(', '));
-  salvar(); limparFotosOrfas().catch(() => { });
+  salvar(); if (!MODO_REDE) limparFotosOrfas().catch(() => { });   // fotos sem uso são limpas pelo computador do caixa
   return alvo.size;
 }
 function processarImagem(src) {
@@ -3134,7 +3134,7 @@ function blocoFoto(fotoId) {
 async function usarFoto(foto) {
   if (fotoAlvo === 'form') { fotoTemp = foto; $('#foto-prev').innerHTML = foto ? `<img src="${foto.mini}" alt="">` : miniHTML(null); return; }
   const p = prod(fotoAlvo); if (!p) return;
-  const n = await aplicarFoto([p], foto);
+  let n; try { n = await aplicarFoto([p], foto); } catch (e) { return aviso('A foto não foi salva: ' + (e.message || e) + '.', 'erro'); }
   aviso(foto ? `Foto salva (${n} tamanho(s) deste modelo).` : 'Foto removida.', 'ok');
   render(); ACT.verFoto({ dataset: { id: p.id } });
 }
@@ -4245,6 +4245,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-10', itens: ['Celular: a foto do produto tirada pela câmera do celular agora é salva (antes era recusada sem aviso).', 'Se a foto não puder ser salva, aparece o motivo na tela.'] },
   { v: '2026.11.04-09', itens: ['Celular: a tela de entrada mostra a logo e o nome da loja.', 'Celular: letras, botões e tabelas menores, para caber mais na tela.'] },
   { v: '2026.11.04-08', itens: ['Venda pelo celular: o QR Code da tela de liberação aparecia minúsculo; agora sai em tamanho legível para a câmera do celular.'] },
   { v: '2026.11.04-07', itens: ['Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.',

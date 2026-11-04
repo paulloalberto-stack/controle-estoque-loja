@@ -1,19 +1,19 @@
 {
- "versao": "2026.11.04-09",
- "publicadoEm": "04/11/2026 13:40",
+ "versao": "2026.11.04-10",
+ "publicadoEm": "04/11/2026 13:50",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "9ee9e25646dd5fbfeb0e3799e0070b5bc3cdbc2100eeee6dde5ac32fd5fd14e8",
- "tamanho": 575322,
- "assinatura": "GfCjwXI4xxyY9tCvPDqI6Rfd9/Be7YeYevmwtFV66VmkH3xuiwyq03h4SVgO3miQx1e/M94GBixTQjiHmTlG4UJBTWcTPd6g8S6AmibAqHG7wQCwVirr65j6TDIS1dJ6VX+osP9Ib56i89h/5urnNtE33WZ+CUTtCktVE6ft7Ro8uqgv0HqhkTR1nXFFL8A8GX+X8OhgJuK9JETSJ+7AvpKWDEeglrtUmkTggfhtS/ONyTaHWAfIg6jwUf/87rqxnQIl8kxBTxblHlUuoCBp/rZpdDYvxkNgTeFQfn69zN9OjnNOq+lcyt87aBUSdQuR63F69SU+QzsOysK0i6d0EW3UnhTpltNQoyHHqB73O2DRBTbInDgTRsdFgnl6uABnfgyIeR5MwNLx3SWBrNqllQhuksSU8Ppb7J7jnExsFMFofcseXs7MhP3RLNE1yqRgjXkQPJTn9enLr5DjTJjmlovIoGQ1JYQvcVgusa9Y1ypVZl7e6ua72Nc23aX3wT3z",
+ "sha256": "439ef46f227f3059e5d2c05a5858298459b8f1712646e60dfbe8c0fdbef04866",
+ "tamanho": 575695,
+ "assinatura": "lpB7FOJH5foJYTPCLtOT/x7LHmYHrErfuzmcn2K8q/F/eQpinhbzqVxqyItFSMa6YE8v0wVjACMnoBvLEOTSEtufxdmnPSB0kmEv+mWxZGc4D8HKFK5BDPP+1+9n3MtvZ/o+tBoRHEW/CqIeFYMFzcqMTR1fbdQi2rpPpgRDTlrJV1CzQPAFiQgi6ViDNEaATgcg6DO4+TMKGdZGrzidmKlVPY7cIRIaDe04PtieBemXxCcFSqUiKupObMswx2AfSJhsxubtU40caZK4Lwn2gy9WqCRlSAwkCFu/GtxMcF4koNTlQq8jT85SMspdoP8lwaKmyh6fhfxH6PWB6nSrLyRz2Wz3IMBH1TYNnILL5ZbYGW4AH4zo6ajyxMj2VliiCIRuLEtG7yUBL5Hovll3TaQHZ0+1//rNYS0JN4yKJxveLca7Dv/tv/tktdTlAiAwL1ILikOZnmfx0xF/L/Fy3D6IAEed192/0u16sJXLzkS6TcFk3yDt/dI7WGoeksxH",
  "novidades": [
-  "Celular: a tela de entrada mostra a logo e o nome da loja.",
-  "Celular: letras, botões e tabelas menores, para caber mais na tela."
+  "Celular: a foto do produto tirada pela câmera do celular agora é salva (antes era recusada sem aviso).",
+  "Se a foto não puder ser salva, aparece o motivo na tela."
  ],
  "servidor": {
-  "versao": "2026.11.04-09",
+  "versao": "2026.11.04-10",
   "arquivo": "servidor.py",
-  "sha256": "134030d19273a9cfb8f1f265e2ab2988c4be01e0e9e2ad486bb1623035509c46",
-  "assinatura": "mqsJe2nRv/rPppEGBNoqWfRA690uhLF1txH22dqU/pe6wqxV/C3pwG9wEqAhDVQ+d/RBjvW2DRYMAyFiq2DSCd8Xh6fVfpI34KXo1qXBGORen6K2it1Pb6v8airO5GCnkioth63s1zA45drJVFYmJQZ2SDYUsO3jljVs5PZSu3p4d8U21adDBuFZ7RQyde+YbE6dIcUrbQeSq/Ha2Bc+/bjGpyIVJSfXjoEMlhwokni5tPo09HOHxuAQnlY3YQvDpCLAnCPCdksXlurdQuFffNS4ChavVq1Iccuwvuv8HUA4nNNA7vBQy9PHvKrbjwCCeaHYtMjoZ4GlxycEOSQa2qDQlPV5e4hy/mdDPCSpWcHc8eL7n6RCWeH9bXx1v2EhLeMEEck5Dw0VYFtlhSpqa2SrF9hfJVcXAXfjW6+2lV2UmXkPysS4fOem8skHQrgYXyOD214E57DC7KIldubSs84avxHazcDcBNCW/MZoyq4jdw2U9A1CCfi05Z9QbRcl",
-  "tamanho": 72272
+  "sha256": "d5b8bb9e1f3f3abf4e1a9e3f207dc5db3305e39c2a9a93d299e3c99a9396e8a2",
+  "assinatura": "KlxVQyWlImRNtSchZtNOht96Tc6LXev01hzryYA63l/GaNGvyW9SU4e8KCI4axp3NUsNLXHhx+YWyihTdpK/uPM7FUvixbJM1xOs2SHlz0ouqD/7YlW/9OUCjD6Kj2VdAiV21MD0YeZnXF6Gx5fS0TzIM9lSXo4rWVL4/KDS3H7d4UQ5i0oFzc+vdACtZwT6Azxt4YCjYYhOmrSSO8hOHc84ediCpCUC6XbqhQtPZiRdhuLpmDZ8JO40xJ5SGG1t64NwhQxs/Li7DdA9n509mIPggxDNBajcrm3UvNvWJ5qjoMQkplCQUQC7sCpAaIL60C4pt1q1M12NPHwhwHVbi5bB/YiyfzFd4F/Ks5UDvUraiPoprcltbHFM09A9hYqztHxlOyR4at5ZjS5fXbPbDM7jFQ3ykIy11eME26OeuxO7rg0qaxHSVhlZ/Dev3cC6yq0UTE9FfWxazx1fpss81KPFthAlLlBT7Ri/0HNoViHCCAnRSl7nfXKSBu3+oC1B",
+  "tamanho": 73054
  }
 }
