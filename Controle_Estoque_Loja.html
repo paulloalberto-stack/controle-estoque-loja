@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.03-15">
+<meta name="versao-sistema" content="2026.11.04-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -829,8 +829,10 @@ function clientesMaiusculas() {
    limpar os dados do navegador não apaga mais nada. Aberto como arquivo (file://), usa o banco do navegador como antes. */
 const MODO_SERVIDOR = /^https?:$/.test(location.protocol);
 let srvOk = true, srvInfo = null, srvFalhou = 0;
+const SERVIDOR_SEGURO = '2026.11.04-01';   // a partir desta versão o servidor recusa pedidos de outros sites e se atualiza pela nuvem
 async function api(caminho, opc) {
-  const r = await fetch('/api/' + caminho, Object.assign({ cache: 'no-store' }, opc || {}));
+  opc = Object.assign({ cache: 'no-store' }, opc || {}); opc.headers = Object.assign({ 'X-Controle-Estoque': '1' }, opc.headers || {});
+  const r = await fetch('/api/' + caminho, opc);
   if (!r.ok) { let m = 'o servidor respondeu ' + r.status; try { const j = await r.json(); if (j.erro) m = j.erro; } catch (e) { } const e = new Error(m); e.status = r.status; throw e; }
   return (r.headers.get('content-type') || '').indexOf('json') >= 0 ? r.json() : r.text();
 }
@@ -854,7 +856,7 @@ function telaSemServidor() {
 }
 async function gravarServidor(json) {
   try { await api('dados', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: json }); }
-  catch (e) { if (e.status === 409) { aviso('ATENÇÃO: ' + e.message, 'erro'); return; } throw e; }
+  catch (e) { if (e.status === 409 || e.status === 423) { aviso('ATENÇÃO: ' + e.message, 'erro'); return; } throw e; }
   if (srvFalhou) aviso('Gravação no banco de dados restabelecida.', 'ok');
   srvFalhou = 0;
 }
@@ -4087,6 +4089,10 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-01', itens: ['Segurança: o servidor do banco de dados só aceita pedidos do próprio sistema. Antes, uma página da internet aberta no navegador conseguia apagar dados; agora é recusada e fica registrada no log do servidor.',
+    'Segurança: o sistema não pode mais ser aberto escondido dentro de outro site (proteção contra clique falso).',
+    'Licença conferida também pelo servidor, com a data protegida: atrasar o relógio do Windows não adia o vencimento e o modo consulta vale mesmo se alguém mexer no arquivo do sistema.',
+    'O servidor passa a ser atualizado pela nuvem junto com o sistema, na tela de atualização do master (com assinatura digital conferida). Servidores antigos precisam do pacote uma última vez: o sistema avisa.'] },
   { v: '2026.11.03-15', itens: ['Licença de uso por loja (P.A.S Soluções Tecnológicas): Configurações → Licença mostra plano, validade e dias restantes e recebe o código de ativação. Os administradores são avisados 15 dias antes do vencimento.', 'Sem licença ativada, o sistema funciona por 30 dias de avaliação. Vencida a licença e o prazo de tolerância, entra em modo consulta: dá para consultar e fazer backup, mas não registrar vendas e movimentações. Nenhum dado é apagado.'] },
   { v: '2026.11.03-14', itens: ['Ícone próprio do sistema: em Configurações → Empresa dá para enviar uma imagem só para o ícone da barra de tarefas e do atalho da área de trabalho (de preferência PNG quadrado de 512 × 512 px), com prévia em 256, 48, 32 e 16 px. Sem ícone próprio, continua usando a logo.', 'Ícone mais nítido: a janela recebe a versão grande do ícone e os tamanhos pequenos são reduzidos em etapas.'] },
   { v: '2026.11.03-13', itens: ['O ícone da janela do sistema na barra de tarefas do Windows (e na aba do navegador) passa a ser a logo da loja, no lugar do globo. Trocou a logo e salvou, o ícone muda junto.'] },
@@ -4386,8 +4392,17 @@ ACT.atBaixar = async () => {
     if (hash !== String(v.sha256 || '').toLowerCase()) throw new Error('o arquivo baixado não confere com o código SHA-256 publicado');
     progEtapa(3, 90, 'Conferindo a assinatura digital…'); await pausa(250);
     await verificarAssinatura(v, buf);
+    let srv = null;
+    if (MODO_SERVIDOR && v.servidor && srvInfo && v.servidor.versao > srvInfo.servidor) {
+      progEtapa(4, 93, 'Baixando o servidor ' + v.servidor.versao + '…');
+      const rs = await fetch(URL_ATUALIZACAO + '/' + encodeURIComponent(v.servidor.arquivo || 'servidor.py') + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!rs.ok) { const e = new Error('a nuvem respondeu ' + rs.status + ' ao baixar o servidor'); e.status = rs.status; throw e; }
+      const bs = await rs.arrayBuffer();
+      if (hexDe(await crypto.subtle.digest('SHA-256', bs)) !== String(v.servidor.sha256).toLowerCase()) throw new Error('o servidor baixado não confere com o código SHA-256 publicado');
+      srv = { versao: v.servidor.versao, sha256: v.servidor.sha256, assinatura: v.servidor.assinatura, buf: bs };
+    }
     progEtapa(4, 96, 'Guardando o download…');
-    pacoteBaixado = { versao: v.versao, publicadoEm: v.publicadoEm || '', novidades: v.novidades || [], sha256: hash, assinatura: v.assinatura, tamanho: buf.byteLength, em: agora(), por: eu.nome, buf };
+    pacoteBaixado = { srv, versao: v.versao, publicadoEm: v.publicadoEm || '', novidades: v.novidades || [], sha256: hash, assinatura: v.assinatura, tamanho: buf.byteLength, em: agora(), por: eu.nome, buf };
     await kvGravar('atualizacaoBaixada', pacoteBaixado).catch(() => { });
     registrar('Atualização baixada', v.versao + ' · SHA-256 ' + hash.slice(0, 16) + '…'); gravarLog('Sistema', 'Baixou a atualização do sistema', 'versão ' + v.versao + ' · assinatura válida'); salvar();
     await pausa(200); progOk('Versão ' + v.versao + ' baixada e conferida (' + kb(buf.byteLength) + '). Agora instale no passo 3.');
@@ -4417,6 +4432,12 @@ ACT.atInstalar = async () => {
       progEtapa(4, 80, 'Versão ' + p.versao + ' gravada…'); await pausa(200);
       progEtapa(5, 92, 'Conferindo a instalação…');
       const st = await atualizarSrvInfo(); if (!st || st.sistema !== p.versao) throw new Error('o servidor não confirmou a versão instalada');
+      if (p.srv && st.servidor >= SERVIDOR_SEGURO) {   // servidor novo: confere a assinatura, troca o arquivo e reinicia sozinho
+        progEtapa(5, 94, 'Atualizando o servidor para ' + p.srv.versao + ' (reinicia em poucos segundos)…');
+        await api('instalarServidor', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Versao': p.srv.versao, 'X-Sha256': p.srv.sha256, 'X-Assinatura': p.srv.assinatura }, body: p.srv.buf });
+        let ok = false; for (let k = 0; k < 40 && !ok; k++) { await pausa(500); try { const s2 = await api('status'); ok = s2.servidor === p.srv.versao; srvInfo = s2; } catch (e) { } }
+        if (!ok) throw new Error('o servidor não voltou na versão ' + p.srv.versao + '; feche e abra pelo atalho');
+      }
     } else {
     progEtapa(1, 15, 'Abrindo a pasta do sistema…');
     const { h, txt } = await pastaComPermissao();
@@ -4465,7 +4486,7 @@ function atualizacao() {
     ${nova ? `<h4 class="rel-sec">O que muda na versão ${esc(v.versao)}</h4>${listaNovidadesNuvem(v)}` : ''}
     <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="atVerificar">Verificar agora</button></div>`;
   const s2 = !nova ? '<p class="mut">Nada para baixar: o sistema já está na versão mais nova.</p>' : p
-    ? `<div class="at-ok"><b>Versão ${esc(p.versao)} baixada e conferida</b><ul class="at-lista"><li>Baixada em ${fmtDH(p.em)} por ${esc(p.por)} · ${kb(p.tamanho)}</li><li>Código SHA-256: <code>${esc(p.sha256)}</code> — confere com o publicado</li><li>Assinatura digital da loja: <b>válida</b></li></ul></div>
+    ? `<div class="at-ok"><b>Versão ${esc(p.versao)} baixada e conferida</b><ul class="at-lista"><li>Baixada em ${fmtDH(p.em)} por ${esc(p.por)} · ${kb(p.tamanho)}</li><li>Código SHA-256: <code>${esc(p.sha256)}</code> — confere com o publicado</li><li>Assinatura digital da loja: <b>válida</b></li>${p.srv ? `<li>Servidor do banco de dados: versão ${esc(p.srv.versao)} (instalado junto)</li>` : ''}</ul></div>
        <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="atDescartar">Descartar o download</button></div>`
     : `<p>Baixa o arquivo da versão ${esc(v.versao)} do GitHub e confere o código SHA-256 e a assinatura digital. Nada é instalado neste passo.</p>
        <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="atBaixar">Baixar versão ${esc(v.versao)}</button></div>`;
@@ -4652,7 +4673,8 @@ async function lerLicenca(codigo) {
 }
 // situação: ok | vencendo | tolerancia | bloqueada | avaliacao
 async function conferirLicenca() {
-  const c = db.config, h = hoje(); let l = null, erro = '';
+  if (MODO_SERVIDOR) await atualizarSrvInfo();
+  const sl = MODO_SERVIDOR && srvInfo && srvInfo.licenca, c = db.config, h = sl && sl.hoje > hoje() ? sl.hoje : hoje(); let l = null, erro = '';
   if (c.licenca) {
     try { l = await lerLicenca(c.licenca); if (soDig(l.cnpj) !== soDig(c.cnpj)) { erro = `a licença é do CNPJ/CPF ${l.cnpj} e o cadastrado em Empresa é ${soDig(c.cnpj) || '(vazio)'}`; l = null; } }
     catch (e) { erro = e.message; }
@@ -4662,9 +4684,10 @@ async function conferirLicenca() {
     licInfo = { l, resta, fimTol: somaDiasDe(l.validade, tol), sit: resta < -tol ? 'bloqueada' : resta < 0 ? 'tolerancia' : resta <= DIAS_AVISO_LIC ? 'vencendo' : 'ok' };
   } else {
     if (!c.licencaInicio) { c.licencaInicio = h; salvar(); }
-    const resta = DIAS_AVALIACAO - difDias(h, c.licencaInicio);
-    licInfo = { l: null, erro, resta, fimTol: somaDiasDe(c.licencaInicio, DIAS_AVALIACAO), sit: resta >= 0 ? 'avaliacao' : 'bloqueada' };
+    const ini = sl && sl.inicio ? sl.inicio : c.licencaInicio, resta = DIAS_AVALIACAO - difDias(h, ini);
+    licInfo = { l: null, erro, resta, fimTol: somaDiasDe(ini, DIAS_AVALIACAO), sit: resta >= 0 ? 'avaliacao' : 'bloqueada' };
   }
+  licInfo.relogio = !!(sl && sl.relogioAtrasado);
   avisoLicenca(); return licInfo;
 }
 const licencaBloqueada = () => !!licInfo && licInfo.sit === 'bloqueada';
@@ -4678,6 +4701,8 @@ function avisoLicenca() {
   else if (i.sit === 'tolerancia') { t = `<b>Licença vencida em ${fmtDia(i.l.validade)}.</b> O sistema funciona normalmente até ${fmtDia(i.fimTol)}; depois entra em modo consulta. Fale com a P.A.S para renovar.${ver}`; cls = 'alerta alerta-lic-erro'; }
   else if (i.sit === 'vencendo') t = `<b>A licença vence em ${i.resta} dia(s) (${fmtDia(i.l.validade)}).</b> Fale com a P.A.S Soluções Tecnológicas para renovar.${ver}`;
   else if (i.sit === 'avaliacao') { t = `<b>Período de avaliação: falta(m) ${i.resta} dia(s).</b> Para continuar usando depois de ${fmtDia(i.fimTol)}, ative a licença em Configurações → Licença.${i.erro ? ' <span class="err">Licença não aceita: ' + esc(i.erro) + '.</span>' : ''}${ver}`; cls = 'alerta alerta-nuvem'; }
+  if (eu && adm() && i && i.relogio) t += `${t ? '<br>' : ''}<b>O relógio deste computador está atrasado.</b> Acerte a data e a hora do Windows (o sistema usa a data mais recente que já viu).`;
+  if (eu && adm() && MODO_SERVIDOR && srvInfo && srvInfo.servidor < SERVIDOR_SEGURO) t += `${t ? '<br>' : ''}<b>Correção de segurança pendente no servidor (versão ${esc(srvInfo.servidor)}).</b> Peça ao suporte para rodar uma vez o ATUALIZAR.bat do pacote mais novo neste computador; depois disso o servidor passa a se atualizar pela nuvem.`;
   el.innerHTML = t ? `<div class="${cls}">${t}</div>` : '';
 }
 ACT.irLicenca = () => { view = 'config'; filtros.cfg.aba = 'licenca'; render(); window.scrollTo(0, 0); };
