@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-10'
+VERSAO_SERVIDOR = '2026.11.04-11'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -416,7 +416,20 @@ def b64u(s):
     return base64.urlsafe_b64decode(s + '=' * (-len(s) % 4))
 
 
+_LIC_CACHE = {}
+
+
 def ler_licenca(codigo):
+    if codigo in _LIC_CACHE:   # a conferência da assinatura é feita uma vez por código
+        return _LIC_CACHE[codigo]
+    r = _ler_licenca(codigo)
+    if len(_LIC_CACHE) > 20:
+        _LIC_CACHE.clear()
+    _LIC_CACHE[codigo] = r
+    return r
+
+
+def _ler_licenca(codigo):
     m = re.match('^PAS1-([A-Za-z0-9_-]+)[.]([A-Za-z0-9_-]+)$', re.sub('[^A-Za-z0-9_.-]', '', codigo or ''))
     if not m:
         return None
@@ -444,10 +457,12 @@ def situacao_licenca(b, config):
         b.meta_interna('licencaInicio', ini)
     config = config or {}
     l = ler_licenca(config.get('licenca'))
-    sit = {'hoje': hoje, 'inicio': ini, 'relogioAtrasado': atrasado}
+    sit = {'hoje': hoje, 'inicio': ini, 'relogioAtrasado': atrasado, 'recursos': []}
     if l and re.sub('[^0-9]', '', str(l.get('cnpj'))) == re.sub('[^0-9]', '', str(config.get('cnpj') or '')):
         fim = (datetime.date.fromisoformat(l['validade']) + datetime.timedelta(days=int(l.get('tolerancia') or 0))).isoformat()
         sit.update(sit='ok' if hoje <= fim else 'bloqueada', validade=l['validade'], fim=fim)
+        if sit['sit'] == 'ok':   # recursos Premium comprados (vêm assinados dentro da licença)
+            sit['recursos'] = [str(x) for x in (l.get('recursos') or []) if isinstance(x, str)]
     else:
         fim = (datetime.date.fromisoformat(ini) + datetime.timedelta(days=DIAS_AVALIACAO)).isoformat()
         sit.update(sit='avaliacao' if hoje <= fim else 'bloqueada', fim=fim)
@@ -844,6 +859,8 @@ class Atendente(BaseHTTPRequestHandler):
                 if isinstance(self, AtendenteRede):
                     return self._erro(403, 'só no computador do caixa')
                 ligar = bool(dados.get('ativo'))
+                if ligar and not recurso_liberado('celular'):
+                    return self._erro(403, 'a venda pelo celular não está liberada na licença desta loja (recurso Premium)')
                 b.meta_interna('rede', ligar)
                 ok = iniciar_rede() if ligar else (parar_rede() or True)
                 log('venda pelo celular %s pelo sistema' % ('liberada' if ligar else 'bloqueada'))
@@ -1160,7 +1177,7 @@ class AtendenteRede(Atendente):
         return h in {'%s:%d' % (x, PORTA_REDE) for x in REDE['ips'] + [REDE['host'], REDE['host'] + '.local', '127.0.0.1', 'localhost']}
 
     def _barrar(self):
-        if not REDE.get('https') or not self._host_ok():   # bloqueado pelo master: conexões já abertas também param
+        if not REDE.get('https') or not self._host_ok() or not recurso_liberado('celular'):   # bloqueado pelo master: conexões já abertas também param
             self.close_connection = True
             return 'acesso negado'
         caminho = self.path.split('?')[0]
@@ -1346,9 +1363,16 @@ def parar_rede():
     SESSOES.clear()
 
 
+def recurso_liberado(nome):
+    try:
+        return nome in situacao_licenca(BANCO_ATIVO, BANCO_ATIVO.config()).get('recursos', [])
+    except Exception:
+        return False
+
+
 def info_rede():
     ip = (REDE['ips'] or [''])[0]
-    return {'ativo': bool(REDE.get('https')), 'liberado': bool(BANCO_ATIVO and BANCO_ATIVO.meta_interna('rede')), 'ips': REDE['ips'], 'host': REDE['host'], 'erro': REDE['erro'],
+    return {'ativo': bool(REDE.get('https')) and recurso_liberado('celular'), 'licenciado': recurso_liberado('celular'), 'liberado': bool(BANCO_ATIVO and BANCO_ATIVO.meta_interna('rede')), 'ips': REDE['ips'], 'host': REDE['host'], 'erro': REDE['erro'],
             'endereco': 'https://%s:%d/' % (ip, PORTA_REDE) if ip else '', 'instalar': 'http://%s:%d/' % (ip, PORTA_INSTALAR) if ip else '', 'sessoes': len([s for s in SESSOES.values() if s['exp'] > time.time()])}
 
 
@@ -1375,7 +1399,7 @@ def servir():
         return False
     BANCO_ATIVO = Banco(BANCO)
     threading.Thread(target=laco_copias, args=(BANCO_ATIVO,), daemon=True).start()
-    if BANCO_ATIVO.meta_interna('rede'):
+    if BANCO_ATIVO.meta_interna('rede') and recurso_liberado('celular'):
         for _ in range(20):   # depois de uma atualização, a porta da rede pode levar alguns segundos para ficar livre
             if iniciar_rede():
                 break

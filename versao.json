@@ -1,19 +1,20 @@
 {
- "versao": "2026.11.04-10",
- "publicadoEm": "04/11/2026 13:50",
+ "versao": "2026.11.04-11",
+ "publicadoEm": "04/11/2026 14:21",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "439ef46f227f3059e5d2c05a5858298459b8f1712646e60dfbe8c0fdbef04866",
- "tamanho": 575695,
- "assinatura": "lpB7FOJH5foJYTPCLtOT/x7LHmYHrErfuzmcn2K8q/F/eQpinhbzqVxqyItFSMa6YE8v0wVjACMnoBvLEOTSEtufxdmnPSB0kmEv+mWxZGc4D8HKFK5BDPP+1+9n3MtvZ/o+tBoRHEW/CqIeFYMFzcqMTR1fbdQi2rpPpgRDTlrJV1CzQPAFiQgi6ViDNEaATgcg6DO4+TMKGdZGrzidmKlVPY7cIRIaDe04PtieBemXxCcFSqUiKupObMswx2AfSJhsxubtU40caZK4Lwn2gy9WqCRlSAwkCFu/GtxMcF4koNTlQq8jT85SMspdoP8lwaKmyh6fhfxH6PWB6nSrLyRz2Wz3IMBH1TYNnILL5ZbYGW4AH4zo6ajyxMj2VliiCIRuLEtG7yUBL5Hovll3TaQHZ0+1//rNYS0JN4yKJxveLca7Dv/tv/tktdTlAiAwL1ILikOZnmfx0xF/L/Fy3D6IAEed192/0u16sJXLzkS6TcFk3yDt/dI7WGoeksxH",
+ "sha256": "22e239911547bfcd93cf8fb202e8d3ff166d07f27cd28d222b18deb8b37e4fb8",
+ "tamanho": 581371,
+ "assinatura": "csyofXNbtoNaTbjZn78hvdWZJ8SJhivwj/agniODcYWiN2eKjidhSKjrRCd6S1DD7ktr188tXGfEp0py/HJYrDZNDyKTdvq87/VEj0A56aD+jPvZVwLQywvHhwn/rzApCnop+w3jh7MXaiDVK34vEbSXffb/LE4PB4EmjulAUhyK+zAZOC9FqSjUng+8dgaTFowf2zb54iwibwvODR0nJVqCQL41grAqVtbsqurkWpILy9wDch+3xrgKkZ8ByU5glNINkhoOHgq0/ZItXRuaHZqLNkHTsOMIiLaMLLwcAlYkoNZK0ygEFVvxrGuA4vktQHiuOP7XAPVN7VklkOm2zutWfMD1gS8CJmBxCMxvgsZ8tzM5hjPE88UAD6KEmF488kwVaftBmAh4JOMLvfBfvvXYT/PbjbDlaKQqAGGHFRYV7bY6SN+pTPQe4UL5cBW0L+55aCO8Vys31Ub7Fqv39soawyrSpaS+lR7L5qqGFvaAf4+xLIysjnEVxkp3OG8i",
  "novidades": [
-  "Celular: a foto do produto tirada pela câmera do celular agora é salva (antes era recusada sem aviso).",
-  "Se a foto não puder ser salva, aparece o motivo na tela."
+  "Novo menu Recursos Premium (administradores): mostra os recursos adicionais, quais estão liberados e como contratar.",
+  "Os recursos Premium são liberados um a um pela P.A.S Soluções Tecnológicas, dentro do código da licença (Configurações → Licença). A Venda pelo celular passou a ser um recurso Premium.",
+  "Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas das vendedoras."
  ],
  "servidor": {
-  "versao": "2026.11.04-10",
+  "versao": "2026.11.04-11",
   "arquivo": "servidor.py",
-  "sha256": "d5b8bb9e1f3f3abf4e1a9e3f207dc5db3305e39c2a9a93d299e3c99a9396e8a2",
-  "assinatura": "KlxVQyWlImRNtSchZtNOht96Tc6LXev01hzryYA63l/GaNGvyW9SU4e8KCI4axp3NUsNLXHhx+YWyihTdpK/uPM7FUvixbJM1xOs2SHlz0ouqD/7YlW/9OUCjD6Kj2VdAiV21MD0YeZnXF6Gx5fS0TzIM9lSXo4rWVL4/KDS3H7d4UQ5i0oFzc+vdACtZwT6Azxt4YCjYYhOmrSSO8hOHc84ediCpCUC6XbqhQtPZiRdhuLpmDZ8JO40xJ5SGG1t64NwhQxs/Li7DdA9n509mIPggxDNBajcrm3UvNvWJ5qjoMQkplCQUQC7sCpAaIL60C4pt1q1M12NPHwhwHVbi5bB/YiyfzFd4F/Ks5UDvUraiPoprcltbHFM09A9hYqztHxlOyR4at5ZjS5fXbPbDM7jFQ3ykIy11eME26OeuxO7rg0qaxHSVhlZ/Dev3cC6yq0UTE9FfWxazx1fpss81KPFthAlLlBT7Ri/0HNoViHCCAnRSl7nfXKSBu3+oC1B",
-  "tamanho": 73054
+  "sha256": "847f6cd0f98e4ccd9c65bf3b69558bfc3dc90b559c452b10e8b2cb443369b10f",
+  "assinatura": "ZljqXDUTZvx4oi69sdNiw8th9PT/qI2a4W3/2Be/NP9xvnpJMe1AOLmhvjEDZs6y96sBLeQTkMyKsRpj1aDezVWDfoKH0ytXJPnqZ60NgRn7nOYFp9Hwkg0aOofKspb4pLK7MYffwKx3tsyhGcmqRXuayZqz3k6rI37oiSDM4xSLSpYsZknhTuqGMDEWmbg3kYnfmGNkdnX9oiNpxMJYuwAGZpYxA8urW+IXRPqUDHmIOVNpKC1MqGaHPHVWGmEJWbT1jbm+9DGSHkqLh4J3hXIQs2zIplDG0lV9SGeM7cMZufZ26ivcUukRKmRk84b/QMJV1NYbCdPwR1tbNKyJSZFe5H1Op/TBUbUyIBM/Bt4mE5nipoeaqKKLfqyVviNA+5yJZMVn/szoCqcOWrZcPYx1K9/ytMYhJf5i3CfNPUOyvnGX+960GxEjl/7EXYD6eeAI/x27zzoXl55lC+IXPqg8Q6CEk4xP+gnyP62K6HuQrCTvdEArtWaCYtmustea",
+  "tamanho": 74069
  }
 }

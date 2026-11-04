@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-10">
+<meta name="versao-sistema" content="2026.11.04-11">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -548,6 +548,15 @@ input[data-maiusc]::placeholder{text-transform:none}
   .form2{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
+/* recursos premium */
+.pr-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
+.pr-card{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--sh)}
+.pr-card h3{margin:0 0 4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pr-card p{margin:0}
+.pr-card:not(.lib){background:#fafbfc}.pr-card:not(.lib) .pr-ic{background:#eef0f3;color:#8a92a3}
+.pr-ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--soft);color:var(--ac);display:flex;align-items:center;justify-content:center}
+.pr-ic svg,.pr-cad svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pr-cad{display:flex;align-items:center;gap:6px;margin-top:8px!important;font-size:12.5px;color:#6b7385}.pr-cad svg{width:14px;height:14px}
 /* venda pelo celular */
 .leitor{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-height:60vh;margin:0 auto}
 .leitor video{width:100%;height:100%;object-fit:cover;display:block}
@@ -1200,6 +1209,7 @@ const ICONES = {
   comissoes: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   relatorios: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
   usuarios: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>',
   config: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'
@@ -1207,7 +1217,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1528,7 +1538,6 @@ const CFG_ABAS = [
   ['seguranca', 'Segurança', 'Senhas, bloqueio e registro', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>'],
   ['sobre', 'Sobre e atualização', 'Versão, novidades e como atualizar', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'],
   ['licenca', 'Licença', 'Plano, validade e ativação', '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M11.4 11.6L21 2"/><path d="M16 7l3 3"/><path d="M19 4l2 2"/>'],
-  ['celular', 'Venda pelo celular', 'Adicional: liberar celulares', '<rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>'],
   ['backup', 'Backup e dados', 'Cópia de segurança e restauração', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>']
 ];
 const OPCOES_VIAS = [['1', '1 via (só a do cliente)'], ['2', '2 vias (cliente e loja)'], ['3', '3 vias'], ['4', '4 vias']];
@@ -1543,7 +1552,7 @@ function config() {
   const nb = db.config.ultimoBackup, diasBk = nb ? Math.floor((Date.parse(hoje()) - Date.parse(nb.slice(0, 10))) / 864e5) : null;
   return `<h2>Configurações</h2>
   <div class="cfg-layout">
-  <nav class="cfg-nav">${CFG_ABAS.filter(a => a[0] !== 'celular' || master()).map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
+  <nav class="cfg-nav">${CFG_ABAS.map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
   <div class="cfg-corpo">
   <div id="cfg">
   ${pane('empresa', `<section class="card">${cab('Dados da empresa', 'Saem no cabeçalho dos recibos, termos, relatórios e etiquetas.')}
@@ -1584,7 +1593,6 @@ function config() {
   ${pane('seguranca', secaoSeguranca())}
   ${pane('sobre', secaoSobre())}
   ${pane('licenca', secaoLicenca())}
-  ${master() ? pane('celular', secaoCelular()) : ''}
   ${pane('backup', `<section class="card">${cab('Backup', 'Os dados ficam guardados <b>neste computador, neste navegador</b>. Guarde cópias fora dele (pen drive, e-mail, nuvem).')}
     <div class="resumo-tit"><div class="rbox ${nb ? (diasBk > 7 ? 'err' : 'ok') : 'err'}"><small>Último backup</small><b>${nb ? fmtDia(nb) : 'Nunca'}</b><span>${nb ? (diasBk === 0 ? 'hoje' : 'há ' + diasBk + ' dia(s)') : 'faça o primeiro agora'}</span></div><div class="rbox"><small>Produtos</small><b>${fmtN(db.produtos.length)}</b><span>${fmtN(ativos().reduce((s, p) => s + p.estoque, 0))} peça(s)</span></div><div class="rbox"><small>Vendas</small><b>${fmtN(db.vendas.length)}</b><span>${db.clientes.length} cliente(s)</span></div><div class="rbox"><small>Movimentações</small><b>${fmtN(db.movs.length)}</b><span>${db.condicionais.length} condicional(is) · ${db.entradas.length} entrada(s)</span></div></div>
     <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="exportar">Exportar backup</button><button class="btn" data-act="importar">Restaurar backup…</button></div></section>
@@ -1596,7 +1604,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -4245,6 +4253,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-11', itens: ['Novo menu Recursos Premium (administradores): mostra os recursos adicionais, quais estão liberados e como contratar.',
+    'Os recursos Premium são liberados um a um pela P.A.S Soluções Tecnológicas, dentro do código da licença (Configurações → Licença). A Venda pelo celular passou a ser um recurso Premium.',
+    'Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas das vendedoras.'] },
   { v: '2026.11.04-10', itens: ['Celular: a foto do produto tirada pela câmera do celular agora é salva (antes era recusada sem aviso).', 'Se a foto não puder ser salva, aparece o motivo na tela.'] },
   { v: '2026.11.04-09', itens: ['Celular: a tela de entrada mostra a logo e o nome da loja.', 'Celular: letras, botões e tabelas menores, para caber mais na tela.'] },
   { v: '2026.11.04-08', itens: ['Venda pelo celular: o QR Code da tela de liberação aparecia minúsculo; agora sai em tamanho legível para a câmera do celular.'] },
@@ -4892,6 +4903,7 @@ function secaoLicenca() {
       <div class="rbox"><small>Cliente</small><b style="font-size:14px">${l ? esc(l.cliente) : '—'}</b><span>${l ? 'CNPJ/CPF ' + esc(l.cnpj) : 'sem licença ativada'}</span></div>
       <div class="rbox"><small>Plano</small><b>${l ? esc(l.plano) : '—'}</b><span>${l ? l.pcs + ' computador(es) · código ' + esc(l.id) : ''}</span></div>
       <div class="rbox"><small>Validade</small><b>${l ? fmtDia(l.validade) : fmtDia(i.fimTol || hoje())}</b><span>${l ? 'tolerância até ' + fmtDia(i.fimTol) : 'fim da avaliação'}</span></div></div>
+    <p style="margin:10px 0 0"><b>Recursos Premium:</b> ${l && (l.recursos || []).length ? l.recursos.map(k => esc((PREMIUM.find(r => r.k === k) || { nome: k }).nome)).join(', ') : 'nenhum'} <button class="lnk" data-act="ir" data-v="premium">Ver Recursos Premium</button></p>
     ${i.erro ? `<p class="err">A licença gravada não foi aceita: ${esc(i.erro)}.</p>` : ''}
     <div class="form2" style="margin-top:12px"><label class="full">Código da licença (enviado pela P.A.S Soluções Tecnológicas)<textarea id="lic-cod" rows="3" placeholder="PAS1-…" spellcheck="false"></textarea></label></div>
     <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="ativarLicenca">${l ? 'Renovar / trocar licença' : 'Ativar licença'}</button></div>
@@ -5348,7 +5360,38 @@ ACT.verVersoes = () => {
     <h4 class="rel-sec">O que mudou em cada versão</h4>${NOVIDADES.map(n => `<div class="ver-bloco"><b>${esc(n.v)}</b>${n.v === VERSAO_APP ? ' <span class="tag ok">em uso</span>' : ja.has(n.v) ? ' <span class="tag ab">instalada</span>' : ''}<ul class="sg-dicas">${n.itens.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}`, '', true);
 };
 
-/* ===== Venda pelo celular (adicional liberado pelo master) =====
+/* ===== Recursos Premium (adicionais liberados pela licença) ===== */
+const PREMIUM = [
+  { k: 'celular', nome: 'Venda pelo celular', pronto: true, ic: '<rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
+    desc: 'As vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, com leitura do código de barras pela câmera e foto dos produtos.' },
+  { k: 'taxas', nome: 'Taxas de cartão e conciliação', ic: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+    desc: 'Taxas da maquininha por bandeira e parcela, quanto cai na conta e quando, e conferência com o extrato da operadora.' },
+  { k: 'inventario', nome: 'Inventário em lote com leitor', ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
+    desc: 'Conte o estoque passando o leitor (ou a câmera do celular) peça por peça; o sistema mostra as diferenças e ajusta tudo de uma vez.' },
+  { k: 'promocoes', nome: 'Promoções programadas', ic: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+    desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
+  { k: 'cashback', nome: 'Aniversariantes e cashback', ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+    desc: 'Aniversariantes do mês com mensagem pronta para o WhatsApp e crédito de cashback que o cliente usa na próxima compra.' },
+  { k: 'metas', nome: 'Metas das vendedoras', ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    desc: 'Meta do mês por vendedora, acompanhamento dia a dia e ranking, ligado às comissões.' }
+];
+const temRecurso = k => !!(licInfo && licInfo.l && licInfo.sit !== 'bloqueada' && (licInfo.l.recursos || []).indexOf(k) >= 0);
+function premium() {
+  const i = licInfo || {}, cnpj = db.config.cnpj || '(preencha o CNPJ em Configurações → Empresa)';
+  const nLib = PREMIUM.filter(r => temRecurso(r.k)).length;
+  const cartao = r => {
+    const lib = temRecurso(r.k), tag = !r.pronto ? (lib ? '<span class="tag ab">Liberado · chega na próxima versão</span>' : '<span class="tag in">Em breve</span>') : lib ? '<span class="tag ok">Liberado</span>' : '<span class="tag in">Bloqueado</span>';
+    return `<div class="pr-card${lib ? ' lib' : ''}"><div class="pr-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${r.ic}</svg></div><div><h3>${esc(r.nome)} ${tag}</h3><p class="mut">${esc(r.desc)}</p>
+      ${!lib ? `<p class="pr-cad"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Para liberar, fale com a P.A.S Soluções Tecnológicas.</p>` : ''}</div></div>`;
+  };
+  return `<h2>Recursos Premium</h2>
+  <section class="card"><p style="margin:0">Recursos adicionais que a loja contrata à parte e a P.A.S Soluções Tecnológicas libera um a um, pelo código da licença. <b>${nLib} de ${PREMIUM.length} liberado(s).</b></p>
+    <p class="mut" style="margin:6px 0 0">${i.sit === 'avaliacao' ? 'Durante o período de avaliação os recursos Premium ficam bloqueados. ' : i.sit === 'bloqueada' ? 'Com a licença vencida os recursos Premium ficam bloqueados. ' : ''}Para contratar, informe o CNPJ <b>${esc(cnpj)}</b>${i.l ? ' e o código da licença <b>' + esc(i.l.id) + '</b>' : ''}: você recebe um código novo, que é colado em Configurações → Licença, e o recurso abre na hora.
+    <button class="lnk" data-act="irLicenca">Ver licença</button></p></section>
+  <div class="pr-grade">${PREMIUM.map(cartao).join('')}</div>
+  ${temRecurso('celular') ? `<h3 class="rel-sec" style="margin-top:18px">Venda pelo celular</h3>${secaoCelular()}` : ''}`;
+}
+/* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
 const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'ajuda'];
@@ -5391,8 +5434,8 @@ function secaoCelular() {
   if (!MODO_SERVIDOR || MODO_REDE) return '<section class="card"><p class="mut">Disponível no computador do caixa, aberto pelo atalho Controle de Estoque.</p></section>';
   if (!srvInfo || !srvInfo.rede) return '<section class="card"><p class="err">O servidor deste computador precisa ser atualizado (versão 2026.11.04-07 ou mais nova) para liberar a venda pelo celular. Use Atualização do sistema.</p></section>';
   const r = srvInfo.rede, ligado = !!r.ativo;
-  return `<section class="card"><div class="cfg-cab"><h3>Venda pelo celular <span class="tag ${ligado ? 'ok' : 'in'}">${ligado ? 'liberada' : 'bloqueada'}</span></h3>
-      <p class="mut">Recurso adicional: as vendedoras vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Só o usuário master libera ou bloqueia.</p></div>
+  return `<section class="card"><div class="cfg-cab"><h3>Venda pelo celular <span class="tag ${ligado ? 'ok' : 'in'}">${ligado ? 'ligada' : 'desligada'}</span></h3>
+      <p class="mut">Recurso adicional: as vendedoras vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Recurso Premium liberado na licença; os administradores ligam ou desligam aqui.</p></div>
     ${r.erro ? `<p class="err">Não foi possível ligar: ${esc(r.erro)}</p>` : ''}
     ${ligado ? `<div class="cel-qr"><div>${qrSVG(r.instalar, 200)}<small>1. No celular, leia este QR Code (câmera) para instalar o certificado da loja e abrir o sistema</small></div>
       <div class="cel-end"><p><b>Instalar no celular:</b><br><code>${esc(r.instalar)}</code></p><p><b>Endereço do sistema no celular:</b><br><code>${esc(r.endereco)}</code></p>
@@ -5400,14 +5443,14 @@ function secaoCelular() {
       <ul class="sg-dicas"><li>Na primeira vez, o Windows pode perguntar se permite o acesso à rede: marque <b>Redes privadas</b> e clique em <b>Permitir</b> (precisa da senha de administrador do computador). Se o celular não abrir, o suporte roda <b>LIBERAR_CELULAR_NO_FIREWALL.bat</b> do pacote de instalação.</li>
       <li>Peça ao técnico da internet para <b>fixar o IP</b> deste computador no roteador. Se o IP mudar, o endereço acima muda (o certificado é refeito sozinho).</li>
       <li>Cada pessoa entra no celular com o próprio usuário e senha; o celular só vende e consulta.</li></ul>` : ''}
-    <div class="acoes" style="justify-content:flex-start;margin-top:10px">${ligado ? '<button class="btn perigo" data-act="celularRede" data-v="0">Bloquear venda pelo celular</button>' : '<button class="btn pri" data-act="celularRede" data-v="1">Liberar venda pelo celular</button>'}</div></section>`;
+    <div class="acoes" style="justify-content:flex-start;margin-top:10px">${ligado ? '<button class="btn perigo" data-act="celularRede" data-v="0">Desligar venda pelo celular</button>' : '<button class="btn pri" data-act="celularRede" data-v="1">Ligar venda pelo celular</button>'}</div></section>`;
 }
 ACT.celularRede = async el => {
-  if (!master()) return aviso('Somente o usuário master libera a venda pelo celular.', 'erro');
+  if (!adm() || !temRecurso('celular')) return aviso('A venda pelo celular não está liberada na licença desta loja (Recursos Premium).', 'erro');
   const ligar = el.dataset.v === '1';
-  try { const r = await apiJson('rede', 'POST', { ativo: ligar }); srvInfo = Object.assign(srvInfo || {}, { rede: r }); registrar(ligar ? 'Venda pelo celular liberada' : 'Venda pelo celular bloqueada', r.endereco || ''); salvar(); }
-  catch (e) { aviso('Não foi possível ' + (ligar ? 'liberar' : 'bloquear') + ': ' + e.message, 'erro'); await atualizarSrvInfo(); }
-  render(); if (ligar && srvInfo.rede && srvInfo.rede.ativo) aviso('Venda pelo celular liberada. Leia o QR Code com o celular.', 'ok');
+  try { const r = await apiJson('rede', 'POST', { ativo: ligar }); srvInfo = Object.assign(srvInfo || {}, { rede: r }); registrar(ligar ? 'Venda pelo celular ligada' : 'Venda pelo celular desligada', r.endereco || ''); salvar(); }
+  catch (e) { aviso('Não foi possível ' + (ligar ? 'ligar' : 'desligar') + ': ' + e.message, 'erro'); await atualizarSrvInfo(); }
+  render(); if (ligar && srvInfo.rede && srvInfo.rede.ativo) aviso('Venda pelo celular ligada. Leia o QR Code com o celular.', 'ok');
 };
 
 
