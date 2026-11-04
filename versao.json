@@ -1,14 +1,14 @@
 {
- "versao": "2026.11.04-11",
- "publicadoEm": "04/11/2026 14:21",
+ "versao": "2026.11.04-12",
+ "publicadoEm": "04/11/2026 14:38",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "22e239911547bfcd93cf8fb202e8d3ff166d07f27cd28d222b18deb8b37e4fb8",
- "tamanho": 581371,
- "assinatura": "csyofXNbtoNaTbjZn78hvdWZJ8SJhivwj/agniODcYWiN2eKjidhSKjrRCd6S1DD7ktr188tXGfEp0py/HJYrDZNDyKTdvq87/VEj0A56aD+jPvZVwLQywvHhwn/rzApCnop+w3jh7MXaiDVK34vEbSXffb/LE4PB4EmjulAUhyK+zAZOC9FqSjUng+8dgaTFowf2zb54iwibwvODR0nJVqCQL41grAqVtbsqurkWpILy9wDch+3xrgKkZ8ByU5glNINkhoOHgq0/ZItXRuaHZqLNkHTsOMIiLaMLLwcAlYkoNZK0ygEFVvxrGuA4vktQHiuOP7XAPVN7VklkOm2zutWfMD1gS8CJmBxCMxvgsZ8tzM5hjPE88UAD6KEmF488kwVaftBmAh4JOMLvfBfvvXYT/PbjbDlaKQqAGGHFRYV7bY6SN+pTPQe4UL5cBW0L+55aCO8Vys31Ub7Fqv39soawyrSpaS+lR7L5qqGFvaAf4+xLIysjnEVxkp3OG8i",
+ "sha256": "65bce3d29ce679b33985e11814a522c4c3fa33a71be893576b51406e9f313c01",
+ "tamanho": 600007,
+ "assinatura": "lR6Vk37o8QLDEi9FB3mGbRrcOC8c0/qV2yRes5SfrwgylqTxEOvls08ZLdVt0/+s8FtuCcZIRMwEKDKRYXiIKDgt9jMQ9sN0xqkcTp2nykhDeHYNI2g67zB2siUm2tlf0i0Hmi8zc5o0xEtMkgI9YLHjtFB9rvUxf91ftDxeOenUMnMOoeBUEf1AEpZAHP/fV08TxZVBl4YQAHswWHqMFpvbXmFzI8aDyA166x1njvtBO2COOoz0osnRcxdlFRrl9vrvrYz/2Ay4DXxzeLSOTE7Ns6jKvOvdsjrxNT1ppdcS86crZwo6IekEFRtHyWCaHQhxQ8s9lUQcTRGgsZ8fRVfRHCTTbKpqj6nibsu0e/ezcntdtMY95zG47dxGXeUoVM/FrG/t2YpY7sCLsv0HPIusiYy8F1kF2mmugQ/uNy5Bm89PVK72xB4wyArKgN/D/R67U4AWPKGg7KzyNkluc0Ugx5IsZAulXezXx+E93XDTAYEXHxEOYhub/hDyW0gP",
  "novidades": [
-  "Novo menu Recursos Premium (administradores): mostra os recursos adicionais, quais estão liberados e como contratar.",
-  "Os recursos Premium são liberados um a um pela P.A.S Soluções Tecnológicas, dentro do código da licença (Configurações → Licença). A Venda pelo celular passou a ser um recurso Premium.",
-  "Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas das vendedoras."
+  "Recurso Premium \"Taxas de cartão e conciliação\": cadastro das maquininhas com as taxas de débito, crédito à vista e parcelado (2x a 12x) e os prazos de recebimento.",
+  "Na venda com cartão: escolha da maquininha (se houver mais de uma) e das parcelas do crédito. A taxa e o prazo ficam gravados na venda.",
+  "Novo menu Cartões a receber: quanto cai na conta e em que dia, por maquininha, com o total das taxas pagas. Conferência do depósito: digite quanto caiu no banco e o sistema mostra a diferença. Sai em PDF e Excel."
  ],
  "servidor": {
   "versao": "2026.11.04-11",

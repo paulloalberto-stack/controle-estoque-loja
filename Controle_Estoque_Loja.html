@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-11">
+<meta name="versao-sistema" content="2026.11.04-12">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -51,7 +51,7 @@ small{display:block;font-size:11px;color:var(--mut)}
 #nav button:hover{background:rgba(255,255,255,.08)}
 #nav button.on{background:#fff;color:var(--pri)}
 .pags{margin:10px 0}
-.pag-lin{display:flex;gap:8px;align-items:center;margin:4px 0;max-width:520px}
+.pag-lin{display:flex;gap:8px;align-items:center;margin:4px 0;max-width:760px;flex-wrap:wrap}
 .pag-lin select{flex:1}
 .tabs-sub{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .res td.n{font-variant-numeric:tabular-nums}
@@ -549,6 +549,8 @@ input[data-maiusc]::placeholder{text-transform:none}
   .grid2{grid-template-columns:1fr}
 }
 /* recursos premium */
+.mq-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fafbfc}
+.mq-parc{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}.mq-parc input{width:100%}
 .pr-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
 .pr-card{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--sh)}
 .pr-card h3{margin:0 0 4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -685,7 +687,8 @@ const filtros = {
   fin: { de: '', ate: '', aba: 'receber' },
   com: { de: '', ate: '' },
   log: { de: '', ate: '', u: '', cat: '', busca: '', nav: '' },
-  cfg: { aba: 'empresa' }
+  cfg: { aba: 'empresa' },
+  car: { de: '', ate: '', maq: '', sit: '' }
 };
 
 /* ===== Utilidades ===== */
@@ -1208,6 +1211,7 @@ const ICONES = {
   movs: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   comissoes: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+  cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   relatorios: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
@@ -1217,15 +1221,16 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
   $('#login').hidden = true; $('#app').hidden = false;
   const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || (m[3] === 'master' && !master())) view = 'painel';
   if (MODO_REDE && VIEWS_REDE.indexOf(view) < 0) view = 'vendas';
+  if (view === 'cartoes' && !temRecurso('taxas')) view = 'premium';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0)).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1604,7 +1609,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, cartoes, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1860,7 +1865,7 @@ ACT.finalizarVenda = () => {
 /* pagamentos: várias formas, troco, crediário e crédito do cliente */
 function totalVenda() { const sub = r2(carrinho.venda.reduce((s, i) => s + i.qtd * i.valor, 0)); return r2(sub - calcDesconto(sub, form.venda.desc, form.venda.desct)); }
 function calcPags(pags, total) {
-  const l = pags.map(p => ({ forma: p.forma, valor: String(p.valor).trim() === '' ? null : r2(num(p.valor)) }));
+  const l = pags.map(p => ({ forma: p.forma, valor: String(p.valor).trim() === '' ? null : r2(num(p.valor)), maq: p.maq, parc: p.parc }));
   const resto = r2(total - l.reduce((s, x) => s + (x.valor || 0), 0));
   let primeira = true; l.forEach(x => { if (x.valor == null) { x.valor = primeira ? Math.max(0, resto) : 0; primeira = false; } });
   const soma = r2(l.reduce((s, x) => s + x.valor, 0)), dif = r2(soma - total);
@@ -1868,7 +1873,7 @@ function calcPags(pags, total) {
 }
 function blocoPag() {
   const f = form.venda;
-  return `<div class="pags"><label>Pagamento</label>${f.pags.map((p, i) => `<div class="pag-lin"><select data-pag="${i}" data-campo="forma">${PAGAMENTOS.map(x => `<option ${x === p.forma ? 'selected' : ''}>${x}</option>`).join('')}</select><input class="val" data-pag="${i}" data-campo="valor" value="${esc(p.valor)}" placeholder="${String(p.valor).trim() ? '' : 'restante'}">${f.pags.length > 1 ? `<button class="lnk perigo" data-act="tirarPag" data-i="${i}">remover</button>` : ''}</div>`).join('')}
+  return `<div class="pags"><label>Pagamento</label>${f.pags.map((p, i) => `<div class="pag-lin"><select data-pag="${i}" data-campo="forma">${PAGAMENTOS.map(x => `<option ${x === p.forma ? 'selected' : ''}>${x}</option>`).join('')}</select><input class="val" data-pag="${i}" data-campo="valor" value="${esc(p.valor)}" placeholder="${String(p.valor).trim() ? '' : 'restante'}">${extraPagCartao(p, i)}${f.pags.length > 1 ? `<button class="lnk perigo" data-act="tirarPag" data-i="${i}">remover</button>` : ''}</div>`).join('')}
     <button class="lnk" data-act="addPag">+ dividir com outra forma de pagamento</button>${f.pags.some(p => p.forma === 'Pix') ? ' <button class="btn ac" data-act="pixVenda">QR Code Pix</button>' : ''}</div>
     ${f.pags.some(p => p.forma === CREDIARIO) ? `<div class="form3"><label>Parcelas do crediário<input type="number" min="1" max="24" data-f="venda.parc" value="${esc(f.parc)}"></label><label>1º vencimento<input type="date" data-f="venda.venc1" value="${esc(f.venc1 || somaDias(30))}"></label></div>` : ''}`;
 }
@@ -1888,12 +1893,13 @@ function validarPags(pags, total, cl, parc, venc1) {
   if ((cred || praz) && !cl) { aviso('Crediário e crédito do cliente exigem cliente cadastrado. Escolha o cliente na lista ou cadastre.', 'erro'); return null; }
   if (cred && cred > saldoCredito(cl.id) + 0.001) { aviso(`Crédito disponível do cliente: ${fmtR(saldoCredito(cl.id))}.`, 'erro'); return null; }
   let troco = r.troco; const linhas = [];
-  r.linhas.slice().reverse().forEach(x => { let v = x.valor; if (troco && x.forma === 'Dinheiro') { const t = Math.min(troco, v); v = r2(v - t); troco = r2(troco - t); } if (v > 0) linhas.unshift({ forma: x.forma, valor: v }); });
+  r.linhas.slice().reverse().forEach(x => { let v = x.valor; if (troco && x.forma === 'Dinheiro') { const t = Math.min(troco, v); v = r2(v - t); troco = r2(troco - t); } if (v > 0) linhas.unshift(Object.assign({ forma: x.forma, valor: v }, x.maq != null && x.maq !== '' ? { maq: x.maq } : {}, x.parc ? { parc: x.parc } : {})); });
   return { linhas, troco: r.troco, recebidoDinheiro: din, cred, praz, parc: Math.max(1, Math.min(24, int(parc) || 1)), venc1: venc1 || somaDias(30), cl };
 }
 function registrarPags(v, pg) {
   v.pagamentos = pg.linhas; v.troco = pg.troco; v.dinheiroRecebido = pg.recebidoDinheiro;
   v.pagamento = pg.linhas.map(x => x.forma).join(' + ');
+  gravarTaxasVenda(v);   // Premium: taxa e prazo do cartão
   if (pg.cred) db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: pg.cl.id, valor: -pg.cred, ref: 'Usado na venda nº ' + nDoc(v.id), usuario: eu.nome });
   if (pg.praz) gerarParcelas(v, pg.praz, pg.parc, pg.venc1);
 }
@@ -4031,6 +4037,7 @@ function onCampo(e) {
     if (g === 'mov') $('#tb-mov').innerHTML = tabelaMovs();
     if (g === 'vh') $('#lista-vh').innerHTML = listaVh();
     if (g === 'rel') $('#rel').innerHTML = conteudoRel();
+    if (g === 'car' && $('#car-corpo')) $('#car-corpo').innerHTML = corpoCartoes();
     if (['cli', 'rec', 'fin'].indexOf(g) >= 0) { /* tratado abaixo */ }
   }
   if (d.cart) {
@@ -4253,6 +4260,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-12', itens: ['Recurso Premium "Taxas de cartão e conciliação": cadastro das maquininhas com as taxas de débito, crédito à vista e parcelado (2x a 12x) e os prazos de recebimento.',
+    'Na venda com cartão: escolha da maquininha (se houver mais de uma) e das parcelas do crédito. A taxa e o prazo ficam gravados na venda.',
+    'Novo menu Cartões a receber: quanto cai na conta e em que dia, por maquininha, com o total das taxas pagas. Conferência do depósito: digite quanto caiu no banco e o sistema mostra a diferença. Sai em PDF e Excel.'] },
   { v: '2026.11.04-11', itens: ['Novo menu Recursos Premium (administradores): mostra os recursos adicionais, quais estão liberados e como contratar.',
     'Os recursos Premium são liberados um a um pela P.A.S Soluções Tecnológicas, dentro do código da licença (Configurações → Licença). A Venda pelo celular passou a ser um recurso Premium.',
     'Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas das vendedoras.'] },
@@ -5364,7 +5374,7 @@ ACT.verVersoes = () => {
 const PREMIUM = [
   { k: 'celular', nome: 'Venda pelo celular', pronto: true, ic: '<rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
     desc: 'As vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, com leitura do código de barras pela câmera e foto dos produtos.' },
-  { k: 'taxas', nome: 'Taxas de cartão e conciliação', ic: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+  { k: 'taxas', nome: 'Taxas de cartão e conciliação', pronto: true, ic: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
     desc: 'Taxas da maquininha por bandeira e parcela, quanto cai na conta e quando, e conferência com o extrato da operadora.' },
   { k: 'inventario', nome: 'Inventário em lote com leitor', ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
     desc: 'Conte o estoque passando o leitor (ou a câmera do celular) peça por peça; o sistema mostra as diferenças e ajusta tudo de uma vez.' },
@@ -5390,6 +5400,173 @@ function premium() {
     <button class="lnk" data-act="irLicenca">Ver licença</button></p></section>
   <div class="pr-grade">${PREMIUM.map(cartao).join('')}</div>
   ${temRecurso('celular') ? `<h3 class="rel-sec" style="margin-top:18px">Venda pelo celular</h3>${secaoCelular()}` : ''}`;
+}
+/* ===== Premium: taxas de cartão e conciliação =====
+   Cada maquininha tem taxa de débito, crédito à vista e parcelado (2x a 12x) e o prazo em dias. Na venda, a taxa e o prazo
+   ficam gravados no pagamento (mudar a taxa depois não muda o passado). Daí saem os recebíveis: quanto cai na conta e quando.
+   Conferência: para cada dia e maquininha, a loja digita quanto caiu de fato no banco e o sistema mostra a diferença. */
+const CARTOES = ['Cartão de débito', 'Cartão de crédito'];
+const maquininhas = () => (db.config.maquininhas || []).filter(m => m.ativa !== false);
+const maqPorId = id => (db.config.maquininhas || []).find(m => m.id === id) || null;
+function taxaMaq(m, forma, parc) {
+  if (!m) return 0;
+  if (forma === 'Cartão de débito') return num(m.debito);
+  parc = int(parc) || 1;
+  return parc <= 1 ? num(m.credito) : num((m.parcelado || [])[parc - 2]) || num(m.credito);
+}
+const prazoMaq = (m, forma) => forma === 'Cartão de débito' ? (m && m.diasDeb !== '' && m.diasDeb != null ? int(m.diasDeb) : 1) : (m && m.diasCred !== '' && m.diasCred != null ? int(m.diasCred) : 30);
+function diaUtil(iso) { const d = new Date(iso + 'T12:00:00'); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1); return dataLocal(d); }
+// grava na venda a maquininha, as parcelas, a taxa e o prazo de cada pagamento com cartão
+function gravarTaxasVenda(v) {
+  if (!temRecurso('taxas')) return;
+  (v.pagamentos || []).forEach(p => {
+    if (CARTOES.indexOf(p.forma) < 0) { delete p.maq; delete p.parc; return; }
+    const m = maqPorId(+p.maq) || maquininhas()[0]; if (!m) return;
+    p.maq = m.id; p.maqNome = m.nome; p.parc = p.forma === 'Cartão de crédito' ? Math.max(1, Math.min(12, int(p.parc) || 1)) : 1;
+    p.taxa = taxaMaq(m, p.forma, p.parc); p.dias = prazoMaq(m, p.forma); p.antecipa = !!m.antecipa;
+  });
+  v.pagamento = (v.pagamentos || []).map(p => p.forma + (p.parc > 1 ? ' ' + p.parc + 'x' : '')).join(' + ');
+}
+// recebíveis de cartão (uma linha por parcela)
+function recebiveis() {
+  const out = [], pad = maquininhas()[0] || null;
+  vendasValidas().forEach(v => pagsVenda(v).forEach(p => {
+    if (CARTOES.indexOf(p.forma) < 0 || !(p.valor > 0)) return;
+    const est = p.taxa == null, m = est ? (maqPorId(+p.maq) || pad) : null;
+    const taxa = est ? taxaMaq(m, p.forma, p.parc) : num(p.taxa), dias = est ? prazoMaq(m, p.forma) : int(p.dias);
+    const n = p.forma === 'Cartão de crédito' && !(est ? m && m.antecipa : p.antecipa) ? Math.max(1, int(p.parc) || 1) : 1;
+    const maq = est ? (m ? m.nome : '(sem maquininha)') : (p.maqNome || '—'), dv = v.data.slice(0, 10);
+    const taxaV = r2(p.valor * taxa / 100), liq = r2(p.valor - taxaV);
+    const bB = Math.floor(p.valor / n * 100) / 100, bL = Math.floor(liq / n * 100) / 100;
+    for (let k = 1; k <= n; k++) {
+      const bruto = k === n ? r2(p.valor - bB * (n - 1)) : bB, liquido = k === n ? r2(liq - bL * (n - 1)) : bL;
+      out.push({ venda: v.id, dataVenda: dv, forma: p.forma, parc: k, de: int(p.parc) || 1, maq, taxa, bruto, tarifa: r2(bruto - liquido), liquido, est,
+        prev: diaUtil(somaDiasDe(dv, dias + 30 * (k - 1))) });
+    }
+  }));
+  return out.sort((a, b) => a.prev.localeCompare(b.prev) || a.venda - b.venda);
+}
+const chaveConc = (data, maq) => data + '|' + maq;
+const concDe = (data, maq) => (db.conciliacoes || []).filter(c => c.chave === chaveConc(data, maq)).pop();
+// agenda: um grupo por dia previsto + maquininha
+function agendaCartoes(lista) {
+  const g = {};
+  lista.forEach(r => { const k = chaveConc(r.prev, r.maq); (g[k] = g[k] || { data: r.prev, maq: r.maq, itens: [], bruto: 0, tarifa: 0, liquido: 0 }); const x = g[k]; x.itens.push(r); x.bruto = r2(x.bruto + r.bruto); x.tarifa = r2(x.tarifa + r.tarifa); x.liquido = r2(x.liquido + r.liquido); });
+  return Object.values(g).sort((a, b) => a.data.localeCompare(b.data) || a.maq.localeCompare(b.maq)).map(x => {
+    const c = concDe(x.data, x.maq), dif = c ? r2(c.recebido - x.liquido) : null;
+    x.conc = c; x.dif = dif; x.sit = c ? (Math.abs(dif) < 0.01 ? 'ok' : 'dif') : x.data <= hoje() ? 'pend' : 'futuro';
+    return x;
+  });
+}
+const SIT_CAR = { ok: ['ok', 'Conferido'], dif: ['bx', 'Diferença'], pend: ['at', 'Conferir'], futuro: ['ab', 'A receber'] };
+function cartoes() {
+  const f = filtros.car;
+  if (!f.de) { f.de = hoje().slice(0, 8) + '01'; f.ate = fimMes(f.de); }
+  const nomes = [...new Set((db.config.maquininhas || []).map(m => m.nome).concat(recebiveis().map(r => r.maq)))];
+  return `<h2>Cartões a receber</h2>
+  ${maquininhas().length ? '' : '<div class="alerta">Cadastre a(s) maquininha(s) e as taxas para o sistema calcular quanto cai na conta e quando. <button class="lnk" data-act="maqConfig">Cadastrar maquininha</button></div>'}
+  <section class="card"><div class="filtros"><label>Previsão de<input type="date" data-filtro="car.de" value="${f.de}"></label><label>até<input type="date" data-filtro="car.ate" value="${f.ate}"></label>
+    <label>Maquininha<select data-filtro="car.maq"><option value="">Todas</option>${nomes.map(n => `<option ${n === f.maq ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <label>Situação<select data-filtro="car.sit">${[['', 'Todas'], ['pend', 'A conferir'], ['dif', 'Com diferença'], ['ok', 'Conferidas'], ['futuro', 'A receber']].map(([k, t]) => `<option value="${k}" ${k === f.sit ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+    <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="maqConfig">Maquininhas e taxas</button><button class="btn" data-act="carExportar">PDF / Excel</button></div></div>
+    <div id="car-corpo">${corpoCartoes()}</div></section>`;
+}
+function filtrarCartoes() {
+  const f = filtros.car;
+  return agendaCartoes(recebiveis().filter(r => r.prev >= f.de && r.prev <= f.ate && (!f.maq || r.maq === f.maq))).filter(x => !f.sit || x.sit === f.sit);
+}
+function corpoCartoes() {
+  const ag = filtrarCartoes(), soma = (l, k) => r2(l.reduce((s, x) => s + x[k], 0));
+  const fut = ag.filter(x => x.sit === 'futuro'), pend = ag.filter(x => x.sit === 'pend'), dif = ag.filter(x => x.sit === 'dif');
+  const est = ag.some(x => x.itens.some(r => r.est));
+  return `<div class="resumo-tit">
+      <div class="rbox"><small>Vendido no cartão (bruto)</small><b>${fmtR(soma(ag, 'bruto'))}</b><span>${ag.reduce((s, x) => s + x.itens.length, 0)} lançamento(s)</span></div>
+      <div class="rbox"><small>Taxas da maquininha</small><b class="err">${fmtR(soma(ag, 'tarifa'))}</b><span>${soma(ag, 'bruto') ? (soma(ag, 'tarifa') / soma(ag, 'bruto') * 100).toFixed(2).replace('.', ',') + '% do bruto' : ''}</span></div>
+      <div class="rbox ok"><small>Líquido que cai na conta</small><b>${fmtR(soma(ag, 'liquido'))}</b><span>a receber: ${fmtR(soma(fut, 'liquido'))}</span></div>
+      <div class="rbox ${pend.length || dif.length ? 'at' : ''}"><small>Conferência</small><b>${pend.length} a conferir</b><span>${dif.length ? dif.length + ' com diferença (' + fmtR(r2(dif.reduce((s, x) => s + x.dif, 0))) + ')' : 'nenhuma diferença'}</span></div></div>
+    ${est ? '<p class="mut">Vendas feitas antes do cadastro das taxas aparecem com a taxa atual da maquininha (estimada, marcada com *).</p>' : ''}
+    ${ag.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Cai na conta</th><th>Maquininha</th><th class="n">Lanç.</th><th class="n">Bruto</th><th class="n">Taxas</th><th class="n">Líquido esperado</th><th class="n">Caiu na conta</th><th class="n">Diferença</th><th>Situação</th><th></th></tr></thead><tbody>
+      ${ag.map(x => `<tr><td>${fmtDia(x.data)}</td><td>${esc(x.maq)}${x.itens.some(r => r.est) ? ' *' : ''}</td><td class="n">${x.itens.length}</td><td class="n">${fmtR(x.bruto)}</td><td class="n">${fmtR(x.tarifa)}</td><td class="n"><b>${fmtR(x.liquido)}</b></td>
+        <td class="n">${x.conc ? fmtR(x.conc.recebido) : '—'}</td><td class="n ${x.dif < 0 ? 'err' : ''}">${x.dif == null ? '—' : fmtR(x.dif)}</td><td><span class="tag ${SIT_CAR[x.sit][0]}">${SIT_CAR[x.sit][1]}</span></td>
+        <td class="n"><button class="lnk" data-act="carDetalhe" data-k="${esc(chaveConc(x.data, x.maq))}">Ver</button>${x.data <= hoje() ? ` <button class="lnk" data-act="carConferir" data-k="${esc(chaveConc(x.data, x.maq))}">${x.conc ? 'Refazer' : 'Conferir'}</button>` : ''}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="2">Total · ${ag.length} dia(s)</td><td class="n">${ag.reduce((s, x) => s + x.itens.length, 0)}</td><td class="n">${fmtR(soma(ag, 'bruto'))}</td><td class="n">${fmtR(soma(ag, 'tarifa'))}</td><td class="n">${fmtR(soma(ag, 'liquido'))}</td>
+        <td class="n">${fmtR(r2(ag.filter(x => x.conc).reduce((s, x) => s + x.conc.recebido, 0)))}</td><td class="n">${fmtR(r2(ag.filter(x => x.dif != null).reduce((s, x) => s + x.dif, 0)))}</td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhum recebível de cartão no período.</p>'}`;
+}
+const grupoCartao = k => { const [data, maq] = k.split('|'); return agendaCartoes(recebiveis().filter(r => r.prev === data && r.maq === maq))[0]; };
+ACT.carDetalhe = el => {
+  const x = grupoCartao(el.dataset.k); if (!x) return;
+  modalAnalitico(`Cartões – ${x.maq} – ${fmtDia(x.data)}`, `Lançamentos que caem na conta em ${fmtDia(x.data)}`,
+    [C('Venda', 's'), C('Data da venda', 's'), C('Forma', 's'), C('Parcela', 's'), C('Bruto', 'r'), C('Taxa %', 's'), C('Taxa R$', 'r'), C('Líquido', 'r')],
+    x.itens.map(r => ({ c: [nDoc(r.venda), fmtDia(r.dataVenda), r.forma, r.de > 1 ? r.parc + '/' + r.de : 'à vista', r.bruto, fmtDec(r.taxa) + '%' + (r.est ? ' *' : ''), r.tarifa, r.liquido] }))
+      .concat([{ forte: true, c: ['Total', '', '', '', x.bruto, '', x.tarifa, x.liquido] }]));
+};
+ACT.carConferir = el => {
+  const x = grupoCartao(el.dataset.k); if (!x) return;
+  abrirModal(`Conferir depósito – ${esc(x.maq)} – ${fmtDia(x.data)}`, `<p>Líquido esperado: <b>${fmtR(x.liquido)}</b> (${x.itens.length} lançamento(s), bruto ${fmtR(x.bruto)}, taxas ${fmtR(x.tarifa)}).</p>
+    <div class="form2"><label>Valor que caiu na conta<input id="cc-valor" class="val" value="${x.conc ? fmtDec(x.conc.recebido) : fmtDec(x.liquido)}" inputmode="decimal"></label><label>Observação<input id="cc-obs" value="${esc(x.conc ? x.conc.obs || '' : '')}" placeholder="ex.: aluguel da maquininha descontado"></label></div>
+    <p class="mut">Confira no extrato do banco ou no aplicativo da maquininha. Se o valor for diferente, a diferença fica marcada para você cobrar a operadora.</p>`,
+    `<button class="btn pri" data-act="carConfirmar" data-k="${esc(el.dataset.k)}">Gravar conferência</button>`);
+};
+ACT.carConfirmar = el => {
+  const x = grupoCartao(el.dataset.k); if (!x) return;
+  const v = r2(num($('#cc-valor').value)); if (!(v >= 0)) return aviso('Informe o valor que caiu na conta.', 'erro');
+  db.conciliacoes = (db.conciliacoes || []).filter(c => c.chave !== el.dataset.k);
+  db.conciliacoes.push({ id: db.seq.conc = (db.seq.conc || 0) + 1, chave: el.dataset.k, data: x.data, maq: x.maq, esperado: x.liquido, recebido: v, dif: r2(v - x.liquido), obs: $('#cc-obs').value.trim(), em: agora(), por: eu.nome });
+  registrar('Depósito de cartão conferido', `${x.maq} ${fmtDia(x.data)}: esperado ${fmtR(x.liquido)}, caiu ${fmtR(v)}`); salvar(); fecharModal(); render();
+  aviso(Math.abs(v - x.liquido) < 0.01 ? 'Conferido: o valor bate.' : `Conferido com diferença de ${fmtR(r2(v - x.liquido))}.`, Math.abs(v - x.liquido) < 0.01 ? 'ok' : 'erro');
+};
+ACT.carExportar = () => {
+  const ag = filtrarCartoes(), f = filtros.car, linhas = [];
+  ag.forEach(x => linhas.push({ c: [fmtDia(x.data), x.maq, x.itens.length, x.bruto, x.tarifa, x.liquido, x.conc ? x.conc.recebido : '', x.dif == null ? '' : x.dif, SIT_CAR[x.sit][1]] }));
+  const s = k => r2(ag.reduce((a, x) => a + x[k], 0));
+  linhas.push({ forte: true, c: ['Total', '', ag.reduce((a, x) => a + x.itens.length, 0), s('bruto'), s('tarifa'), s('liquido'), r2(ag.filter(x => x.conc).reduce((a, x) => a + x.conc.recebido, 0)), r2(ag.filter(x => x.dif != null).reduce((a, x) => a + x.dif, 0)), ''] });
+  modalAnalitico('Cartões a receber', `Previsão de ${fmtDia(f.de)} a ${fmtDia(f.ate)}${f.maq ? ' · ' + f.maq : ''}`,
+    [C('Cai na conta', 's'), C('Maquininha', 's'), C('Lançamentos', 'i'), C('Bruto', 'r'), C('Taxas', 'r'), C('Líquido esperado', 'r'), C('Caiu na conta', 'r'), C('Diferença', 'r'), C('Situação', 's')], linhas);
+};
+// cadastro das maquininhas
+function linhaMaq(m, i) {
+  const pc = k => `<label>${k}x<input class="val mq-p" data-k="${k}" value="${esc(fmtDec0((m.parcelado || [])[k - 2]))}"></label>`;
+  return `<div class="mq-card" data-i="${i}"><div class="form3"><label>Nome da maquininha<input class="mq-nome" value="${esc(m.nome || '')}" placeholder="ex.: Stone, Cielo, PagSeguro"></label>
+      <label>Débito (%)<input class="val mq-deb" value="${esc(fmtDec0(m.debito))}"></label><label>Débito cai em (dias)<input class="val mq-ddeb" type="number" min="0" value="${m.diasDeb == null ? 1 : m.diasDeb}"></label>
+      <label>Crédito à vista (%)<input class="val mq-cred" value="${esc(fmtDec0(m.credito))}"></label><label>Crédito cai em (dias)<input class="val mq-dcred" type="number" min="0" value="${m.diasCred == null ? 30 : m.diasCred}"></label>
+      <label class="chk" style="align-self:end"><input type="checkbox" class="mq-ant" ${m.antecipa ? 'checked' : ''}> Recebimento antecipado (parcelado cai todo de uma vez)</label></div>
+    <p class="mut" style="margin:8px 0 4px">Crédito parcelado (%) – deixe em branco para usar a taxa do crédito à vista</p><div class="mq-parc">${[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(pc).join('')}</div>
+    <div class="acoes" style="justify-content:space-between"><label class="chk"><input type="checkbox" class="mq-ativa" ${m.ativa !== false ? 'checked' : ''}> Em uso</label><button class="lnk perigo" data-act="maqTirar" data-i="${i}">remover</button></div></div>`;
+}
+const fmtDec0 = v => v === '' || v == null ? '' : fmtDec(v);
+let maqTemp = [];
+ACT.maqConfig = () => {
+  if (!adm()) return aviso('Somente administradores cadastram as maquininhas.', 'erro');
+  maqTemp = JSON.parse(JSON.stringify(db.config.maquininhas || [])); if (!maqTemp.length) maqTemp.push({ id: 1, nome: '', ativa: true });
+  desenharMaq();
+};
+function desenharMaq() {
+  abrirModal('Maquininhas e taxas', `<p class="mut">Taxas cobradas pela operadora em cada venda. Os dias são corridos a partir da venda; se cair no fim de semana, passa para segunda-feira (feriados não são considerados). A primeira maquininha em uso é a padrão na venda.</p>
+    <div id="mq-lista">${maqTemp.map(linhaMaq).join('')}</div><button class="btn" data-act="maqNova">+ Outra maquininha</button>`,
+    '<button class="btn pri" data-act="maqSalvar">Salvar taxas</button>', true);
+}
+const lerMaqTela = () => $$('.mq-card').forEach(c => {
+  const m = maqTemp[+c.dataset.i], q = s => c.querySelector(s), nv = s => { const t = q(s).value.trim(); return t === '' ? '' : r2(num(t)); };
+  m.nome = q('.mq-nome').value.trim(); m.debito = nv('.mq-deb'); m.credito = nv('.mq-cred'); m.diasDeb = int(q('.mq-ddeb').value); m.diasCred = int(q('.mq-dcred').value);
+  m.antecipa = q('.mq-ant').checked; m.ativa = q('.mq-ativa').checked; m.parcelado = [...c.querySelectorAll('.mq-p')].map(x => x.value.trim() === '' ? '' : r2(num(x.value)));
+});
+ACT.maqNova = () => { lerMaqTela(); maqTemp.push({ id: Math.max(0, ...maqTemp.map(m => m.id || 0)) + 1, nome: '', ativa: true }); desenharMaq(); };
+ACT.maqTirar = el => { lerMaqTela(); maqTemp.splice(+el.dataset.i, 1); desenharMaq(); };
+ACT.maqSalvar = () => {
+  lerMaqTela();
+  const ok = maqTemp.filter(m => m.nome);
+  if (maqTemp.some(m => !m.nome)) return aviso('Dê um nome a cada maquininha (ou remova a que está em branco).', 'erro');
+  if (new Set(ok.map(m => m.nome.toLowerCase())).size !== ok.length) return aviso('Há duas maquininhas com o mesmo nome.', 'erro');
+  if (ok.some(m => [m.debito, m.credito].concat(m.parcelado).some(t => t !== '' && (t < 0 || t > 30)))) return aviso('Confira as taxas: use o percentual (ex.: 1,99), entre 0 e 30.', 'erro');
+  db.config.maquininhas = ok; registrar('Taxas das maquininhas alteradas', ok.map(m => `${m.nome}: déb ${fmtDec0(m.debito) || 0}% cré ${fmtDec0(m.credito) || 0}%`).join('; '));
+  salvar(); fecharModal(); render(); aviso('Taxas salvas. Valem para as próximas vendas.', 'ok');
+};
+// na venda: maquininha e parcelas do cartão
+function extraPagCartao(p, i) {
+  if (!temRecurso('taxas') || CARTOES.indexOf(p.forma) < 0 || !maquininhas().length) return '';
+  const ms = maquininhas(), m = maqPorId(+p.maq) || ms[0];
+  return `${ms.length > 1 ? `<select data-pag="${i}" data-campo="maq" title="Maquininha">${ms.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>` : ''}
+    ${p.forma === 'Cartão de crédito' ? `<select data-pag="${i}" data-campo="parc" title="Parcelas no cartão">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(k => `<option value="${k}" ${k === (int(p.parc) || 1) ? 'selected' : ''}>${k === 1 ? 'à vista' : k + 'x'}</option>`).join('')}</select>` : ''}`;
 }
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
