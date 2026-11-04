@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-01">
+<meta name="versao-sistema" content="2026.11.04-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -514,6 +514,8 @@ input[data-maiusc]::placeholder{text-transform:none}
 .kpi-link:hover::after{opacity:1}
 .anal-dias{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 10px;font-size:12.5px}
 .alerta-nuvem{background:#eef4ff;border-color:#bcd0f7;color:#1d3a7a}
+.tp-linha{display:grid;grid-template-columns:1.3fr .55fr 2.2fr 1.3fr .8fr .6fr;gap:8px;align-items:center;margin-bottom:6px}.tp-cab{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+@media (max-width:900px){.tp-linha{grid-template-columns:1fr 1fr}.tp-cab{display:none}}
 .alerta-lic-erro{background:#fff1ec;border-color:#f6c6b4;color:#7a2810}
 .ic-prev{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:10px;border:1px dashed var(--line);border-radius:10px;background:repeating-conic-gradient(#f1f2f4 0 25%,#fff 0 50%) 0 0/16px 16px}.ic-prev>span:not(.mut){display:flex;flex-direction:column;align-items:center;gap:4px}.ic-prev small{color:var(--mut);font-size:11px}.ic-prev img{image-rendering:auto}
 .aj-busca label{display:block;font-weight:700}.aj-busca input{margin-top:6px;font-size:15px;padding:10px 12px}
@@ -607,7 +609,7 @@ const PREFIXO = { 'Camisa': 'CAM', 'Camiseta': 'CMT', 'Polo': 'POL', 'Calça': '
 const CREDIARIO = 'Crediário / a prazo', CREDITO = 'Crédito do cliente (vale-troca)';
 const PAGAMENTOS = ['Dinheiro', 'Pix', 'Cartão de débito', 'Cartão de crédito', CREDIARIO, CREDITO];
 const FAIXAS = [[0, 100, 'Até R$ 100'], [100, 200, 'R$ 100 a 200'], [200, 300, 'R$ 200 a 300'], [300, 1e12, 'Acima de R$ 300']];
-const ORDEM_TAM = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'XXG', 'EXG', 'G1', 'G2', 'G3', 'G4'];
+const ORDEM_TAM = ['RN', 'PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'XXG', 'EXG', 'G1', 'G2', 'G3', 'G4', 'U', 'UN', 'UNICO', 'ÚNICO'];
 
 /* ===== Estado ===== */
 let db, eu = null, view = 'painel', docAtual = null, importado = null;
@@ -798,7 +800,7 @@ const hashSenha = (sal, senha) => sha256(sal + '|' + senha);
 /* ===== Banco (localStorage) ===== */
 function novoDb() {
   return {
-    seq: { prod: 1, ent: 1, venda: 1, cond: 1, mov: 1, usu: 1, cli: 1, cred: 1, troca: 1, rec: 1, pag: 1, comf: 1 },
+    seq: { prod: 1, ent: 1, venda: 1, cond: 1, mov: 1, usu: 1, cli: 1, cred: 1, troca: 1, rec: 1, pag: 1, comf: 1, caixa: 1 },
     config: {
       loja: '', razao: '', cnpj: '', ie: '', endereco: '', bairro: '', cidade: '', cep: '', telefone: '', whatsapp: '', email: '', instagram: '', site: '',
       rodape: 'Trocas em até 30 dias, com etiqueta e este recibo.', cor: '#1e3a5f', logo: '', papel: 'A4', vias: 2, pixChave: '', pixNome: '', pixCidade: '', qr: 'dados', qrLink: '',
@@ -806,7 +808,7 @@ function novoDb() {
       markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: ''
     },
     usuarios: [], produtos: [], entradas: [], vendas: [], condicionais: [], movs: [],
-    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: []
+    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: []
   };
 }
 function normalizar() {
@@ -815,6 +817,7 @@ function normalizar() {
   for (const k in n.seq) if (!db.seq[k]) db.seq[k] = 1;
   for (const k in n.config) if (db.config[k] === undefined) db.config[k] = n.config[k];
   clientesMaiusculas();
+  aplicarTipos();
 }
 const MAIUSC = s => String(s == null ? '' : s).trim().toLocaleUpperCase('pt-BR');
 const CAMPOS_CLI_MAIUSC = ['nome', 'endereco', 'rua', 'num', 'bairro', 'cidade', 'obs'];
@@ -956,8 +959,8 @@ function situacao(p) {
   return '<span class="tag ok">OK</span>';
 }
 function gerarCodigo(tipo, id) {
-  let c = PREFIXO[tipo] + String(id).padStart(5, '0'), k = 0;
-  while (db.produtos.some(p => p.codigo.toUpperCase() === c)) c = PREFIXO[tipo] + String(id).padStart(5, '0') + '-' + (++k);
+  const pf = PREFIXO[tipo] || prefixoAuto(tipo); let c = pf + String(id).padStart(5, '0'), k = 0;
+  while (db.produtos.some(p => p.codigo.toUpperCase() === c)) c = pf + String(id).padStart(5, '0') + '-' + (++k);
   return c;
 }
 function rotulo(p) { return `${p.codigo} | ${p.tipo} ${p.descricao} | ${p.marca} | Tam ${p.tamanho}${p.cor ? ' | ' + p.cor : ''} | ${fmtR(p.preco)} | estoque ${p.estoque}`; }
@@ -1045,6 +1048,7 @@ function avisoMinimo() {
 /* ===== Render geral ===== */
 const ICONES = {
   painel: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  caixa: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
   vendas: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
   condicionais: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
   trocas: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
@@ -1062,7 +1066,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1427,7 +1431,9 @@ function config() {
       <label>Prazo padrão da condicional (dias)<input id="cf-prazoCond" type="number" min="1" value="${c.prazoCond}"></label>
       <label>Markup padrão na importação de XML (preço = custo × )<input id="cf-markup" value="${fmtDec(c.markup)}"></label>
       <label>Reposição: comprar para quantos dias de venda<input id="cf-diasCobertura" type="number" min="7" value="${c.diasCobertura}"></label>
-    </div></section>`)}
+      <label class="chk full"><input type="checkbox" id="cf-caixaObrig" ${c.caixaObrig ? 'checked' : ''}> Exigir caixa aberto para vender (menu Caixa)</label>
+      <label class="chk full"><input type="checkbox" id="cf-caixaCego" ${c.caixaCego ? 'checked' : ''}> Fechamento cego: a vendedora não vê o valor esperado no caixa (só o administrador)</label>
+    </div></section>${secaoTipos()}`)}
   <div class="cfg-salvar" id="cfg-salvar" ${ABAS_SALVAR.indexOf(aba) < 0 ? 'hidden' : ''}><span class="mut" id="cfg-sujo"></span><button class="btn" data-act="descartarConfig">Descartar</button><button class="btn pri" data-act="salvarConfig">Salvar alterações</button></div>
   </div>
   ${pane('aparencia', secaoTema())}
@@ -1445,7 +1451,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1866,7 +1872,7 @@ ACT.verEntrada = el => {
 ACT.imprimirUmaVia = () => { if (docAtual) imprimir(docAtual(''), 'A4'); };
 
 /* produtos */
-function checksTam(tipo) { return `<div class="chks">${TAMANHOS[tipo].map(t => `<label><input type="checkbox" class="fp-t" value="${t}"> ${t}</label>`).join('')}</div>`; }
+function checksTam(tipo) { return `<div class="chks">${(TAMANHOS[tipo] || []).map(t => `<label><input type="checkbox" class="fp-t" value="${t}"> ${t}</label>`).join('')}</div>`; }
 function formProduto(p) {
   const novo = !p, tipo = p ? p.tipo : TIPOS[0];
   fotoAlvo = 'form'; fotoTemp = undefined;
@@ -2096,7 +2102,7 @@ const CFG_CAMPOS = [['loja', 'Nome fantasia', 'Ex.: Estilo Masculino'], ['razao'
 const MASCARA_CFG = { cnpj: 'data-mask="doc" inputmode="numeric" placeholder="00.000.000/0000-00"', cep: 'data-mask="cep" inputmode="numeric" placeholder="00000-000" data-rua="cf-endereco" data-bairro="cf-bairro" data-cidade="cf-cidade"', telefone: 'data-mask="tel" inputmode="tel"', whatsapp: 'data-mask="tel" inputmode="tel"' };
 let logoTemp = '', iconeTemp = '';
 function lerCfg() {
-  const o = { logo: logoTemp, icone: iconeTemp, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
+  const o = { logo: logoTemp, icone: iconeTemp, caixaObrig: !!($('#cf-caixaObrig') || {}).checked, caixaCego: !!($('#cf-caixaCego') || {}).checked, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
   CFG_CAMPOS.forEach(([k]) => o[k] = $('#cf-' + k).value.trim());
   return o;
 }
@@ -2154,6 +2160,7 @@ function carregarLogo(arq, cb) {
 }
 ACT.salvarConfig = () => {
   if (!conferirCampos('#cfg')) return;
+  const eTp = salvarTiposDaTela(); if (eTp) { ACT.cfgAba({ dataset: { v: 'operacao' } }); return aviso(eTp, 'erro'); }
   Object.assign(db.config, lerCfg());
   if (salvar()) { render(); aviso('Configurações salvas.', 'ok'); aplicarFavicon(); atualizarIconeLoja().then(r => { if (r && (r.atalhos || []).length) aviso('Ícone do atalho da área de trabalho atualizado.', 'ok'); }).catch(() => { }); }
 };
@@ -3548,7 +3555,7 @@ ACT.receberParcela = el => {
 ACT.confirmarParcela = el => {
   const r = db.receber.find(x => x.id === +el.dataset.id), pc = $('#modal .parcial');
   r.valorRecebido = darBaixa(r, 'rec', $('#rp-valor') ? num($('#rp-valor').value) : r.valor, pc && pc.checked);
-  r.pagoEm = $('#rp-data').value || hoje(); r.forma = $('#rp-forma').value; r.recebidoPor = eu.nome;
+  r.pagoEm = $('#rp-data').value || hoje(); r.forma = $('#rp-forma').value; r.recebidoPor = eu.nome; r.recebidoEm = agora();
   salvar(); render(); mostrarDoc('Título recebido', reciboParcelaHTML(r));
 };
 ACT.reciboParcela = el => { const r = db.receber.find(x => x.id === +el.dataset.id); mostrarDoc('Recibo', reciboParcelaHTML(r)); };
@@ -3666,7 +3673,7 @@ ACT.pagarConta = el => {
 ACT.confirmarPagto = el => {
   const p = db.pagar.find(x => x.id === +el.dataset.id), pc = $('#modal .parcial');
   p.valorPago = darBaixa(p, 'pag', num($('#pp-valor').value), pc && pc.checked);
-  p.pagoEm = $('#pp-data').value || hoje(); p.forma = $('#pp-forma').value; p.pagoPor = eu.nome;
+  p.pagoEm = $('#pp-data').value || hoje(); p.forma = $('#pp-forma').value; p.pagoPor = eu.nome; p.pagoTs = agora();
   salvar(); fecharModal(); render(); aviso('Pagamento registrado.', 'ok');
 };
 ACT.pagarSelecionadas = () => {
@@ -3885,6 +3892,8 @@ function onCampo(e) {
   }
   if (el.id === 'sel-todos') $$('.sel-prod').forEach(c => c.checked = el.checked);
   if (el.id === 'fp-tipo' && $('#fp-tams')) $('#fp-tams').innerHTML = checksTam(el.value);
+  if (el.classList && el.classList.contains('tp-gp') && el.value) { el.closest('.tp-linha').querySelector('.tp-grade').value = el.value; el.value = ''; }
+  if (el.id === 'tp-pronto' && el.value) { tiposProntos(el.value); el.value = ''; }
   if (el.closest && el.closest('#acerto')) calcAcerto();
   if (el.closest && el.closest('#modal') && (el.id === 'etq-fmt' || el.id === 'etq-np' || el.classList.contains('etq-q') || el.classList.contains('etq-c') || el.classList.contains('etq-o'))) previaEtq();
   if (el.closest && el.closest('#troca')) calcTroca();
@@ -4089,6 +4098,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-02', itens: ['Novo menu Caixa: abertura com o troco, sangria (retirada) e suprimento (entrada) com motivo, e fechamento com a contagem do dinheiro, do Pix e de cada cartão. O relatório mostra o esperado, o contado e a diferença de cada forma, para imprimir e assinar.',
+    'Opções em Configurações → Vendas e estoque: exigir caixa aberto para vender e fechamento cego (a vendedora não vê o valor esperado).',
+    'Tipos de peça e grades de tamanho configuráveis (Configurações → Vendas e estoque): crie tipos (ex.: Vestido, Jaqueta, Body), escolha grades prontas (letras, numeração adulto e feminina, infantil, bebê, calçados, tamanho único) e o prefixo do código. Há listas prontas de moda feminina, infantil e acessórios.'] },
   { v: '2026.11.04-01', itens: ['Segurança: o servidor do banco de dados só aceita pedidos do próprio sistema. Antes, uma página da internet aberta no navegador conseguia apagar dados; agora é recusada e fica registrada no log do servidor.',
     'Segurança: o sistema não pode mais ser aberto escondido dentro de outro site (proteção contra clique falso).',
     'Licença conferida também pelo servidor, com a data protegida: atrasar o relógio do Windows não adia o vencimento e o modo consulta vale mesmo se alguém mexer no arquivo do sistema.',
@@ -4568,6 +4580,7 @@ ACT.criarAtalho = async () => {
    quem: 'todos' | 'adm' (administrador e master) | 'master'. Cada pessoa vê só o que pode fazer. */
 const AJUDA_MAPA = [
   ['painel', 'todos', 'Resumo do dia: vendas, ticket médio, estoque, produtos abaixo do mínimo e condicionais atrasadas. Clique num cartão para ver o detalhe.'],
+  ['caixa', 'todos', 'Abertura do caixa com o troco, sangrias e suprimentos durante o dia e fechamento com a conferência do dinheiro, Pix e cartões (com relatório para imprimir).'],
   ['vendas', 'todos', 'Registrar a venda (leitor de código de barras ou busca), escolher o pagamento (dinheiro, Pix com QR Code, cartões, crediário, vale-troca), dar desconto e emitir o recibo. Embaixo ficam as vendas realizadas.'],
   ['condicionais', 'todos', 'Peças que o cliente leva para provar em casa: registrar a saída com termo e, na volta, fazer o acerto (o que voltou entra no estoque, o que ficou vira venda).'],
   ['trocas', 'todos', 'Troca ou devolução pelo número do recibo: as peças voltam ao estoque e o valor vira vale-troca ou é devolvido.'],
@@ -4586,6 +4599,7 @@ const AJUDA_MAPA = [
 ];
 const AJUDA_PASSOS = [
   { t: 'Fazer uma venda', quem: 'todos', ir: 'vendas', p: ['Abra <b>Vendas</b>.', 'Passe o leitor de código de barras na etiqueta, ou digite o código, a descrição, a marca, a cor ou o tamanho e clique em <b>Adicionar</b>. Repita para cada peça.', 'Se quiser, escolha o <b>Cliente</b> na lista (ou digite o nome) e informe CPF ou telefone.', 'Escolha a forma de <b>Pagamento</b>. Para usar duas formas, clique em <b>+ dividir com outra forma de pagamento</b>.', 'Desconto: informe em <b>R$</b> ou <b>%</b> no campo Desconto.', 'Confira o total e clique em <b>Finalizar venda e emitir recibo</b>.', 'No recibo: imprima, ou envie pelo <b>WhatsApp (PDF)</b>.'] },
+  { t: 'Abrir e fechar o caixa', quem: 'todos', ir: 'caixa', p: ['No começo do dia, abra <b>Caixa</b>, informe o troco que está na gaveta e clique em <b>Abrir caixa</b>.', 'Durante o dia: <b>Sangria (retirar dinheiro)</b> para tirar dinheiro da gaveta e <b>Suprimento (colocar dinheiro)</b> para colocar, sempre com o motivo.', 'No fim do dia, clique em <b>Fechar caixa</b>, conte e informe o dinheiro da gaveta e o total do Pix e de cada cartão.', 'O sistema mostra o relatório com o esperado, o contado e a diferença de cada forma. Imprima e assine.'] },
   { t: 'Receber com Pix (QR Code)', quem: 'todos', ir: 'vendas', p: ['Monte a venda normalmente.', 'Em Pagamento escolha <b>Pix</b>: aparece o botão <b>QR Code Pix</b>.', 'Clique nele e mostre o QR Code ao cliente: ele já vem com a chave da loja e o valor.', 'Depois que o cliente pagar, clique em <b>Finalizar venda e emitir recibo</b>.'] },
   { t: 'Vender no crediário (a prazo)', quem: 'todos', ir: 'vendas', p: ['Monte a venda e informe o <b>Cliente</b>.', 'Em Pagamento escolha <b>Crediário / a prazo</b>.', 'Informe as <b>Parcelas do crediário</b> e o <b>1º vencimento</b>.', 'Finalize: as parcelas aparecem no recibo e em Financeiro → Contas a receber, onde o administrador registra cada pagamento.'] },
   { t: 'Usar o vale-troca do cliente', quem: 'todos', ir: 'vendas', p: ['Monte a venda e escolha o <b>Cliente</b> que tem o crédito.', 'Em Pagamento escolha <b>Crédito do cliente (vale-troca)</b>.', 'Se o crédito não cobrir tudo, use <b>+ dividir com outra forma de pagamento</b> para o restante.'] },
@@ -4627,6 +4641,7 @@ const AJUDA_PERGUNTAS = [
   { p: 'O atalho da área de trabalho sumiu ou está sem a logo.', quem: 'adm', r: 'Configurações → Empresa → Criar atalho na área de trabalho com esta logo.' },
   { p: 'Apareceu "Licença vencida: o sistema está em modo consulta".', quem: 'todos', r: 'A licença de uso venceu e passou o prazo de tolerância. Dá para consultar tudo e fazer backup, mas não registrar vendas e movimentações. Avise o administrador: ele renova com a P.A.S Soluções Tecnológicas e ativa o código novo. Nenhum dado é apagado.' },
   { p: 'Como ativo ou renovo a licença?', quem: 'adm', r: 'Configurações → Licença: cole o código enviado pela P.A.S Soluções Tecnológicas e clique em Ativar licença. O código vale para o CNPJ cadastrado em Empresa.' },
+  { p: 'Como cadastro um tipo de peça novo (ex.: vestido) ou outra grade de tamanhos?', quem: 'adm', r: 'Configurações → Vendas e estoque → Tipos de peça e grades de tamanho: + Novo tipo (ou Adicionar tipos prontos: feminina, infantil, acessórios), escolha a grade pronta ou digite os tamanhos e clique em Salvar alterações.' },
   { p: 'Como mudo a chave Pix do QR Code?', quem: 'adm', r: 'Configurações → Recibos e impressão: chave Pix, nome e cidade do recebedor.' }
 ];
 const semAcento = s => [...String(s || '').toLowerCase().normalize('NFD')].filter(c => { const k = c.charCodeAt(0); return k < 0x300 || k > 0x36f; }).join('');
@@ -4732,6 +4747,169 @@ ACT.ativarLicenca = async () => {
   } catch (e) { aviso('Licença não ativada: ' + e.message + '.', 'erro'); }
 };
 
+/* ===== Tipos de peça e grades de tamanho (Configurações → Vendas e estoque) =====
+   Cada tipo tem nome, prefixo do código interno e grade (tamanhos oferecidos no cadastro). Sem configuração, vale o padrão
+   de moda masculina. TIPOS, TAMANHOS e PREFIXO são preenchidos aqui e usados no cadastro, filtros, relatórios e importações. */
+const G_LETRAS = 'PP, P, M, G, GG, XG, XGG, XXG', G_NUM = '36, 38, 40, 42, 44, 46, 48, 50', G_FEM = '34, 36, 38, 40, 42, 44, 46',
+  G_INF = '1, 2, 3, 4, 6, 8, 10, 12, 14, 16', G_BEBE = 'RN, P, M, G', G_CALC = '33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44', G_UNICO = 'U';
+const TIPOS_PADRAO = [['Camisa', 'CAM', G_LETRAS], ['Camiseta', 'CMT', G_LETRAS], ['Polo', 'POL', G_LETRAS], ['Calça', 'CAL', G_NUM], ['Bermuda', 'BER', G_NUM]];
+const GRADES_PRONTAS = [['Letras (PP a XXG)', G_LETRAS], ['Numeração adulto (36 a 50)', G_NUM], ['Numeração feminina (34 a 46)', G_FEM], ['Infantil (1 a 16)', G_INF], ['Bebê (RN a G)', G_BEBE], ['Calçados (33 a 44)', G_CALC], ['Tamanho único (U)', G_UNICO]];
+const TIPOS_PRONTOS = {
+  'Moda masculina (mais peças)': [['Camisa social', 'CSO', '1, 2, 3, 4, 5, 6'], ['Jaqueta', 'JAQ', G_LETRAS], ['Moletom', 'MOL', G_LETRAS], ['Short', 'SHO', G_LETRAS], ['Cueca', 'CUE', G_LETRAS], ['Sapato', 'SAP', G_CALC], ['Tênis', 'TEN', G_CALC]],
+  'Moda feminina': [['Blusa', 'BLU', G_LETRAS], ['Vestido', 'VES', G_LETRAS], ['Saia', 'SAI', G_FEM], ['Short feminino', 'SHF', G_FEM], ['Calça feminina', 'CFE', G_FEM], ['Macacão', 'MAC', G_LETRAS], ['Cropped', 'CRO', G_LETRAS]],
+  'Moda infantil': [['Body', 'BOD', G_BEBE], ['Conjunto infantil', 'CJI', G_INF], ['Camiseta infantil', 'CTI', G_INF], ['Bermuda infantil', 'BEI', G_INF], ['Vestido infantil', 'VEI', G_INF]],
+  'Acessórios': [['Cinto', 'CIN', 'P, M, G'], ['Boné', 'BON', G_UNICO], ['Meia', 'MEI', G_UNICO], ['Carteira', 'CAR', G_UNICO], ['Perfume', 'PER', G_UNICO], ['Óculos', 'OCU', G_UNICO]]
+};
+const prefixoAuto = n => semAcento(n).replace(/[^a-z]/g, '').slice(0, 3).toUpperCase() || 'PRD';
+const gradeLista = g => String(g || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+function tiposConfig() {
+  return db.config.tipos && db.config.tipos.length ? db.config.tipos : TIPOS_PADRAO.map(([nome, prefixo, g]) => ({ nome, prefixo, grade: gradeLista(g) }));
+}
+function aplicarTipos() {
+  TIPOS.length = 0; for (const k in TAMANHOS) delete TAMANHOS[k]; for (const k in PREFIXO) delete PREFIXO[k];
+  tiposConfig().forEach(t => { TIPOS.push(t.nome); TAMANHOS[t.nome] = t.grade.slice(); PREFIXO[t.nome] = t.prefixo; });
+  (db.produtos || []).forEach(p => { if (p.tipo && TIPOS.indexOf(p.tipo) < 0) { TIPOS.push(p.tipo); TAMANHOS[p.tipo] = []; PREFIXO[p.tipo] = prefixoAuto(p.tipo); } });
+}
+const opcGrades = () => `<option value="">grade pronta…</option>${GRADES_PRONTAS.map(([n, g]) => `<option value="${esc(g)}">${esc(n)}</option>`).join('')}`;
+function linhasTipos(l) {
+  return `<div class="tp-linha tp-cab"><span>Tipo de peça</span><span>Prefixo</span><span>Grade de tamanhos (separe por vírgula)</span><span></span><span>Em uso</span><span></span></div>` +
+    l.map(t => `<div class="tp-linha" data-orig="${esc(t.orig || '')}"><input class="tp-nome" value="${esc(t.nome)}" placeholder="Ex.: Vestido"><input class="tp-pref" value="${esc(t.prefixo)}" maxlength="4" placeholder="VES">
+      <input class="tp-grade" value="${esc((t.grade || []).join(', '))}" placeholder="Ex.: P, M, G"><select class="tp-gp">${opcGrades()}</select>
+      <small class="mut">${t.uso ? t.uso + ' produto(s)' : 'nenhum'}</small>${t.uso ? '<span></span>' : '<button class="lnk perigo" data-act="tpRemover">remover</button>'}</div>`).join('');
+}
+function secaoTipos() {
+  const uso = {}; db.produtos.forEach(p => { uso[p.tipo] = (uso[p.tipo] || 0) + 1; });
+  return `<section class="card"><div class="cfg-cab"><h3>Tipos de peça e grades de tamanho</h3><p class="mut">Os tipos aparecem no cadastro, nos filtros e nos relatórios. A grade são os tamanhos oferecidos ao cadastrar um modelo; o prefixo começa o código interno (ex.: CAM00012). Mudar o nome de um tipo muda também nos produtos dele.</p></div>
+    <div id="tp-lista">${linhasTipos(TIPOS.map(n => { const t = tiposConfig().find(x => x.nome === n) || { nome: n, prefixo: PREFIXO[n], grade: TAMANHOS[n] || [] }; return Object.assign({}, t, { orig: n, uso: uso[n] || 0 }); }))}</div>
+    <div class="acoes" style="justify-content:flex-start;margin-top:8px"><button class="btn" data-act="tpNovo">+ Novo tipo</button>
+      <select id="tp-pronto"><option value="">+ Adicionar tipos prontos…</option>${Object.keys(TIPOS_PRONTOS).map(k => `<option>${esc(k)}</option>`).join('')}</select></div>
+    <p class="mut" style="margin-top:6px">Depois de mexer, clique em <b>Salvar alterações</b> no fim da página.</p></section>`;
+}
+function lerTiposTela() {
+  return [...document.querySelectorAll('#tp-lista .tp-linha:not(.tp-cab)')].map(r => ({ orig: r.dataset.orig || '', nome: r.querySelector('.tp-nome').value.trim(), prefixo: r.querySelector('.tp-pref').value.trim().toUpperCase(), grade: gradeLista(r.querySelector('.tp-grade').value), uso: db.produtos.filter(p => p.tipo === r.dataset.orig).length }));
+}
+function conferirTipos(l) {
+  if (!l.length) return 'Cadastre pelo menos um tipo de peça.';
+  const nomes = {}, pref = {};
+  for (const t of l) {
+    if (!t.nome) return 'Há um tipo sem nome.';
+    if (!/^[A-Z]{2,4}$/.test(t.prefixo)) return `Prefixo de "${t.nome}": use de 2 a 4 letras, sem acento (ex.: VES).`;
+    if (!t.grade.length) return `Informe a grade de tamanhos de "${t.nome}".`;
+    const k = semAcento(t.nome); if (nomes[k]) return `O tipo "${t.nome}" está repetido.`; nomes[k] = 1;
+    if (pref[t.prefixo]) return `O prefixo ${t.prefixo} está em "${pref[t.prefixo]}" e em "${t.nome}". Use um diferente para cada tipo.`; pref[t.prefixo] = t.nome;
+  }
+  const sumiram = TIPOS.filter(n => db.produtos.some(p => p.tipo === n) && !l.some(t => t.orig === n));
+  return sumiram.length ? `Não dá para remover "${sumiram[0]}": há produtos desse tipo.` : '';
+}
+function redesenharTipos(l) { $('#tp-lista').innerHTML = linhasTipos(l); }
+ACT.tpNovo = () => { const l = lerTiposTela(); l.push({ orig: '', nome: '', prefixo: '', grade: [], uso: 0 }); redesenharTipos(l); const n = document.querySelectorAll('#tp-lista .tp-nome'); n[n.length - 1].focus(); };
+ACT.tpRemover = el => { el.closest('.tp-linha').remove(); if ($('#cfg-sujo')) $('#cfg-sujo').textContent = 'Há alterações não salvas.'; };
+function tiposProntos(nome) {
+  const l = lerTiposTela(), tem = new Set(l.map(t => semAcento(t.nome)));
+  (TIPOS_PRONTOS[nome] || []).forEach(([n, p, g]) => { if (!tem.has(semAcento(n))) l.push({ orig: '', nome: n, prefixo: p, grade: gradeLista(g), uso: 0 }); });
+  redesenharTipos(l); if ($('#cfg-sujo')) $('#cfg-sujo').textContent = 'Há alterações não salvas.';
+}
+// salvar (junto com "Salvar alterações" das configurações)
+function salvarTiposDaTela() {
+  if (!$('#tp-lista')) return '';
+  const l = lerTiposTela(), e = conferirTipos(l); if (e) return e;
+  let renomeados = 0;
+  l.forEach(t => { if (t.orig && t.orig !== t.nome) db.produtos.forEach(p => { if (p.tipo === t.orig) { p.tipo = t.nome; renomeados++; } }); });
+  const antes = JSON.stringify(tiposConfig()); db.config.tipos = l.map(({ nome, prefixo, grade }) => ({ nome, prefixo, grade }));
+  if (JSON.stringify(db.config.tipos) !== antes) registrar('Tipos de peça e grades alterados', db.config.tipos.map(t => t.nome).join(', ') + (renomeados ? ` · ${renomeados} produto(s) com tipo renomeado` : ''));
+  aplicarTipos(); return '';
+}
+
+/* ===== Caixa: abertura, sangria, suprimento e fechamento =====
+   O caixa guarda o período (abertura → fechamento). O esperado de cada forma é calculado pelas vendas, recebimentos de
+   títulos, devoluções em dinheiro, contas pagas em dinheiro, sangrias e suprimentos desse período. No fechamento, a pessoa
+   informa o que contou e o sistema registra a diferença. Opcional: exigir caixa aberto para vender e fechamento cego. */
+const FORMAS_CAIXA = ['Dinheiro', 'Pix', 'Cartão de débito', 'Cartão de crédito'];
+const caixaAberto = () => (db.caixas || []).find(c => !c.fechamento);
+const noCaixa = (ts, c) => !!ts && ts >= c.abertura.em && (!c.fechamento || ts <= c.fechamento.em);
+function resumoCaixa(c) {
+  const r = { vendas: {}, receb: {}, outras: {}, devol: 0, pagas: 0, sangria: 0, suprimento: 0, nVendas: 0, total: 0 };
+  FORMAS_CAIXA.forEach(f => { r.vendas[f] = 0; r.receb[f] = 0; });
+  vendasValidas().filter(v => noCaixa(v.data, c)).forEach(v => {
+    r.nVendas++; r.total = r2(r.total + v.total);
+    pagsVenda(v).forEach(p => { if (r.vendas[p.forma] !== undefined) r.vendas[p.forma] = r2(r.vendas[p.forma] + p.valor); else r.outras[p.forma] = r2((r.outras[p.forma] || 0) + p.valor); });
+  });
+  db.receber.filter(x => x.recebidoEm && noCaixa(x.recebidoEm, c) && r.receb[x.forma] !== undefined).forEach(x => { r.receb[x.forma] = r2(r.receb[x.forma] + (x.valorRecebido || x.valor)); });
+  db.trocas.filter(t => t.destino !== 'credito' && noCaixa(t.data, c)).forEach(t => { r.devol = r2(r.devol + (t.valor || 0)); });
+  db.pagar.filter(p => p.pagoTs && p.forma === 'Dinheiro' && noCaixa(p.pagoTs, c)).forEach(p => { r.pagas = r2(r.pagas + (p.valorPago || p.valor)); });
+  (c.movs || []).forEach(m => { r[m.tipo] = r2(r[m.tipo] + m.valor); });
+  r.esperado = {}; FORMAS_CAIXA.forEach(f => { r.esperado[f] = r2(r.vendas[f] + r.receb[f]); });
+  r.esperado.Dinheiro = r2(c.abertura.valor + r.vendas.Dinheiro + r.receb.Dinheiro + r.suprimento - r.sangria - r.devol - r.pagas);
+  return r;
+}
+const veEsperado = () => adm() || !db.config.caixaCego;
+function caixa() {
+  const c = caixaAberto(), hist = (db.caixas || []).filter(x => x.fechamento).slice(-30).reverse();
+  let topo;
+  if (!c) topo = `<section class="card"><div class="cfg-cab"><h3>Caixa fechado</h3><p class="mut">Abra o caixa no começo do dia informando o troco (dinheiro) que está na gaveta.${db.config.caixaObrig ? ' <b>Nesta loja, só dá para vender com o caixa aberto.</b>' : ''}</p></div>
+    <div class="form2"><label>Troco inicial em dinheiro (R$)<input id="cx-troco" inputmode="decimal" placeholder="0,00" data-enter="abrirCaixa"></label><div style="align-self:end"><button class="btn pri" data-act="abrirCaixa">Abrir caixa</button></div></div></section>`;
+  else {
+    const r = resumoCaixa(c), ve = veEsperado();
+    topo = `<section class="card"><div class="cfg-cab"><h3>Caixa nº ${nDoc(c.id)} aberto</h3><p class="mut">Aberto em ${fmtDH(c.abertura.em)} por ${esc(c.abertura.por)} · troco inicial ${fmtR(c.abertura.valor)}</p></div>
+      <div class="resumo-tit"><div class="rbox ok"><small>Vendas no caixa</small><b>${r.nVendas}</b><span>${ve ? fmtR(r.total) : ''}</span></div>
+      ${ve ? `<div class="rbox"><small>Dinheiro esperado na gaveta</small><b>${fmtR(r.esperado.Dinheiro)}</b><span>troco + vendas + recebimentos + suprimentos − sangrias − devoluções − pagamentos</span></div>` : '<div class="rbox"><small>Fechamento cego</small><b>Conte e informe</b><span>o esperado aparece só para o administrador</span></div>'}
+      <div class="rbox"><small>Sangrias / suprimentos</small><b>${fmtR(r.sangria)} / ${fmtR(r.suprimento)}</b><span>${(c.movs || []).length} lançamento(s)</span></div></div>
+      ${ve ? tabSimples(['Forma', 'Vendas', 'Recebimentos', 'Esperado'], FORMAS_CAIXA.map(f => [f, fmtR(r.vendas[f]), fmtR(r.receb[f]), '<b>' + fmtR(r.esperado[f]) + '</b>'])) + (Object.keys(r.outras).length ? `<p class="mut">Fora do caixa: ${Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(' · ')}.</p>` : '') + (r.devol || r.pagas ? `<p class="mut">Saídas em dinheiro: devoluções ${fmtR(r.devol)} · contas pagas ${fmtR(r.pagas)}.</p>` : '') : ''}
+      ${(c.movs || []).length ? `<h4 class="rel-sec">Sangrias e suprimentos</h4>${tabSimples(['Hora', 'Tipo', 'Valor', 'Motivo', 'Por'], c.movs.map(m => [fmtDH(m.em), m.tipo === 'sangria' ? 'Sangria (retirada)' : 'Suprimento (entrada)', fmtR(m.valor), esc(m.motivo || ''), esc(m.por)]))}` : ''}
+      <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="movCaixa" data-t="sangria">Sangria (retirar dinheiro)</button><button class="btn" data-act="movCaixa" data-t="suprimento">Suprimento (colocar dinheiro)</button><button class="btn pri" data-act="fecharCaixa">Fechar caixa</button></div></section>`;
+  }
+  return `${cabTela('Caixa')}${topo}
+    <section class="card"><div class="cfg-cab"><h3>Caixas fechados</h3></div>${hist.length ? tabSimples(['Nº', 'Aberto', 'Fechado', 'Por', 'Vendas'].concat(adm() ? ['Diferença'] : []).concat(['']), hist.map(x => { const dif = r2(FORMAS_CAIXA.reduce((s, f) => s + (x.fechamento.diferenca[f] || 0), 0)); return [nDoc(x.id), fmtDH(x.abertura.em), fmtDH(x.fechamento.em), esc(x.fechamento.por), fmtR(x.fechamento.resumo.total)].concat(adm() ? [`<span class="${Math.abs(dif) >= 0.01 ? 'err' : 'ok'}">${dif > 0 ? '+' : ''}${fmtR(dif)}</span>`] : []).concat([`<button class="lnk" data-act="verCaixa" data-id="${x.id}">Relatório</button>`]); })) : '<p class="vazio">Nenhum caixa fechado ainda.</p>'}</section>`;
+}
+ACT.abrirCaixa = () => {
+  if (caixaAberto()) return aviso('O caixa já está aberto.', 'erro');
+  const v = r2(num(($('#cx-troco') || {}).value || '0')); if (v < 0) return aviso('Troco inválido.', 'erro');
+  db.caixas = db.caixas || []; db.seq.caixa = db.seq.caixa || 1;
+  const c = { id: db.seq.caixa++, abertura: { em: agora(), por: eu.nome, valor: v }, movs: [] }; db.caixas.push(c);
+  registrar('Caixa aberto', `Caixa nº ${nDoc(c.id)} · troco ${fmtR(v)}`); salvar(); render(); aviso('Caixa aberto.', 'ok');
+};
+ACT.movCaixa = el => {
+  const t = el.dataset.t;
+  abrirModal(t === 'sangria' ? 'Sangria – retirar dinheiro do caixa' : 'Suprimento – colocar dinheiro no caixa', `<div class="form2"><label>Valor (R$)<input id="cm-valor" inputmode="decimal" placeholder="0,00"></label><label>Motivo<input id="cm-mot" placeholder="${t === 'sangria' ? 'Ex.: depósito no banco, pagamento de entregador' : 'Ex.: troco extra'}" data-enter="confirmarMovCaixa"></label></div>`,
+    `<button class="btn pri" data-act="confirmarMovCaixa" data-t="${t}">Confirmar</button>`);
+};
+ACT.confirmarMovCaixa = el => {
+  const c = caixaAberto(); if (!c) return aviso('Abra o caixa primeiro.', 'erro');
+  const t = el.dataset.t || 'sangria', v = r2(num($('#cm-valor').value)), mot = $('#cm-mot').value.trim();
+  if (v <= 0) return aviso('Informe o valor.', 'erro'); if (!mot) return aviso('Informe o motivo.', 'erro');
+  if (t === 'sangria' && veEsperado() && v > resumoCaixa(c).esperado.Dinheiro + 0.005) return aviso('A sangria é maior que o dinheiro esperado na gaveta.', 'erro');
+  c.movs.push({ em: agora(), por: eu.nome, tipo: t, valor: v, motivo: mot });
+  registrar(t === 'sangria' ? 'Sangria do caixa' : 'Suprimento do caixa', `Caixa nº ${nDoc(c.id)} · ${fmtR(v)} · ${mot}`); salvar(); fecharModal(); render();
+  aviso((t === 'sangria' ? 'Sangria' : 'Suprimento') + ' registrada.', 'ok');
+};
+ACT.fecharCaixa = () => {
+  const c = caixaAberto(); if (!c) return;
+  abrirModal('Fechar caixa nº ' + nDoc(c.id), `<p>Conte o que tem em cada forma e informe abaixo${veEsperado() ? '' : ' (fechamento cego: o esperado aparece no relatório depois de fechar)'}.</p>
+    <div class="form2">${FORMAS_CAIXA.map((f, i) => `<label>${f === 'Dinheiro' ? 'Dinheiro na gaveta (contado)' : f + ' (total do dia na maquininha / extrato)'}<input class="cx-cont" data-forma="${f}" inputmode="decimal" placeholder="0,00" ${i === 0 ? 'autofocus' : ''}></label>`).join('')}
+    <label class="full">Observação<input id="cx-obs" placeholder="Opcional"></label></div>`, '<button class="btn pri" data-act="confirmarFechamento">Fechar caixa</button>');
+};
+ACT.confirmarFechamento = () => {
+  const c = caixaAberto(); if (!c) return;
+  const contado = {}; $$('.cx-cont').forEach(i => { contado[i.dataset.forma] = r2(num(i.value || '0')); });
+  c.fechamento = { em: agora(), por: eu.nome, contado, obs: ($('#cx-obs') || {}).value || '' };
+  const r = resumoCaixa(c); c.fechamento.resumo = { total: r.total, nVendas: r.nVendas, vendas: r.vendas, receb: r.receb, outras: r.outras, devol: r.devol, pagas: r.pagas, sangria: r.sangria, suprimento: r.suprimento };
+  c.fechamento.esperado = r.esperado; c.fechamento.diferenca = {}; FORMAS_CAIXA.forEach(f => { c.fechamento.diferenca[f] = r2((contado[f] || 0) - r.esperado[f]); });
+  const dif = r2(FORMAS_CAIXA.reduce((s, f) => s + c.fechamento.diferenca[f], 0));
+  registrar('Caixa fechado', `Caixa nº ${nDoc(c.id)} · vendas ${fmtR(r.total)} · diferença ${fmtR(dif)}`); salvar(); fecharModal(); render();
+  ACT.verCaixa({ dataset: { id: c.id } });
+};
+function relCaixaHTML(c) {
+  const fz = c.fechamento, r = fz.resumo;
+  return via => `${cabDoc('FECHAMENTO DE CAIXA', c.id, fz.em, via)}
+    <p>Aberto em ${fmtDH(c.abertura.em)} por ${esc(c.abertura.por)} · fechado em ${fmtDH(fz.em)} por ${esc(fz.por)}</p>
+    <p>${r.nVendas} venda(s) · total vendido ${fmtR(r.total)} · troco inicial ${fmtR(c.abertura.valor)}</p>
+    <table><thead><tr><th>Forma</th><th>Vendas</th><th>Receb.</th><th>Esperado</th><th>Contado</th><th>Diferença</th></tr></thead><tbody>${FORMAS_CAIXA.map(f => `<tr><td>${f}</td><td>${fmtR(r.vendas[f])}</td><td>${fmtR(r.receb[f])}</td><td>${fmtR(fz.esperado[f])}</td><td>${fmtR(fz.contado[f] || 0)}</td><td><b>${fz.diferenca[f] > 0 ? '+' : ''}${fmtR(fz.diferenca[f])}</b></td></tr>`).join('')}</tbody></table>
+    <p>Sangrias ${fmtR(r.sangria)} · suprimentos ${fmtR(r.suprimento)} · devoluções em dinheiro ${fmtR(r.devol)} · contas pagas em dinheiro ${fmtR(r.pagas)}${Object.keys(r.outras || {}).length ? ' · fora do caixa: ' + Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(', ') : ''}</p>
+    ${(c.movs || []).map(m => `<p>${fmtDH(m.em)} · ${m.tipo === 'sangria' ? 'Sangria' : 'Suprimento'} ${fmtR(m.valor)} · ${esc(m.motivo)} · ${esc(m.por)}</p>`).join('')}
+    ${fz.obs ? `<p>Obs.: ${esc(fz.obs)}</p>` : ''}<p style="margin-top:28px">_______________________________<br>${esc(fz.por)}</p>`;
+}
+ACT.verCaixa = el => { const c = (db.caixas || []).find(x => x.id === +el.dataset.id); if (c && c.fechamento) mostrarDoc('Fechamento de caixa nº ' + nDoc(c.id), relCaixaHTML(c)); };
+
 /* ===== Histórico de logs do sistema =====
    Tudo o que cada pessoa faz fica gravado num banco separado (lojaRoupasLog): entradas no sistema, vendas, estoque,
    financeiro, configurações, impressões, PDFs, WhatsApp, exportações e telas abertas. */
@@ -4795,8 +4973,8 @@ const ACOES_LOG = {
   ir: ['Navegação', 'Abriu a tela', 1], voltar: ['Navegação', 'Voltou para a tela anterior', 1], finAba: ['Navegação', 'Abriu a aba do Financeiro', 1], cfgAba: ['Navegação', 'Abriu a aba das Configurações', 1], verAbaixo: ['Navegação', 'Abriu a lista de compra', 1]
 };
 // ações que já gravam o próprio registro por dentro (não duplicar)
-const LOG_PROPRIO = ['login', 'sair', 'criarAdmin', 'salvarMinhaSenha', 'comConfirmar', 'comConfReabrir', 'ativarCripto', 'digitarSenhaBk', 'confirmarSemCripto', 'salvarSeguranca', 'conferirDados', 'abrirMesmoAssim'];
-const NAO_LOGAR = ['fecharModal', 'addItem', 'tirarItem', 'addPag', 'tirarPag', 'paleta', 'temaPadrao', 'tirarLogo', 'tirarLogoTela', 'comAddFaixa', 'comTirarFaixa', 'camAbrir', 'camFechar', 'camCapturar', 'fotoRemover', 'relModo', 'abrirArquivoCripto'];
+const LOG_PROPRIO = ['abrirCaixa', 'confirmarMovCaixa', 'confirmarFechamento', 'login', 'sair', 'criarAdmin', 'salvarMinhaSenha', 'comConfirmar', 'comConfReabrir', 'ativarCripto', 'digitarSenhaBk', 'confirmarSemCripto', 'salvarSeguranca', 'conferirDados', 'abrirMesmoAssim'];
+const NAO_LOGAR = ['movCaixa', 'fecharCaixa', 'fecharModal', 'addItem', 'tirarItem', 'addPag', 'tirarPag', 'paleta', 'temaPadrao', 'tirarLogo', 'tirarLogoTela', 'comAddFaixa', 'comTirarFaixa', 'camAbrir', 'camFechar', 'camCapturar', 'fotoRemover', 'relModo', 'abrirArquivoCripto'];
 const tituloModal = () => { const h = $('#modal h3'); return h ? h.textContent.trim() : ''; };
 const porId = (l, el) => el && el.dataset && el.dataset.id ? l.find(x => x.id === +el.dataset.id) : null;
 // detalhe calculado ANTES da ação (o registro pode deixar de existir depois)
@@ -4850,6 +5028,8 @@ Object.keys(ACOES_LOG).filter(k => ['Vendas', 'Condicionais', 'Trocas', 'Cliente
   const f = ACT[k];
   ACT[k] = el => licencaBloqueada() ? aviso('Licença vencida: o sistema está em modo consulta e não registra vendas nem movimentações. Fale com a P.A.S Soluções Tecnológicas para renovar.', 'erro') : f(el);
 });
+// caixa obrigatório: venda e acerto de condicional só com o caixa aberto
+['finalizarVenda', 'confirmarAcerto'].forEach(k => { const f = ACT[k]; ACT[k] = el => db.config.caixaObrig && !caixaAberto() ? aviso('Abra o caixa antes de vender (menu Caixa).', 'erro') : f(el); });
 
 /* tela Histórico de logs */
 const CATS_LOG = ['Acesso', 'Vendas', 'Condicionais', 'Trocas', 'Clientes', 'Estoque', 'Financeiro', 'Comissões', 'Usuários', 'Configurações', 'Backup e dados', 'Documentos', 'Consultas', 'Navegação', 'Sistema', 'Outros'];

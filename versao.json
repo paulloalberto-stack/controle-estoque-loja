@@ -1,15 +1,14 @@
 {
- "versao": "2026.11.04-01",
- "publicadoEm": "04/11/2026 09:37",
+ "versao": "2026.11.04-02",
+ "publicadoEm": "04/11/2026 10:02",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "b6d9c420474c3abc08e309a61af62514304145aea2429c829d6d714439cc66b8",
- "tamanho": 502716,
- "assinatura": "PARg6PyMlhhWaaQwPlwN+U58FN8qeT9Kt6dL8ZxleWQbXODKXmsSFERR7jzWixZfQfEuLs6X1MpFOruCV2opF92bQNH1/Iac7CBNQMPB3Mpuf2+fEZ0CYPUnOKaHALoggtOvvqKLngR3NVt7o8S+8yoAzGn5rp5DnBDiCwAfcKhHl8eNGLwBHej32WhoDRTC92UtiA9H4eMAGJHHvBpx+5YDB2h414zC2zXG92ccV1ghY7RQukvcW4d+lLc4JXu/yFO1XoNQakpBlbsrE7mP6A/6i+8dIc+MuWrW+5TB5qt2Zaset7dVIdUFix5F7wd1RecuS2WeYBCKWEqlvzwaQ9UQ1L3hLFPyuOqdvjjuxe7IKlTyJQJxl8ML5tOHsg9HdZsHQMKYBhRTR4WJlWTvr5Jk23Ezu0RoG/GH0bzGfWtrKrAwDwZoxxs4Q2vBumMcZ36ESmfbuK5lnOVViMq+KBmOk5w/E/LkYzwjsmPvkCeL5yXwgbQjWAeY+djYMW9/",
+ "sha256": "c921b3c2e0c2463cee911e42b3deee1cf78f4b855fbb2150c2cadd6e97c654ae",
+ "tamanho": 524749,
+ "assinatura": "jmv9zm+oWzjl9lVlcYyacwDFPbnXMpJ/kcWl2hc00SHL2qlmjyC2Ees6umWjqP54WpMZzNtYj/oj9cXvJdqkz3fYCrpqRhGhcId6R3A5OJXJLt2v6WsUcMtFJquCbdjUon15lgU6cncfRH0lHumwS2gHnGy3yZC7vRmDRbqLcpN50KwU9eaV1CefQQvlGQxZQxKMGPWnDotFMs289CI9PxtOqIcXv4NGgqHyqHuXG0wSXfYZlTYvDOpCRt6NmMvV1RKrCYJPFB+giUfLQmA1ybg2WnuUVnS412b+S1JiP0XyzjGm3uPDEtamtpuV48AYP07+ZY3LLvwV0lPJ00WpyMrAcuhEsiubfyHc+5t+9f4JEsrrNNAILeWLIUb/JOadU+0a01hGuL5WvHeDDla8+/rx6zSgwbzJ76iYwP+4iLUUHnnrQpbAxPrLPpgcoAO4CnM3gsjCvyyh4mcYw/HNEGEiAKZSvUqHan+vcT6R8p2p4pKDSwFsbqLG4TXjLz7b",
  "novidades": [
-  "Segurança: o servidor do banco de dados só aceita pedidos do próprio sistema. Antes, uma página da internet aberta no navegador conseguia apagar dados; agora é recusada e fica registrada no log do servidor.",
-  "Segurança: o sistema não pode mais ser aberto escondido dentro de outro site (proteção contra clique falso).",
-  "Licença conferida também pelo servidor, com a data protegida: atrasar o relógio do Windows não adia o vencimento e o modo consulta vale mesmo se alguém mexer no arquivo do sistema.",
-  "O servidor passa a ser atualizado pela nuvem junto com o sistema, na tela de atualização do master (com assinatura digital conferida). Servidores antigos precisam do pacote uma última vez: o sistema avisa."
+  "Novo menu Caixa: abertura com o troco, sangria (retirada) e suprimento (entrada) com motivo, e fechamento com a contagem do dinheiro, do Pix e de cada cartão. O relatório mostra o esperado, o contado e a diferença de cada forma, para imprimir e assinar.",
+  "Opções em Configurações → Vendas e estoque: exigir caixa aberto para vender e fechamento cego (a vendedora não vê o valor esperado).",
+  "Tipos de peça e grades de tamanho configuráveis (Configurações → Vendas e estoque): crie tipos (ex.: Vestido, Jaqueta, Body), escolha grades prontas (letras, numeração adulto e feminina, infantil, bebê, calçados, tamanho único) e o prefixo do código. Há listas prontas de moda feminina, infantil e acessórios."
  ],
  "servidor": {
   "versao": "2026.11.04-01",
