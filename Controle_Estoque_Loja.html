@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-13">
+<meta name="versao-sistema" content="2026.11.04-14">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -864,7 +864,7 @@ function novoDb() {
       markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: ''
     },
     usuarios: [], produtos: [], entradas: [], vendas: [], condicionais: [], movs: [],
-    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: []
+    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: []
   };
 }
 function normalizar() {
@@ -1211,6 +1211,7 @@ const ICONES = {
   movs: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   comissoes: '<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+  inventario: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
   cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -1221,7 +1222,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1229,8 +1230,9 @@ function render() {
   const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || (m[3] === 'master' && !master())) view = 'painel';
   if (MODO_REDE && VIEWS_REDE.indexOf(view) < 0) view = 'vendas';
   if (view === 'cartoes' && !temRecurso('taxas')) view = 'premium';
+  if (view === 'inventario' && !temRecurso('inventario')) view = MODO_REDE ? 'vendas' : 'premium';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1458,7 +1460,7 @@ function tabelaProdutos() {
   return `<div class="tabw"><table class="tb"><thead><tr>${adm() ? '<th><input type="checkbox" id="sel-todos" title="Selecionar todos os listados"></th>' : ''}<th></th><th>Código</th><th>Tipo</th><th>Descrição</th><th>Marca</th><th>Tam.</th><th>Cor</th>${adm() ? '<th class="n">Custo</th>' : ''}<th class="n">Venda</th><th class="n">Estoque</th><th class="n">Em cond.</th><th class="n">Mínimo</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p => { const ec = emCond(p.id); return `<tr class="${estaBaixo(p) ? 'baixo' : ''}">${adm() ? `<td><input type="checkbox" class="sel-prod" value="${p.id}"></td>` : ''}<td class="td-foto"><button class="mini-btn" data-act="verFoto" data-id="${p.id}" title="Ver foto e tamanhos">${miniHTML(p)}</button></td><td>${esc(p.codigo)}${p.barras ? `<small>${esc(p.barras)}</small>` : ''}</td><td>${esc(p.tipo)}</td><td>${esc(p.descricao)}${p.colecao ? `<small>${esc(p.colecao)}</small>` : ''}</td><td>${esc(p.marca)}</td><td><b>${esc(p.tamanho)}</b></td><td>${esc(p.cor)}</td>${adm() ? `<td class="n">${fmtR(p.custo)}</td>` : ''}<td class="n">${fmtR(p.preco)}</td><td class="n"><b>${p.estoque}</b></td><td class="n">${ec || ''}</td><td class="n">${p.minimo}</td><td>${situacao(p)}</td><td class="n"><button class="lnk" data-act="etiquetas" data-id="${p.id}">Etiquetas</button><button class="lnk" data-act="histProduto" data-id="${p.id}">Histórico</button>${adm() ? `<button class="lnk" data-act="editarProduto" data-id="${p.id}">Editar</button><button class="lnk" data-act="ajustarEstoque" data-id="${p.id}">Ajustar</button><button class="lnk perigo" data-act="excluirProduto" data-id="${p.id}">Excluir</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 
-const TIPOS_MOV = ['ENTRADA', 'VENDA', 'CONDICIONAL SAÍDA', 'CONDICIONAL DEVOLUÇÃO', 'VENDA DE CONDICIONAL', 'TROCA / DEVOLUÇÃO', 'CANCELAMENTO DE VENDA', 'AJUSTE', 'EXCLUSÃO DE ENTRADA'];
+const TIPOS_MOV = ['INVENTÁRIO', 'ENTRADA', 'VENDA', 'CONDICIONAL SAÍDA', 'CONDICIONAL DEVOLUÇÃO', 'VENDA DE CONDICIONAL', 'TROCA / DEVOLUÇÃO', 'CANCELAMENTO DE VENDA', 'AJUSTE', 'EXCLUSÃO DE ENTRADA'];
 function movs() {
   const f = filtros.mov;
   return `<h2>Movimentações de estoque</h2>
@@ -1609,7 +1611,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, cartoes, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, cartoes, inventario, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -4260,6 +4262,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-14', itens: ['Recurso Premium "Inventário em lote com leitor": novo menu Inventário. O administrador abre o inventário da loja toda ou de um tipo, marca ou coleção; a equipe conta passando o leitor, digitando o código ou pela câmera do celular (vários celulares ao mesmo tempo).',
+    'Durante a contagem: produtos contados, peças, sobras e faltas na hora, lista de não contados, desfazer leitura e corrigir contagem.',
+    'Ao finalizar, o estoque é ajustado de uma vez (respeitando vendas e entradas feitas durante a contagem), com opção de zerar o que não foi encontrado, e fica o relatório com a diferença a preço de custo (PDF e Excel).'] },
   { v: '2026.11.04-13', itens: ['Ajuda: passo a passo para configurar a maquininha e as taxas do cartão, vender no crédito parcelado e conferir o depósito, com perguntas e respostas. Também no botão Passo a passo de Cartões a receber e da janela Maquininhas e taxas (aparece quando o recurso Premium de taxas está liberado).'] },
   { v: '2026.11.04-12', itens: ['Recurso Premium "Taxas de cartão e conciliação": cadastro das maquininhas com as taxas de débito, crédito à vista e parcelado (2x a 12x) e os prazos de recebimento.',
     'Na venda com cartão: escolha da maquininha (se houver mais de uma) e das parcelas do crédito. A taxa e o prazo ficam gravados na venda.',
@@ -4782,6 +4787,18 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Fazer o inventário (contagem do estoque)', quem: 'adm', rec: 'inventario', ir: 'inventario', p: [
+    'Abra <b>Inventário</b>. Escolha se é a loja toda ou só um <b>Tipo</b>, <b>Marca</b> ou <b>Coleção</b> e clique em <b>Iniciar inventário</b>.',
+    'A equipe conta as peças: no computador, passe o leitor na etiqueta de cada peça (cada leitura conta 1; para várias peças iguais, digite a quantidade antes). No celular, abra <b>Inventário</b> e toque em <b>Contar pela câmera</b>. Várias pessoas podem contar ao mesmo tempo.',
+    'Acompanhe na tela: produtos contados, peças, sobras e faltas. Na aba <b>Não contados</b> aparece o que ainda falta procurar.',
+    'Errou? Em <b>Suas últimas leituras</b> use <b>desfazer</b>, ou clique em <b>corrigir</b> na linha do produto e informe a quantidade certa.',
+    'Ao terminar, clique em <b>Finalizar e ajustar estoque</b>. Decida se quer <b>zerar</b> os produtos que não foram encontrados e confirme.',
+    'O estoque é ajustado e abre o relatório com as sobras, as faltas e a diferença a preço de custo (PDF ou Excel). Os ajustes aparecem em Movimentações como INVENTÁRIO.'] },
+  { t: 'Contar o inventário pelo celular', quem: 'todos', rec: 'inventario', ir: 'inventario', p: [
+    'Com o inventário aberto pelo administrador, abra <b>Inventário</b> no celular.',
+    'Toque em <b>Contar pela câmera</b> e aponte para a etiqueta de cada peça, deitada na linha vermelha. Cada leitura dá um bipe e soma 1.',
+    'Peças iguais: tire a etiqueta da frente da câmera e leia a próxima. A mesma etiqueta parada na frente não soma de novo.',
+    'Toque em <b>Fechar</b> quando terminar. As leituras já ficam gravadas no computador do caixa.'] },
   { t: 'Configurar a maquininha e as taxas do cartão', quem: 'adm', rec: 'taxas', ir: 'cartoes', p: [
     'Tenha em mãos as taxas da maquininha: ficam no aplicativo ou no site da operadora (Stone, Cielo, PagSeguro, Mercado Pago, Getnet…), em <b>Taxas</b> ou <b>Meu plano</b>, ou no contrato.',
     'Abra <b>Cartões a receber</b> e clique em <b>Maquininhas e taxas</b>.',
@@ -4823,6 +4840,8 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'Posso vender enquanto faço o inventário?', quem: 'adm', rec: 'inventario', r: 'Pode. Para cada produto, o sistema considera o que foi contado mais as vendas e entradas feitas depois da contagem dele. O ideal é não vender uma peça que ainda não foi contada; se vender, conte o produto de novo depois ou corrija a contagem.' },
+  { p: 'Li um código e apareceu "não faz parte deste inventário".', quem: 'todos', rec: 'inventario', r: 'O inventário foi aberto só para um tipo, marca ou coleção, e essa peça é de outro. Separe a peça e não conte.' },
   { p: 'A taxa da maquininha mudou. O que eu faço?', quem: 'adm', rec: 'taxas', r: 'Em Cartões a receber → Maquininhas e taxas, troque a taxa e clique em Salvar taxas. A taxa nova vale a partir das próximas vendas; as vendas já feitas continuam com a taxa da época.' },
   { p: 'Passei a venda com a maquininha ou as parcelas erradas.', quem: 'todos', rec: 'taxas', r: 'Peça ao administrador para cancelar a venda (Vendas → Vendas realizadas → Cancelar, na linha da venda) e faça de novo com a maquininha e as parcelas certas.' },
   { p: 'O que quer dizer o * em Cartões a receber?', quem: 'adm', rec: 'taxas', r: 'É uma venda com cartão feita antes de as taxas serem cadastradas. O sistema calcula com a taxa atual da maquininha, por isso o valor é uma estimativa.' },
@@ -5402,7 +5421,7 @@ const PREMIUM = [
     desc: 'As vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, com leitura do código de barras pela câmera e foto dos produtos.' },
   { k: 'taxas', nome: 'Taxas de cartão e conciliação', pronto: true, ic: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
     desc: 'Taxas da maquininha por bandeira e parcela, quanto cai na conta e quando, e conferência com o extrato da operadora.' },
-  { k: 'inventario', nome: 'Inventário em lote com leitor', ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
+  { k: 'inventario', nome: 'Inventário em lote com leitor', pronto: true, ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
     desc: 'Conte o estoque passando o leitor (ou a câmera do celular) peça por peça; o sistema mostra as diferenças e ajusta tudo de uma vez.' },
   { k: 'promocoes', nome: 'Promoções programadas', ic: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
     desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
@@ -5549,11 +5568,12 @@ ACT.carExportar = () => {
   modalAnalitico('Cartões a receber', `Previsão de ${fmtDia(f.de)} a ${fmtDia(f.ate)}${f.maq ? ' · ' + f.maq : ''}`,
     [C('Cai na conta', 's'), C('Maquininha', 's'), C('Lançamentos', 'i'), C('Bruto', 'r'), C('Taxas', 'r'), C('Líquido esperado', 'r'), C('Caiu na conta', 'r'), C('Diferença', 'r'), C('Situação', 's')], linhas);
 };
-ACT.ajudaCartao = () => {
-  const ps = AJUDA_PASSOS.filter(x => x.rec === 'taxas' && podeVer(x.quem)), qs = AJUDA_PERGUNTAS.filter(x => x.rec === 'taxas' && podeVer(x.quem));
-  abrirModal('Passo a passo – cartão de crédito e débito', ps.map((x, i) => `<details class="aj-item"${i ? '' : ' open'}><summary><span class="aj-n">${i + 1}</span>${esc(x.t)}</summary><ol>${x.p.map(s => `<li>${s}</li>`).join('')}</ol></details>`).join('')
-    + `<h4 class="rel-sec">Perguntas e respostas</h4>` + qs.map(x => `<details class="aj-item"><summary>${esc(x.p)}</summary><p>${esc(x.r)}</p></details>`).join(''), '', true);
-};
+ACT.ajudaCartao = () => ajudaRecurso('taxas', 'Passo a passo – cartão de crédito e débito');
+function ajudaRecurso(rec, titulo) {
+  const ps = AJUDA_PASSOS.filter(x => x.rec === rec && podeVer(x.quem)), qs = AJUDA_PERGUNTAS.filter(x => x.rec === rec && podeVer(x.quem));
+  abrirModal(titulo, ps.map((x, i) => `<details class="aj-item"${i ? '' : ' open'}><summary><span class="aj-n">${i + 1}</span>${esc(x.t)}</summary><ol>${x.p.map(s => `<li>${s}</li>`).join('')}</ol></details>`).join('')
+    + (qs.length ? `<h4 class="rel-sec">Perguntas e respostas</h4>` + qs.map(x => `<details class="aj-item"><summary>${esc(x.p)}</summary><p>${esc(x.r)}</p></details>`).join('') : ''), '', true);
+}
 // cadastro das maquininhas
 function linhaMaq(m, i) {
   const pc = k => `<label>${k}x<input class="val mq-p" data-k="${k}" value="${esc(fmtDec0((m.parcelado || [])[k - 2]))}"></label>`;
@@ -5599,10 +5619,156 @@ function extraPagCartao(p, i) {
   return `${ms.length > 1 ? `<select data-pag="${i}" data-campo="maq" title="Maquininha">${ms.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>` : ''}
     ${p.forma === 'Cartão de crédito' ? `<select data-pag="${i}" data-campo="parc" title="Parcelas no cartão">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(k => `<option value="${k}" ${k === (int(p.parc) || 1) ? 'selected' : ''}>${k === 1 ? 'à vista' : k + 'x'}</option>`).join('')}</select>` : ''}`;
 }
+/* ===== Premium: inventário em lote com leitor =====
+   O administrador abre um inventário (loja toda ou só um tipo, marca ou coleção). Qualquer pessoa conta passando o leitor,
+   digitando o código ou pela câmera do celular; cada leitura é um registro próprio (vários celulares contam juntos sem conflito).
+   Vendas e entradas durante a contagem são respeitadas: o estoque final de cada produto = o que foi contado + o que se
+   movimentou depois da última leitura daquele produto. Ao finalizar, o sistema ajusta o estoque e guarda o relatório. */
+const invAberto = () => (db.inventarios || []).find(i => i.status === 'aberto');
+const noEscopoInv = (inv, p) => { const e = inv.escopo || {}; return p.ativo !== false && (!e.tipo || p.tipo === e.tipo) && (!e.marca || p.marca === e.marca) && (!e.colecao || p.colecao === e.colecao); };
+const escopoTxt = inv => { const e = inv.escopo || {}; return [e.tipo && 'tipo ' + e.tipo, e.marca && 'marca ' + e.marca, e.colecao && 'coleção ' + e.colecao].filter(Boolean).join(' · ') || 'loja toda'; };
+let invAba = 'dif', invDesconhecidos = [];
+function linhasInv(inv) {
+  const cont = new Map();
+  (db.contagens || []).forEach(c => { if (c.inv !== inv.id) return; const x = cont.get(c.prod) || { q: 0, ult: '' }; x.q += c.qtd; if (c.em > x.ult) x.ult = c.em; cont.set(c.prod, x); });
+  const movs = new Map(); (db.movs || []).forEach(m => { if (m.data >= inv.criado) (movs.get(m.prod) || movs.set(m.prod, []).get(m.prod)).push(m); });
+  const ps = db.produtos.filter(p => noEscopoInv(inv, p) || cont.has(p.id)), ord = new Map(ordenar(ps.slice()).map((p, i) => [p.id, i]));
+  return ps.map(p => {
+    const c = cont.get(p.id), ate = c ? c.ult : '9999';
+    const depois = (movs.get(p.id) || []).filter(m => m.data > ate).reduce((s, m) => s + m.qtd, 0);   // movimentos depois da contagem do produto
+    const esp = p.estoque - depois, q = c ? c.q : 0;
+    return { p, esp, cont: q, contado: !!c, dif: q - esp, depois, ult: c ? c.ult : '' };
+  }).sort((a, b) => ord.get(a.p.id) - ord.get(b.p.id));
+}
+function inventario() {
+  const inv = invAberto();
+  if (!inv) return `<h2>Inventário</h2>
+    ${adm() ? `<section class="card"><h3>Novo inventário</h3><p class="mut">Conte o estoque passando o leitor de código de barras (ou a câmera do celular) peça por peça. No fim, o sistema mostra as sobras e faltas e ajusta o estoque de uma vez. Pode ser a loja toda ou só uma parte.</p>
+      <div class="form3"><label>Tipo<select id="inv-tipo"><option value="">Todos</option>${TIPOS.map(t => `<option>${esc(t)}</option>`).join('')}</select></label>
+      <label>Marca<select id="inv-marca"><option value="">Todas</option>${[...new Set(ativos().map(p => p.marca).filter(Boolean))].sort().map(m => `<option>${esc(m)}</option>`).join('')}</select></label>
+      <label>Coleção<select id="inv-col"><option value="">Todas</option>${[...new Set(ativos().map(p => p.colecao).filter(Boolean))].sort().map(m => `<option>${esc(m)}</option>`).join('')}</select></label></div>
+      <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="invIniciar">Iniciar inventário</button><button class="btn" data-act="ajudaInv">Passo a passo</button></div></section>`
+      : '<section class="card"><p>Nenhum inventário aberto agora. Quando o administrador iniciar um, a contagem aparece aqui.</p></section>'}
+    ${histInv()}`;
+  const ls = linhasInv(inv), cont = ls.filter(l => l.contado), noEsc = ls.filter(l => noEscopoInv(inv, l.p));
+  const pecas = cont.reduce((s, l) => s + l.cont, 0), sobra = cont.filter(l => l.dif > 0), falta = cont.filter(l => l.dif < 0);
+  const minhas = (db.contagens || []).filter(c => c.inv === inv.id && c.por === eu.nome).slice(-6).reverse();
+  const lista = invAba === 'dif' ? ls.filter(l => l.contado && l.dif) : invAba === 'nao' ? noEsc.filter(l => !l.contado) : ls;
+  return `<h2>Inventário nº ${nDoc(inv.id)} <span class="tag ab">aberto</span></h2>
+  <section class="card"><p class="mut" style="margin:0 0 10px">${esc(escopoTxt(inv))} · iniciado em ${fmtDH(inv.criado)} por ${esc(inv.por)}</p>
+    <div class="resumo-tit"><div class="rbox"><small>Produtos contados</small><b>${cont.length} de ${noEsc.length}</b><span>${noEsc.length ? Math.round(noEsc.filter(l => l.contado).length / noEsc.length * 100) : 0}% do inventário</span></div>
+      <div class="rbox"><small>Peças contadas</small><b>${fmtN(pecas)}</b><span>${(db.contagens || []).filter(c => c.inv === inv.id).length} leitura(s)</span></div>
+      <div class="rbox ${sobra.length ? 'ok' : ''}"><small>Sobras (até agora)</small><b>${sobra.reduce((s, l) => s + l.dif, 0)}</b><span>${sobra.length} produto(s)</span></div>
+      <div class="rbox ${falta.length ? 'at' : ''}"><small>Faltas (até agora)</small><b>${-falta.reduce((s, l) => s + l.dif, 0)}</b><span>${falta.length} produto(s)</span></div></div></section>
+  <section class="card"><h3>Contar</h3>
+    <div class="picker"><div class="pk-wrap"><input id="inv-cod" placeholder="Passe o leitor ou digite o código da etiqueta" data-enter="invLer" autofocus autocomplete="off"></div><input id="inv-qtd" type="number" min="1" value="1" class="qtd" title="Quantidade" data-enter="invLer"><button class="btn" data-act="invLer">Contar</button>${navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? `<button class="btn pri btn-cam" data-act="lerCamera" data-tipo="inv"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Contar pela câmera</button>` : ''}</div>
+    <div id="inv-msg" class="mut" style="min-height:1.4em;margin-top:6px"></div>
+    ${minhas.length ? `<p class="mut" style="margin:8px 0 4px">Suas últimas leituras</p>${tabSimples(['Produto', 'Qtd', 'Hora', ''], minhas.map(c => { const p = prod(c.prod); return [esc(p ? nomeCompleto(p) : '?'), c.qtd, c.em.slice(11, 16), `<button class="lnk perigo" data-act="invDesfazer" data-id="${esc(c.id)}">desfazer</button>`]; }))}` : ''}
+    ${invDesconhecidos.length ? `<p class="err">Códigos não cadastrados lidos: ${invDesconhecidos.slice(-10).map(esc).join(', ')}</p>` : ''}</section>
+  <section class="card"><div class="rel-cab"><div class="seg">${[['dif', 'Diferenças'], ['nao', 'Não contados'], ['todos', 'Todos']].map(([k, t]) => `<button class="${k === invAba ? 'on' : ''}" data-act="invAba" data-v="${k}">${t}</button>`).join('')}</div>
+      <div class="rel-bts"><button class="btn" data-act="invExportar">PDF / Excel</button><button class="btn" data-act="ajudaInv">Passo a passo</button>${adm() ? '<button class="btn perigo" data-act="invCancelar">Cancelar inventário</button><button class="btn pri" data-act="invFinalizar">Finalizar e ajustar estoque</button>' : ''}</div></div>
+    ${lista.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Código</th><th>Produto</th><th>Tam.</th><th class="n">Esperado</th><th class="n">Contado</th><th class="n">Diferença</th><th></th></tr></thead><tbody>
+      ${lista.slice(0, 400).map(l => `<tr><td>${esc(l.p.codigo)}</td><td>${esc(nomeProd(l.p))}${l.p.cor ? ' <span class="mut">' + esc(l.p.cor) + '</span>' : ''}${noEscopoInv(inv, l.p) ? '' : ' <span class="tag at">fora do escopo</span>'}</td><td>${esc(l.p.tamanho)}</td><td class="n">${l.esp}</td>
+        <td class="n">${l.contado ? l.cont : '<span class="mut">—</span>'}</td><td class="n ${l.dif < 0 ? 'err' : l.dif > 0 ? 'ok' : ''}">${l.contado ? (l.dif > 0 ? '+' : '') + l.dif : ''}</td><td class="n"><button class="lnk" data-act="invCorrigir" data-id="${l.p.id}">corrigir</button></td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="3">Total · ${lista.length} produto(s)</td><td class="n">${lista.reduce((s, l) => s + l.esp, 0)}</td><td class="n">${lista.reduce((s, l) => s + l.cont, 0)}</td><td class="n">${lista.filter(l => l.contado).reduce((s, l) => s + l.dif, 0)}</td><td></td></tr></tfoot></table></div>${lista.length > 400 ? '<p class="mut">Mostrando 400. Use PDF / Excel para a lista completa.</p>' : ''}`
+      : `<p class="vazio">${invAba === 'dif' ? 'Nenhuma diferença nos produtos contados até agora.' : invAba === 'nao' ? 'Todos os produtos do inventário já foram contados.' : 'Nenhum produto.'}</p>`}</section>`;
+}
+function histInv() {
+  const h = (db.inventarios || []).filter(i => i.status !== 'aberto').slice(-20).reverse();
+  if (!h.length) return '';
+  return `<section class="card"><h3>Inventários anteriores</h3>${tabSimples(['Nº', 'Escopo', 'Início', 'Fim', 'Situação', 'Sobras', 'Faltas', 'Diferença a custo', ''], h.map(i => {
+    const a = (i.fim && i.fim.ajustes) || [], so = a.filter(x => x.dif > 0).reduce((s, x) => s + x.dif, 0), fa = -a.filter(x => x.dif < 0).reduce((s, x) => s + x.dif, 0);
+    return [nDoc(i.id), esc(escopoTxt(i)), fmtDH(i.criado), i.fim ? fmtDH(i.fim.em) : '', i.status === 'finalizado' ? '<span class="tag ok">Finalizado</span>' : '<span class="tag in">Cancelado</span>', so, fa, fmtR(r2(a.reduce((s, x) => s + x.dif * (x.custo || 0), 0))), i.status === 'finalizado' ? `<button class="lnk" data-act="invRelatorio" data-id="${i.id}">Relatório</button>` : ''];
+  }))}</section>`;
+}
+ACT.invAba = el => { invAba = el.dataset.v; render(); };
+ACT.invIniciar = () => {
+  if (!adm()) return aviso('Somente administradores iniciam o inventário.', 'erro');
+  if (invAberto()) return aviso('Já existe um inventário aberto.', 'erro');
+  const inv = { id: db.seq.inv = (db.seq.inv || 0) + 1, criado: agora(), por: eu.nome, status: 'aberto', escopo: { tipo: $('#inv-tipo').value, marca: $('#inv-marca').value, colecao: $('#inv-col').value } };
+  const n = ativos().filter(p => noEscopoInv(inv, p)).length; if (!n) return aviso('Nenhum produto ativo nesse filtro.', 'erro');
+  db.inventarios = db.inventarios || []; db.inventarios.push(inv); invAba = 'nao'; invDesconhecidos = [];
+  registrar('Inventário iniciado', `nº ${nDoc(inv.id)} · ${escopoTxt(inv)} · ${n} produto(s)`); salvar(); render(); aviso('Inventário iniciado. Comece a contar.', 'ok');
+};
+function contarInv(cod, qtd) {
+  const inv = invAberto(); if (!inv) return { erro: 'nenhum inventário aberto' };
+  const p = acharExato(String(cod || '').trim());
+  if (!p) { if (invDesconhecidos.indexOf(cod) < 0) invDesconhecidos.push(cod); return { erro: `código ${cod} não cadastrado` }; }
+  if (!noEscopoInv(inv, p)) return { erro: `${nomeCompleto(p)} não faz parte deste inventário (${escopoTxt(inv)})` };
+  db.contagens = db.contagens || [];
+  db.contagens.push({ id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), inv: inv.id, prod: p.id, qtd, em: agora(), por: eu.nome });
+  salvar();
+  const total = db.contagens.filter(c => c.inv === inv.id && c.prod === p.id).reduce((s, c) => s + c.qtd, 0);
+  return { p, total };
+}
+ACT.invLer = () => {
+  const inp = $('#inv-cod'), q = Math.max(1, int(($('#inv-qtd') || {}).value) || 1), cod = inp.value.trim(); if (!cod) return;
+  const r = contarInv(cod, q);
+  render(); const i2 = $('#inv-cod'); if (i2) { i2.value = ''; i2.focus(); }
+  const m = $('#inv-msg'); if (m) m.innerHTML = r.erro ? `<b class="err">${esc(r.erro)}</b>` : `<b class="ok">✓ ${esc(nomeCompleto(r.p))}</b> · contado até agora: <b>${r.total}</b>`;
+  if (r.erro) aviso(r.erro.replace(/^./, c => c.toUpperCase()) + '.', 'erro');
+};
+ACT.invDesfazer = el => { db.contagens = (db.contagens || []).filter(c => c.id !== el.dataset.id); salvar(); render(); aviso('Leitura desfeita.', 'ok'); };
+ACT.invCorrigir = el => {
+  const inv = invAberto(), l = inv && linhasInv(inv).find(x => x.p.id === +el.dataset.id); if (!l) return;
+  abrirModal('Corrigir contagem', `<p><b>${esc(nomeCompleto(l.p))}</b><br>Contado até agora: <b>${l.cont}</b> · esperado: ${l.esp}</p><label>Quantidade certa<input id="ic-q" type="number" min="0" value="${l.cont}" class="qtd"></label>`,
+    `<button class="btn pri" data-act="invCorrigirOk" data-id="${l.p.id}">Gravar</button>`);
+};
+ACT.invCorrigirOk = el => {
+  const inv = invAberto(), l = inv && linhasInv(inv).find(x => x.p.id === +el.dataset.id), q = int($('#ic-q').value);
+  if (!l || !(q >= 0)) return aviso('Informe a quantidade.', 'erro');
+  if (q !== l.cont || !l.contado) { db.contagens = db.contagens || []; db.contagens.push({ id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), inv: inv.id, prod: l.p.id, qtd: q - l.cont, em: agora(), por: eu.nome, correcao: true }); }
+  registrar('Contagem corrigida', `inventário ${nDoc(inv.id)}: ${l.p.codigo} ${l.cont} → ${q}`); salvar(); fecharModal(); render();
+};
+ACT.invCancelar = () => abrirModal('Cancelar inventário', '<p>O inventário é cancelado sem mexer no estoque. As leituras ficam guardadas no histórico.</p><label>Motivo<input id="inv-mot"></label>', '<button class="btn perigo" data-act="invCancelarOk">Cancelar inventário</button>');
+ACT.invCancelarOk = () => {
+  const inv = invAberto(), mot = $('#inv-mot').value.trim(); if (!inv) return; if (mot.length < 5) return aviso('Informe o motivo.', 'erro');
+  inv.status = 'cancelado'; inv.fim = { em: agora(), por: eu.nome, motivo: mot, ajustes: [] };
+  registrar('Inventário cancelado', `nº ${nDoc(inv.id)}: ${mot}`); salvar(); fecharModal(); render();
+};
+ACT.invFinalizar = () => {
+  const inv = invAberto(); if (!inv || !adm()) return;
+  const ls = linhasInv(inv), nao = ls.filter(l => !l.contado && noEscopoInv(inv, l.p)), naoEst = nao.filter(l => l.esp !== 0), dif = ls.filter(l => l.contado && l.dif);
+  abrirModal('Finalizar inventário nº ' + nDoc(inv.id), `<p><b>${dif.length}</b> produto(s) contado(s) com diferença: sobram <b>${dif.filter(l => l.dif > 0).reduce((s, l) => s + l.dif, 0)}</b> peça(s) e faltam <b>${-dif.filter(l => l.dif < 0).reduce((s, l) => s + l.dif, 0)}</b>.</p>
+    ${nao.length ? `<p><b>${nao.length}</b> produto(s) do inventário não foram contados${naoEst.length ? `, ${naoEst.length} deles com estoque no sistema (${naoEst.reduce((s, l) => s + l.esp, 0)} peça(s))` : ''}.</p>
+      <label class="chk"><input type="checkbox" id="inv-zerar"> Zerar o estoque dos produtos não contados (não foram encontrados na loja)</label><p class="mut">Sem marcar, os não contados ficam como estão.</p>` : '<p class="ok">Todos os produtos do inventário foram contados.</p>'}
+    <p class="mut">O estoque de cada produto contado passa a ser o que foi contado, mais as vendas e entradas que aconteceram depois da contagem dele.</p>`,
+    '<button class="btn pri" data-act="invFinalizarOk">Ajustar estoque e finalizar</button>');
+};
+ACT.invFinalizarOk = () => {
+  const inv = invAberto(); if (!inv) return;
+  const zerar = !!($('#inv-zerar') || {}).checked, ajustes = [];
+  linhasInv(inv).forEach(l => {
+    const conta = l.contado || (zerar && noEscopoInv(inv, l.p)); if (!conta) return;
+    const novo = l.cont + l.depois, aj = novo - l.p.estoque;
+    ajustes.push({ prod: l.p.id, codigo: l.p.codigo, nome: nomeCompleto(l.p), esp: l.esp, cont: l.cont, dif: l.dif, custo: l.p.custo || 0, naoContado: !l.contado });
+    if (aj) { l.p.estoque = novo; mov(l.p, 'INVENTÁRIO', aj, 'Inventário nº ' + nDoc(inv.id)); }
+  });
+  inv.status = 'finalizado'; inv.fim = { em: agora(), por: eu.nome, zerou: zerar, ajustes };
+  const n = ajustes.filter(a => a.dif).length;
+  registrar('Inventário finalizado', `nº ${nDoc(inv.id)} · ${ajustes.length} produto(s) conferido(s), ${n} ajustado(s)`); salvar(); fecharModal(); render();
+  aviso(`Inventário finalizado: ${n} produto(s) com o estoque ajustado.`, 'ok'); ACT.invRelatorio({ dataset: { id: inv.id } });
+};
+function colsInv() { return [C('Código', 's'), C('Produto', 's'), C('Esperado', 'i'), C('Contado', 'i'), C('Diferença', 'i'), C('Custo unit.', 'r'), C('Diferença a custo', 'r')]; }
+ACT.invRelatorio = el => {
+  const inv = (db.inventarios || []).find(i => i.id === +el.dataset.id); if (!inv || !inv.fim) return;
+  const a = inv.fim.ajustes.filter(x => x.dif).sort((x, y) => x.dif - y.dif);
+  const linhas = a.map(x => ({ c: [x.codigo, x.nome + (x.naoContado ? ' (não contado)' : ''), x.esp, x.cont, x.dif, x.custo, r2(x.dif * x.custo)] }));
+  linhas.push({ forte: true, c: ['Total', a.length + ' produto(s) com diferença de ' + inv.fim.ajustes.length + ' conferido(s)', a.reduce((s, x) => s + x.esp, 0), a.reduce((s, x) => s + x.cont, 0), a.reduce((s, x) => s + x.dif, 0), '', r2(a.reduce((s, x) => s + x.dif * x.custo, 0))] });
+  modalAnalitico('Inventário nº ' + nDoc(inv.id), `${escopoTxt(inv)} · ${fmtDH(inv.criado)} a ${fmtDH(inv.fim.em)} · finalizado por ${inv.fim.por}`, colsInv(), linhas);
+};
+ACT.invExportar = () => {
+  const inv = invAberto(); if (!inv) return;
+  const ls = linhasInv(inv), lista = invAba === 'dif' ? ls.filter(l => l.contado && l.dif) : invAba === 'nao' ? ls.filter(l => !l.contado && noEscopoInv(inv, l.p)) : ls;
+  const linhas = lista.map(l => ({ c: [l.p.codigo, nomeCompleto(l.p), l.esp, l.contado ? l.cont : '', l.contado ? l.dif : '', l.p.custo || 0, l.contado ? r2(l.dif * (l.p.custo || 0)) : ''] }));
+  linhas.push({ forte: true, c: ['Total', lista.length + ' produto(s)', lista.reduce((s, l) => s + l.esp, 0), lista.reduce((s, l) => s + l.cont, 0), lista.filter(l => l.contado).reduce((s, l) => s + l.dif, 0), '', r2(lista.filter(l => l.contado).reduce((s, l) => s + l.dif * (l.p.custo || 0), 0))] });
+  modalAnalitico('Inventário nº ' + nDoc(inv.id) + ' (em andamento)', `${escopoTxt(inv)} · ${{ dif: 'diferenças', nao: 'não contados', todos: 'todos os produtos' }[invAba]} · posição de ${fmtDH(agora())}`, colsInv(), linhas);
+};
+ACT.ajudaInv = () => ajudaRecurso('inventario', 'Passo a passo – inventário');
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
-const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'ajuda'];
+const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'inventario', 'ajuda'];
 function telaLoginRede(msg) {
   let loja = {}; try { loja = JSON.parse(localStorage.getItem(CHAVE + '.redeLoja') || '{}'); } catch (e) { }
   const cab = l => `${l.logo ? `<img class="rede-img" src="${esc(l.logo)}" alt="">` : `<div class="rede-logo">${esc(iniciais(l.loja || 'Controle de Estoque'))}</div>`}<h1>${esc(l.loja || 'Controle de Estoque')}</h1>`;
@@ -5782,16 +5948,22 @@ ACT.lerCamera = async el => {
         else { const w = Math.min(v.videoWidth, 1600), h = Math.round(v.videoHeight * w / v.videoWidth); cv.width = w; cv.height = h; cx.drawImage(v, 0, 0, w, h); cods = lerQuadro(cx.getImageData(0, 0, w, h)); }
       } catch (e) { cods = []; }
       const c = cods[0];
-      if (c && c === ultimo && Date.now() - ultimoVisto < 1500) { ultimoVisto = Date.now(); }   // mesma etiqueta ainda na frente da câmera: não soma de novo
+      if (c && c === ultimo && Date.now() - ultimoVisto < (tipo === 'inv' ? 1000 : 1500)) { ultimoVisto = Date.now(); }   // mesma etiqueta ainda na frente da câmera: não soma de novo
       else if (c) {
         const confirmado = det || cods.filter(x => x === c).length >= 2 || (c === antes && ++vezes >= 1);
         if (c !== antes) { antes = c; vezes = 0; }
         if (confirmado) {
           ultimo = c; ultimoVisto = Date.now(); pausaAte = Date.now() + 900; antes = ''; bip();
-          const inp = $('#pk-' + tipo);
-          if (inp) { inp.value = c; ACT.addItem({ dataset: { tipo } }); const i2 = $('#pk-' + tipo); if (i2) i2.blur(); }
-          const p = acharProduto(c), u = $('#lt-ultimo');
-          if (u) u.innerHTML = p && p !== 'varios' ? `<b class="ok">✓ ${esc(nomeCompleto(p))}</b> · leia o próximo ou toque em Fechar` : `<b class="err">Código ${esc(c)} não cadastrado</b>`;
+          const u = $('#lt-ultimo');
+          if (tipo === 'inv') {   // inventário: cada leitura soma 1
+            const r = contarInv(c, 1); render();
+            if (u) u.innerHTML = r.erro ? `<b class="err">${esc(r.erro)}</b>` : `<b class="ok">✓ ${esc(nomeCompleto(r.p))}</b> · contado: <b>${r.total}</b> · leia a próxima peça`;
+          } else {
+            const inp = $('#pk-' + tipo);
+            if (inp) { inp.value = c; ACT.addItem({ dataset: { tipo } }); const i2 = $('#pk-' + tipo); if (i2) i2.blur(); }
+            const p = acharProduto(c);
+            if (u) u.innerHTML = p && p !== 'varios' ? `<b class="ok">✓ ${esc(nomeCompleto(p))}</b> · leia o próximo ou toque em Fechar` : `<b class="err">Código ${esc(c)} não cadastrado</b>`;
+          }
         }
       }
     }
