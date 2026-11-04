@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-16">
+<meta name="versao-sistema" content="2026.11.04-17">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -549,6 +549,7 @@ input[data-maiusc]::placeholder{text-transform:none}
   .grid2{grid-template-columns:1fr}
 }
 /* recursos premium */
+.cards-clica .rbox{cursor:pointer;transition:box-shadow .15s,transform .05s}.cards-clica .rbox:hover{box-shadow:0 4px 14px rgba(16,24,40,.12)}
 .promo-faixa{background:#ecfdf3;border:1px solid #abefc6;color:#05603a;border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13px}
 .mq-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fafbfc}
 .mq-parc{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}.mq-parc input{width:100%}
@@ -2556,7 +2557,7 @@ ACT.verCliente = el => {
   const c = cli(+el.dataset.id), vs = db.vendas.filter(v => v.clienteId === c.id).slice().reverse();
   const cr = db.creditos.filter(x => x.clienteId === c.id).slice().reverse(), rec = db.receber.filter(r => r.clienteId === c.id), cds = db.condicionais.filter(x => x.clienteId === c.id).slice().reverse();
   abrirModal(esc(c.nome), `<p>${esc(c.telefone)}${c.doc ? ' · CPF ' + esc(c.doc) : ''}${c.nascimento ? ' · nasc. ' + fmtDia(c.nascimento) : ''}${c.endereco ? '<br>' + esc(c.endereco) : ''}${c.obs ? '<br><i>' + esc(c.obs) + '</i>' : ''}</p>
-    <h3>Crédito disponível: ${fmtR(saldoCredito(c.id))}</h3>${cr.length ? tabSimples(['Data', 'Movimento', 'Valor'], cr.map(x => [fmtDH(x.data), esc(x.ref), `<span class="${x.valor < 0 ? 'err' : 'ok'}">${fmtR(x.valor)}</span>`]), ['Saldo de crédito', '', fmtR(somar(cr, x => x.valor))]) : ''}
+    <h3>Crédito disponível: ${fmtR(saldoCredito(c.id))}</h3>${cr.length ? (() => { const rs = new Map(lotesCredito(c.id).map(l => [l.id, l.resto])); return tabSimples(['Data', 'Movimento', 'Valor', ''], cr.map(x => [fmtDH(x.data), esc(x.ref) + (x.validade ? ` <span class="mut">(vale até ${fmtDia(x.validade)})</span>` : ''), `<span class="${x.valor < 0 ? 'err' : 'ok'}">${fmtR(x.valor)}</span>`, adm() && x.valor > 0 && (rs.get(x.id) || 0) > 0 && !x.expira ? `<button class="lnk perigo" data-act="credEstornar" data-id="${x.id}">estornar</button>` : '']), ['Saldo de crédito', '', fmtR(somar(cr, x => x.valor)), '']); })() : ''}
     <h3>Compras</h3>${tabelaVendas(vs)}
     ${rec.length ? '<h3>Crediário</h3>' + tabelaReceber(rec) : ''}
     ${cds.length ? '<h3>Condicionais</h3>' + tabSimples(['Nº', 'Saída', 'Situação', 'Peças'], cds.map(x => [nDoc(x.id), fmtDH(x.data), x.status === 'aberta' ? 'Em aberto até ' + fmtDia(x.prazo) : 'Encerrada', x.itens.reduce((s, i) => s + i.qtd, 0)]), ['Total', '', cds.length + ' condicional(is)', somar(cds, pecasDe)]) : ''}`,
@@ -4270,6 +4271,8 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-17', itens: ['Aniversários e cashback: o administrador pode estornar um crédito dado (presente de aniversário ou cashback), informando o motivo. O que já foi usado não volta; estorna o que sobrou. Também na ficha do cliente (Clientes → Ver).',
+    'Os cards do cashback (gerado no mês, em aberto, vence em 7 dias, vencido no mês) abrem o analítico ao clicar, com PDF e Excel. "Em aberto" passa a incluir os presentes de aniversário.'] },
   { v: '2026.11.04-16', itens: ['Recurso Premium "Aniversariantes e cashback": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.',
     'Cashback: a cada compra de cliente cadastrado, uma % do valor pago volta como crédito para a próxima compra, com validade. O recibo mostra o cashback ganho. O que não for usado vence sozinho; crédito que vence em 7 dias aparece para lembrar o cliente.',
     'Extrato do cashback (gerado, usado, estornado e vencido) em PDF e Excel.'] },
@@ -4879,6 +4882,7 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'Dei um presente ou cashback por engano. Como desfaço?', quem: 'adm', rec: 'cashback', r: 'Em Aniversários e cashback, clique em Estornar presente na linha do cliente, ou abra Clientes → Ver e clique em estornar no crédito. Informe o motivo. Só volta o que ainda não foi usado; o estorno fica no extrato e no histórico.' },
   { p: 'O cashback do cliente sumiu.', quem: 'adm', rec: 'cashback', r: 'Provavelmente venceu: crédito com validade que não é usado a tempo vence sozinho e aparece no extrato do cliente como "Cashback vencido". Veja em Aniversários e cashback → Extrato do cashback.' },
   { p: 'Cancelei uma venda que tinha gerado cashback.', quem: 'adm', rec: 'cashback', r: 'O cashback daquela venda é estornado junto. Se o cliente já tinha usado o crédito, o saldo dele pode ficar negativo e é descontado da próxima vez.' },
   { p: 'O desconto da promoção soma com o desconto da venda?', quem: 'todos', rec: 'promocoes', r: 'Sim. A peça já entra no carrinho com o preço da promoção, e o campo Desconto da venda é aplicado em cima do total, como sempre. Use com cuidado.' },
@@ -5973,17 +5977,17 @@ function fidelidade() {
   const f = cfgFid(), ano = hoje().slice(0, 4), lista = aniversariantes(fidAba);
   const ultima = id => { const v = vendasValidas().filter(x => x.clienteId === id).pop(); return v ? fmtDia(v.data.slice(0, 10)) : '—'; };
   const linhaAniv = c => {
-    const pres = (c.presentes || {})[ano], idade = int(ano) - int(c.nascimento.slice(0, 4));
+    const pr0 = (c.presentes || {})[ano], pres = pr0 && !pr0.estornado ? pr0 : null, idade = int(ano) - int(c.nascimento.slice(0, 4));
     const msg = textoMsg(f.msgAniv, { nome: c.nome.split(' ')[0], loja: db.config.loja || 'loja', presente: pres ? `Você ganhou ${fmtR(pres.valor)} de presente para usar até ${fmtDia(pres.validade)}. ` : '' });
     const w = linkWhats(c.telefone, msg);
     return `<tr><td>${c.nascimento.slice(8, 10)}/${c.nascimento.slice(5, 7)}</td><td><b>${esc(c.nome)}</b>${idade > 0 && idade < 120 ? ` <span class="mut">faz ${idade} anos</span>` : ''}</td><td>${esc(c.telefone || '—')}</td><td>${ultima(c.id)}</td><td class="n">${fmtR(saldoCredito(c.id))}</td>
-      <td>${(c.anivMsg || '') === ano ? '<span class="tag ok">mensagem enviada</span>' : ''}${pres ? ' <span class="tag ab">presente dado</span>' : ''}</td>
-      <td class="n">${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener" data-act="fidMsg" data-id="${c.id}">WhatsApp</a>` : '<span class="mut">sem celular</span>'}${adm() && num(f.presente) > 0 && !pres ? ` <button class="btn" data-act="fidPresente" data-id="${c.id}">Dar presente ${fmtR(num(f.presente))}</button>` : ''}</td></tr>`;
+      <td>${(c.anivMsg || '') === ano ? '<span class="tag ok">mensagem enviada</span>' : ''}${pres ? ' <span class="tag ab">presente dado</span>' : pr0 && pr0.estornado ? ' <span class="tag in">presente estornado</span>' : ''}</td>
+      <td class="n">${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener" data-act="fidMsg" data-id="${c.id}">WhatsApp</a>` : '<span class="mut">sem celular</span>'}${adm() && num(f.presente) > 0 && !pres ? ` <button class="btn" data-act="fidPresente" data-id="${c.id}">Dar presente ${fmtR(num(f.presente))}</button>` : ''}${adm() && pres && credPresente(c, ano) ? ` <button class="btn perigo" data-act="credEstornar" data-id="${credPresente(c, ano)}">Estornar presente</button>` : ''}</td></tr>`;
   };
   // cashback
   const mesIni = hoje().slice(0, 8) + '01', estornados = new Set(db.creditos.filter(c => c.estornoDe).map(c => c.estornoDe)), cb = db.creditos.filter(c => c.cashback && c.valor > 0 && !estornados.has(c.id));
   const geradoMes = r2(cb.filter(c => c.data >= mesIni).reduce((s, c) => s + c.valor, 0)), vencidoMes = r2(-db.creditos.filter(c => c.expira && c.data >= mesIni).reduce((s, c) => s + c.valor, 0));
-  const abertos = []; [...new Set(cb.map(c => c.clienteId))].forEach(id => lotesCredito(id).filter(l => l.resto > 0 && l.validade).forEach(l => abertos.push(Object.assign({ cli: cli(id) }, l))));
+  const abertos = []; [...new Set(db.creditos.filter(c => c.validade).map(c => c.clienteId))].forEach(id => lotesCredito(id).filter(l => l.resto > 0 && l.validade).forEach(l => abertos.push(Object.assign({ cli: cli(id) }, l))));
   const emAberto = r2(abertos.reduce((s, l) => s + l.resto, 0)), vencendo = abertos.filter(l => l.validade <= somaDias(7)).sort((a, b) => a.validade.localeCompare(b.validade));
   return `<h2>Aniversários e cashback</h2>
   <section class="card"><div class="rel-cab"><h3 style="margin:0">Aniversariantes</h3><div class="rel-bts"><div class="seg">${[['hoje', 'Hoje'], ['semana', 'Próximos 7 dias'], ['mes', 'Este mês'], ['prox', 'Próximo mês']].map(([k, t]) => `<button class="${k === fidAba ? 'on' : ''}" data-act="fidAba" data-v="${k}">${t}</button>`).join('')}</div><button class="btn" data-act="ajudaFid">Passo a passo</button>${adm() ? '<button class="btn" data-act="fidConfig">Configurar</button>' : ''}</div></div>
@@ -5991,20 +5995,20 @@ function fidelidade() {
       : `<p class="vazio">Nenhum aniversariante ${{ hoje: 'hoje', semana: 'nos próximos 7 dias', mes: 'neste mês', prox: 'no próximo mês' }[fidAba]}.${db.clientes.filter(c => !c.nascimento).length ? ` ${db.clientes.filter(c => !c.nascimento).length} cliente(s) sem data de nascimento no cadastro.` : ''}</p>`}</section>
   <section class="card"><h3>Cashback ${f.ativo ? `<span class="tag ok">ligado: ${fmtDec(num(f.pct))}% por ${int(f.dias)} dias${num(f.minimo) ? ', compra mínima ' + fmtR(num(f.minimo)) : ''}</span>` : '<span class="tag in">desligado</span>'}</h3>
     ${f.ativo ? '' : `<p class="mut">Ligue em <b>Configurar</b>: a cada compra de cliente cadastrado, uma parte do valor volta como crédito para a próxima compra.</p>`}
-    <div class="resumo-tit"><div class="rbox"><small>Gerado neste mês</small><b>${fmtR(geradoMes)}</b><span>${cb.filter(c => c.data >= mesIni).length} venda(s)</span></div>
-      <div class="rbox ok"><small>Em aberto (clientes podem usar)</small><b>${fmtR(emAberto)}</b><span>${new Set(abertos.map(l => l.cli && l.cli.id)).size} cliente(s)</span></div>
-      <div class="rbox ${vencendo.length ? 'at' : ''}"><small>Vence nos próximos 7 dias</small><b>${fmtR(r2(vencendo.reduce((s, l) => s + l.resto, 0)))}</b><span>${vencendo.length} crédito(s)</span></div>
-      <div class="rbox"><small>Vencido neste mês</small><b>${fmtR(vencidoMes)}</b><span>não usado a tempo</span></div></div>
+    <div class="resumo-tit cards-clica"><div class="rbox" data-act="fidCard" data-v="gerado" title="Clique para ver o detalhe"><small>Gerado neste mês</small><b>${fmtR(geradoMes)}</b><span>${cb.filter(c => c.data >= mesIni).length} venda(s)</span></div>
+      <div class="rbox ok" data-act="fidCard" data-v="aberto" title="Clique para ver o detalhe"><small>Em aberto (clientes podem usar)</small><b>${fmtR(emAberto)}</b><span>${new Set(abertos.map(l => l.cli && l.cli.id)).size} cliente(s)</span></div>
+      <div class="rbox ${vencendo.length ? 'at' : ''}" data-act="fidCard" data-v="vence" title="Clique para ver o detalhe"><small>Vence nos próximos 7 dias</small><b>${fmtR(r2(vencendo.reduce((s, l) => s + l.resto, 0)))}</b><span>${vencendo.length} crédito(s)</span></div>
+      <div class="rbox" data-act="fidCard" data-v="vencido" title="Clique para ver o detalhe"><small>Vencido neste mês</small><b>${fmtR(vencidoMes)}</b><span>não usado a tempo</span></div></div>
     ${vencendo.length ? `<h4 class="rel-sec">Lembre o cliente antes de vencer</h4>${tabSimples(['Cliente', 'Valor', 'Vence em', ''], vencendo.map(l => { const c = l.cli || {}, w = linkWhats(c.telefone, textoMsg(f.msgVence, { nome: (c.nome || '').split(' ')[0], loja: db.config.loja || 'loja', valor: fmtR(l.resto), data: fmtDia(l.validade) })); return [esc(c.nome || '?'), fmtR(l.resto), fmtDia(l.validade), w ? `<a class="lnk" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : '']; }))}` : ''}
     <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="fidExtrato">Extrato do cashback (PDF / Excel)</button></div></section>`;
 }
 ACT.fidAba = el => { fidAba = el.dataset.v; render(); };
 ACT.fidMsg = el => { try { window.open(el.href, '_blank', 'noopener'); } catch (e) { } const c = cli(+el.dataset.id); if (!c) return; c.anivMsg = hoje().slice(0, 4); registrar('Mensagem de aniversário enviada', c.nome); salvar(); setTimeout(render, 300); return true; };
 ACT.fidPresente = el => {
-  const c = cli(+el.dataset.id), f = cfgFid(), ano = hoje().slice(0, 4); if (!c || !adm() || (c.presentes || {})[ano]) return;
+  const c = cli(+el.dataset.id), f = cfgFid(), ano = hoje().slice(0, 4), ja = (c && c.presentes || {})[ano]; if (!c || !adm() || (ja && !ja.estornado)) return;
   const val = r2(num(f.presente)), validade = somaDias(int(f.diasPresente) || 30);
-  db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: c.id, valor: val, ref: 'Presente de aniversário ' + ano, validade, presente: true, usuario: eu.nome });
-  c.presentes = Object.assign({}, c.presentes, { [ano]: { valor: val, validade } });
+  const idc = db.seq.cred++; db.creditos.push({ id: idc, data: agora(), clienteId: c.id, valor: val, ref: 'Presente de aniversário ' + ano, validade, presente: true, usuario: eu.nome });
+  c.presentes = Object.assign({}, c.presentes, { [ano]: { valor: val, validade, cred: idc } });
   registrar('Presente de aniversário', `${c.nome}: ${fmtR(val)} até ${fmtDia(validade)}`); salvar(); render(); aviso(`Presente de ${fmtR(val)} lançado como crédito até ${fmtDia(validade)}. Envie a mensagem pelo WhatsApp.`, 'ok');
 };
 ACT.fidConfig = () => {
@@ -6026,10 +6030,51 @@ ACT.fidSalvar = () => {
 };
 ACT.fidExtrato = () => {
   const l = db.creditos.filter(c => c.cashback || c.presente || c.expira || c.estornoDe || /^Usado na venda/.test(c.ref || '')).slice().sort((a, b) => String(a.data).localeCompare(String(b.data)));
-  const tipo = c => c.cashback ? 'Cashback gerado' : c.presente ? 'Presente de aniversário' : c.expira ? 'Vencido' : c.estornoDe ? 'Estorno' : 'Usado na compra';
+  const tipo = c => c.cashback ? 'Cashback gerado' : c.presente ? 'Presente de aniversário' : c.expira ? 'Vencido' : c.estornoDe ? (c.manual ? 'Estorno pelo administrador' : 'Estorno (venda cancelada)') : 'Usado na compra';
   const linhas = l.map(c => ({ c: [fmtDH(c.data), (cli(c.clienteId) || {}).nome || '?', tipo(c), c.ref || '', c.validade ? fmtDia(c.validade) : '', c.valor] }));
   linhas.push({ forte: true, c: ['Total', '', '', '', '', r2(l.reduce((s, c) => s + c.valor, 0))] });
   modalAnalitico('Extrato do cashback e créditos', 'Cashback, presentes, usos, estornos e vencimentos', [C('Data', 's'), C('Cliente', 's'), C('Tipo', 's'), C('Referência', 's'), C('Validade', 's'), C('Valor', 'r')], linhas);
+};
+
+const nomeCli = id => (cli(id) || {}).nome || '?';
+const credPresente = (c, ano) => { const p = (c.presentes || {})[ano]; return p && (p.cred || (db.creditos.find(x => x.clienteId === c.id && x.presente && x.ref === 'Presente de aniversário ' + ano) || {}).id); };
+ACT.credEstornar = el => {
+  if (!adm()) return aviso('Somente administradores estornam crédito.', 'erro');
+  const g = db.creditos.find(c => c.id === +el.dataset.id); if (!g) return;
+  const l = lotesCredito(g.clienteId).find(x => x.id === g.id), resto = l ? l.resto : 0;
+  if (!(resto > 0)) return aviso('Este crédito já foi todo usado ou venceu: não há o que estornar.', 'erro');
+  abrirModal('Estornar crédito', `<p><b>${esc(nomeCli(g.clienteId))}</b><br>${esc(g.ref)} · lançado em ${fmtDH(g.data)} · valor ${fmtR(g.valor)}</p>
+    <p>Valor a estornar: <b>${fmtR(resto)}</b>${resto < g.valor ? ` <span class="mut">(${fmtR(r2(g.valor - resto))} já foi usado e não volta)</span>` : ''}</p>
+    <label>Motivo do estorno<input id="ce-mot" placeholder="ex.: presente dado por engano"></label>`, `<button class="btn perigo" data-act="credEstornarOk" data-id="${g.id}">Estornar ${fmtR(resto)}</button>`);
+};
+ACT.credEstornarOk = el => {
+  const g = db.creditos.find(c => c.id === +el.dataset.id), mot = $('#ce-mot').value.trim(); if (!g) return;
+  if (mot.length < 5) return aviso('Informe o motivo do estorno.', 'erro');
+  const l = lotesCredito(g.clienteId).find(x => x.id === g.id), resto = l ? l.resto : 0; if (!(resto > 0)) return fecharModal();
+  db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: g.clienteId, valor: -resto, ref: `Estorno de crédito (${g.ref}): ${mot}`, estornoDe: g.id, manual: true, usuario: eu.nome });
+  const c = cli(g.clienteId); if (g.presente && c && c.presentes) Object.keys(c.presentes).forEach(a => { if (c.presentes[a].cred === g.id || (!c.presentes[a].cred && g.ref === 'Presente de aniversário ' + a)) c.presentes[a].estornado = true; });
+  registrar('Crédito estornado', `${nomeCli(g.clienteId)}: ${fmtR(resto)} (${g.ref}) – ${mot}`); salvar(); fecharModal(); render(); aviso(`Crédito de ${fmtR(resto)} estornado.`, 'ok');
+};
+ACT.fidCard = el => {
+  const k = el.dataset.v, mesIni = hoje().slice(0, 8) + '01';
+  const estornados = new Set(db.creditos.filter(c => c.estornoDe).map(c => c.estornoDe));
+  const origem = c => c.cashback ? 'Cashback' : c.presente ? 'Presente de aniversário' : 'Crédito';
+  if (k === 'gerado') {
+    const l = db.creditos.filter(c => c.cashback && c.valor > 0 && c.data >= mesIni && !estornados.has(c.id));
+    const linhas = l.map(c => ({ c: [fmtDH(c.data), nomeCli(c.clienteId), c.ref, fmtDia(c.validade), c.valor] })); linhas.push({ forte: true, c: ['Total', l.length + ' venda(s)', '', '', r2(somar(l, c => c.valor))] });
+    return modalAnalitico('Cashback gerado neste mês', 'Cashback das vendas desde ' + fmtDia(mesIni) + ' (sem os estornados)', [C('Data', 's'), C('Cliente', 's'), C('Venda', 's'), C('Validade', 's'), C('Cashback', 'r')], linhas);
+  }
+  if (k === 'aberto' || k === 'vence') {
+    const l = []; [...new Set(db.creditos.filter(c => c.validade).map(c => c.clienteId))].forEach(id => lotesCredito(id).filter(x => x.resto > 0 && x.validade && (k === 'aberto' || x.validade <= somaDias(7))).forEach(x => l.push(Object.assign({ cid: id }, x, { g: db.creditos.find(c => c.id === x.id) }))));
+    l.sort((a, b) => a.validade.localeCompare(b.validade));
+    const linhas = l.map(x => ({ c: [nomeCli(x.cid), (cli(x.cid) || {}).telefone || '', origem(x.g || {}), x.ref, x.g ? fmtDia(x.g.data.slice(0, 10)) : '', fmtDia(x.validade), x.valor, r2(x.valor - x.resto), x.resto] }));
+    linhas.push({ forte: true, c: ['Total', '', '', l.length + ' crédito(s)', '', '', r2(somar(l, x => x.valor)), r2(somar(l, x => x.valor - x.resto)), r2(somar(l, x => x.resto))] });
+    return modalAnalitico(k === 'aberto' ? 'Crédito com validade em aberto' : 'Crédito que vence nos próximos 7 dias', 'Cashback e presentes que os clientes ainda podem usar' + (k === 'vence' ? ', vencendo até ' + fmtDia(somaDias(7)) : ''),
+      [C('Cliente', 's'), C('Telefone', 's'), C('Origem', 's'), C('Referência', 's'), C('Lançado em', 's'), C('Vence em', 's'), C('Valor', 'r'), C('Já usado', 'r'), C('Disponível', 'r')], linhas);
+  }
+  const l = db.creditos.filter(c => c.expira && c.data >= mesIni);
+  const linhas = l.map(c => ({ c: [fmtDia(c.data.slice(0, 10)), nomeCli(c.clienteId), c.ref, -c.valor] })); linhas.push({ forte: true, c: ['Total', l.length + ' crédito(s)', '', r2(-somar(l, c => c.valor))] });
+  modalAnalitico('Crédito vencido neste mês', 'Cashback e presentes que venceram sem uso desde ' + fmtDia(mesIni), [C('Venceu em', 's'), C('Cliente', 's'), C('Referência', 's'), C('Valor vencido', 'r')], linhas);
 };
 ACT.ajudaFid = () => ajudaRecurso('cashback', 'Passo a passo – aniversários e cashback');
 /* ===== Venda pelo celular (recurso Premium) =====

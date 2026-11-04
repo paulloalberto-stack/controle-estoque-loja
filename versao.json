@@ -1,14 +1,13 @@
 {
- "versao": "2026.11.04-16",
- "publicadoEm": "04/11/2026 15:44",
+ "versao": "2026.11.04-17",
+ "publicadoEm": "04/11/2026 15:58",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "37eb03fe37d30fcb75c457478b36c3b60263df40964d259360a056aa5addc883",
- "tamanho": 659001,
- "assinatura": "Puu8OahEyopxLeRZoR5jJYgA2nChVIien+F+aQ4gBWceY14r9YPuALE2TMFow0HA+s/OQCEL1SvxYwJuTgO6UVlhY9EzICcebW9ZiRkxMIDhtn7qINDx8dzv0yjoIqUjTJiR9QX5P3CWp7Lh2kk0aBsqJEZybjTGtvlbxpcG64p85r21GCcIoqTau47rCStvIMvpMQuvglDwJ+N8V+RjFcRHG/BLJoQal03s25iD6+UgPse39mV0LMjGNVriETkQK1+YXy4KUk9ucmpIisKMhyFteYrwLoUffYqnMUrfTjVLNK2pD24/9Av+8ufTL37xRohYiouUqgKXH3HBB3ijYXLUQKAJgRifYL7N2B5NXINMfsB9WdFHK3RDO+P9QyN6LcRfu6JOQjeO+LpJS/zkhoj2CFcMHBTfj7buNifAHLRKyXvF5Py5dusqScwjqg9XEhjFSz3mfKZa8R+VfioPyPwadqvj131u+kmrcpnMmZPd54YDPwQCdtraCcdP139K",
+ "sha256": "a78a86954b59452facee5d8609710b25a551af5dadf4483415e8c9df833a5c6b",
+ "tamanho": 665801,
+ "assinatura": "Ruv/1K84u0jfrw6a8TJGRWGxa3yFJISuVp6UHpdVyUMqz60HjQT1E2C296xpEtssyAloI5ntnmkdcnsiPcaO63+ORvA7ARhRjH4nIxw04tVGA7g5iplrD0Xj+WsB92+KLo5PBMweYj31feMQeHVPNh/XPrekEWMmZHcfkeLlX6M/9nIAgmuA+XEcxwgt2PUDxuyL8qQ3Sn/zQ8KBlIeJhKmxpgLyJwMdTn9l5zvMlV6VVboEum0aAY9l4u7yBpoPvm6MkBGfG2ua/U0spszLXCOs+ao/Gu6pNNXUZUf2IwF8PimHPwBXet0MGw+2BWy7ZDg3r7ABz2AByIqVMroqz63QkoTX7il3N3dx9Ys8Pgqa2mxGNXw7AzPx05Ok2Whwstp8DqfTj+dhhNB5WBBeMjN0znABn+3N/CnWOyG7HsM/bH2ukGMI4jopGzB+VjDHbRkeJj/k3l0giUlZ74lOXdPhcgi4DAnSCZ1jZWjsaKtrGTwL0Rpg2JHTkmuJAI4x",
  "novidades": [
-  "Recurso Premium \"Aniversariantes e cashback\": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.",
-  "Cashback: a cada compra de cliente cadastrado, uma % do valor pago volta como crédito para a próxima compra, com validade. O recibo mostra o cashback ganho. O que não for usado vence sozinho; crédito que vence em 7 dias aparece para lembrar o cliente.",
-  "Extrato do cashback (gerado, usado, estornado e vencido) em PDF e Excel."
+  "Aniversários e cashback: o administrador pode estornar um crédito dado (presente de aniversário ou cashback), informando o motivo. O que já foi usado não volta; estorna o que sobrou. Também na ficha do cliente (Clientes → Ver).",
+  "Os cards do cashback (gerado no mês, em aberto, vence em 7 dias, vencido no mês) abrem o analítico ao clicar, com PDF e Excel. \"Em aberto\" passa a incluir os presentes de aniversário."
  ],
  "servidor": {
   "versao": "2026.11.04-11",
