@@ -1,18 +1,20 @@
 {
- "versao": "2026.11.04-05",
- "publicadoEm": "04/11/2026 11:06",
+ "versao": "2026.11.04-06",
+ "publicadoEm": "04/11/2026 11:33",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "91b0937c2e8ee33e7e03b7b5a5ee96577ed87371c0dd67777d23d7a9aa75f4e9",
- "tamanho": 546434,
- "assinatura": "JdJ7lahG+OY1yZ+hBdW0OHF9ZpzOr20rFHH77FZaeQJsY0GbvVuPvWXaErbliI/msAhZXcdg9UJDVxO3cG+lDBib3xX+KQ+M7fHmDjHliQB0TwFmv5IO7ro9g60q4t4L0ksZyRNlXtDK6dkApHYhKbdLyiQsmGi3Bd7PuB+f9YPZH7+wGt9Sc0nzS83qxHj3FcuZwi7CMLPcku7YgFVoe8qlHeihO2asIeK9OU/CpGfKxX89G20nqP1Ux3zyleeqUrpcwtda30NaGYO0a8rtkVdiAiNqsn5zR3UK7Fx/vZan0CKMrjik29NqeZHDMRhEc5Yw3TFbuL90tYPEEp4/XFuCo6gZSuY/ireQIwLW8mlsLyY1gnLtjt7DtezYmuI2UDT3GQcCq5vHTCMoEind/8GK0qfiZKMiT+vNWShq5tT2hM0mOVgozQfSZYoB3blIo/7IdWIx+fPOgEBdjLYk/ozXlQ+2Tzb8i9Fx/gVxoDpPawOmMa9P9L0aPCEABHnZ",
+ "sha256": "dac240a327c49e343aded0514ddae34c3060f187da907a19a968780df7f8251a",
+ "tamanho": 553749,
+ "assinatura": "KNzvawrmpTIZ6Yy6Xc9eDcGNMmA7C1qabQLSC2CqZ/Fk0df/uZ2LP+piq6i/h6WXhNALzr85DogFmOweXj4ULDpdBRouafi/fdgY/a4tKyvyzPsg9Qd2OeWUGfSvnvsSbGtNdbFVfh9GIFquAHTxRLhjjar4MC/8wmiBrfuEJ4f7ewqdtP0b2zTeC+OcbSeSCH95LOurfv97LFeoqMqKvojfM68BchCktlHr2RA+0kF7ks6Vw1UR6hs5JRBBJIL4IT3eo5NpYW8z1M8NLqmkfzHWca/aO1wICm/emAUJ4M31ZCXCAMcHQfqa8LzKEZ8FYS589vhsybRLOM3/Ai0rdzOXkVFxo2K6gAuqwiPqPrsInILXWK0XpX8ruef4MJml9HngUIDrryi0rYijxTj3Ei+zAn3ZrWxn/GkpBbC6lEUgtCvUaoMRl52+uJCfqyALAGSLOYn2FN7tXLq/Bi0lNdz/cnFy6WoPefJ/ImJbegqBmt6EfSSgfv2ojOcUm6VZ",
  "novidades": [
-  "Caixa: novo Extrato (débito e crédito), como um extrato bancário: saldo inicial (troco), cada lançamento com entrada, saída e saldo, total de entradas e saídas e saldo final; no caixa fechado, também o contado e a diferença. Filtra por forma (todas, dinheiro, Pix, débito, crédito) e sai em PDF ou Excel. Também no histórico de caixas e ao clicar no card do dinheiro."
+  "Gravação por registro: cada gravação manda ao banco só o que mudou (a venda nova, os produtos que saíram, o contador), e não mais o banco inteiro. O sistema continua rápido com anos de dados.",
+  "Duas janelas do sistema abertas ao mesmo tempo se atualizam sozinhas a cada poucos segundos. Se as duas mexerem no mesmo registro ao mesmo tempo, o banco recusa a segunda gravação e o sistema recarrega os dados (nada é sobrescrito sem aviso).",
+  "Servidor do banco atualizado junto (2026.11.04-06): o banco existente é convertido sozinho, sem perder nada."
  ],
  "servidor": {
-  "versao": "2026.11.04-01",
+  "versao": "2026.11.04-06",
   "arquivo": "servidor.py",
-  "sha256": "756057668726c3e87a94041c7a389dce4ba8a66c3e16c3844c008e9236ffa6c1",
-  "assinatura": "UYz+g3z2ZojDQpz3wI4YQkqvpr8xthGW+osD5L5GJ02AFhrDKt10ubJ7QHYvUQQA7UghIa2bIxdd5234rrdIRM2Alpb9KEyERLLm3wMnLHRZJndN5nBavOGQ1c9Y8xarfbILpLZKTFL6vldZgXZJzoOXTYzwY8F0sFwsTC28oJuRfKRul1UiDB7vNZx9hxioDF2iq/SP0/YZ+qi36Al4QHL2kN+4+xbHW6VU0uZ3OHDjPL3vPMhen7/XX+FF3jxFujI78nlriNL1Kw+aMlV+OLe5u4vb0d1fYBHbA1kqvH23RXE2Hcs6zEzGfHPk96FqmjvgrCI79JUWoptc5ttvFWQW2Lvp3xnc1EsNqT1gi0x5V1yBrzHmeZ/QnmSKV2p/DIvJj3K9eR0g5gxDqj3nJhLePlNqA7P5B0ZFo9wrd1h6wFCfqlERKhJhCt28n5TFFW+yAYPLNJBccvtShhNEUAjXRFEkZrBENtoSYkHru/6p/mnLmPw9q/vCewHCO0w0",
-  "tamanho": 39485
+  "sha256": "c6c8ecad0945c4ad7b8d59f50ef48fc6e830e0f1198ba7f49b294bf54752f8ac",
+  "assinatura": "eTWMnemcdNvVVbNxd3fItMFpFt3kKevrh+EoJhcjgQiL6r6vfADg7M7TKaqI/4MRQBo+jvvhIl1oDYbkV1BPvSNYLXzIRX4Ph5LuHGccP82rJuEIdhaoHzN+Nuwe3jpUjk7YLAW2XfFLN4Em4uvnwB7I6TOCA1oULXl1WJsI2RTknW4qb1Pmh605FEUCR84WxmziuVD7iO4VJDSq3hFGXVnaab7Fh9TBeKoY6xYGMEyK6mg3/oeCD6Xc0G3IbNDai3Rf4u4RylEu7AJEGo0e/1pUy5r4+zh/K0oWBuTBa5gGdoGOFTPZ/whhF0ir+26ggYyS0K3BkjwEeisl3M8MYHBKDltYUJseJzNTGlF1dLT/vbY0oY85/DL/hccJsTuYBI+tQ/qKrQvycrm1vaYXxFxVlJOENAzlLkKoZWjJXbjBMLAYCNeFBfJkpYmxuIVAVptQ7z/pNqCF0lDMl+jWMBQT2H8hHDx5fo1Wfn7MFz/+NSX1b1hB56uO7XoRRR+1",
+  "tamanho": 50133
  }
 }

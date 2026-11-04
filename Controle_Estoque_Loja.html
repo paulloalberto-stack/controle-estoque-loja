@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-05">
+<meta name="versao-sistema" content="2026.11.04-06">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -819,6 +819,7 @@ function normalizar() {
   for (const k in n.config) if (db.config[k] === undefined) db.config[k] = n.config[k];
   clientesMaiusculas();
   aplicarTipos();
+  (db.auditoria || []).forEach(a => { if (a.id === undefined || a.id === null) a.id = idAud(); });   // registro com id: grava só o que é novo
 }
 const MAIUSC = s => String(s == null ? '' : s).trim().toLocaleUpperCase('pt-BR');
 const CAMPOS_CLI_MAIUSC = ['nome', 'endereco', 'rua', 'num', 'bairro', 'cidade', 'obs'];
@@ -859,12 +860,101 @@ function telaSemServidor() {
     <p class="mut">Nada foi gravado nem apagado.</p><button onclick="location.reload()" style="padding:10px 18px;border-radius:10px;border:0;background:#16213a;color:#fff;font-weight:700;cursor:pointer">Tentar de novo</button></div>`;
 }
 async function gravarServidor(json) {
+  if (parcialOk) { await gravarParcial(); if (srvFalhou) aviso('Gravação no banco de dados restabelecida.', 'ok'); srvFalhou = 0; return; }
   try { await api('dados', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: json }); }
   catch (e) { if (e.status === 409 || e.status === 423) { aviso('ATENÇÃO: ' + e.message, 'erro'); return; } throw e; }
   if (srvFalhou) aviso('Gravação no banco de dados restabelecida.', 'ok');
   srvFalhou = 0;
 }
 window.addEventListener('beforeunload', e => { if (MODO_SERVIDOR && srvFalhou) { e.preventDefault(); e.returnValue = ''; } });
+/* ===== Gravação por registro e sincronização (servidor 2026.11.04-06 ou mais novo) =====
+   O sistema guarda uma "fotografia" do que já está no banco (texto de cada registro). Ao gravar, manda só o que mudou
+   (registros novos/alterados, excluídos e configurações). A cada poucos segundos busca o que outras janelas gravaram.
+   Se outra janela mudou o mesmo registro ao mesmo tempo, o servidor recusa e o sistema recarrega os dados. */
+const CLIENTE = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+let parcialOk = false, srvVersao = 0, snap = null, sincronizando = false;
+const RESERVADAS_SRV = ['meta', 'fotos', 'logs', 'copias', 'colecoes', 'sqlite_sequence', 'apagados'];
+const ehColecao = (k, v) => Array.isArray(v) && /^[a-z][A-Za-z0-9_]{0,40}$/.test(k) && RESERVADAS_SRV.indexOf(k) < 0;
+function modoColecao(arr) {
+  const vistos = new Set();
+  for (const x of arr) { if (!x || typeof x !== 'object' || x.id === undefined || x.id === null) return 'lista'; const k = String(x.id); if (vistos.has(k)) return 'lista'; vistos.add(k); }
+  return 'id';
+}
+function fotografar(arr) {
+  const modo = modoColecao(arr);
+  if (modo === 'lista') return { modo, s: JSON.stringify(arr) };
+  const m = new Map(); arr.forEach(x => m.set(String(x.id), JSON.stringify(x))); return { modo, m };
+}
+function montarSnap() { snap = { col: {}, meta: {} }; for (const k in db) { if (ehColecao(k, db[k])) snap.col[k] = fotografar(db[k]); else snap.meta[k] = JSON.stringify(db[k]); } }
+function diferencaSnap() {
+  const out = { colecoes: {}, listas: {}, meta: { set: {}, del: [] } }, novo = { col: {}, meta: {} }; let n = 0;
+  for (const k in db) {
+    const v = db[k];
+    if (ehColecao(k, v)) {
+      const f = fotografar(v), velho = snap.col[k]; novo.col[k] = f;
+      if (f.modo === 'lista' || !velho || velho.modo !== 'id') { if (!velho || velho.modo !== f.modo || (f.modo === 'lista' ? velho.s !== f.s : true)) { out.listas[k] = v; n++; } continue; }
+      const up = [], ap = [];
+      v.forEach(x => { const id = String(x.id); if (velho.m.get(id) !== f.m.get(id)) up.push(x); });
+      velho.m.forEach((s, id) => { if (!f.m.has(id)) ap.push(id); });
+      if (up.length || ap.length) { out.colecoes[k] = { upsert: up, apagar: ap }; n++; }
+    } else { const s = JSON.stringify(v); novo.meta[k] = s; if (snap.meta[k] !== s) { out.meta.set[k] = v; n++; } }
+  }
+  for (const k in snap.col) if (!(k in db)) { out.listas[k] = []; n++; }
+  for (const k in snap.meta) if (!(k in db)) { out.meta.del.push(k); n++; }
+  return { out, novo, n };
+}
+async function gravarParcial() {
+  const d = diferencaSnap(); if (!d.n) return;
+  try {
+    const r = await api('gravar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ base: srvVersao, cliente: CLIENTE }, d.out)) });
+    snap = d.novo;
+  } catch (e) {
+    if (e.status === 409) { await recarregarDoServidor('Outra janela ou outro computador alterou os mesmos dados ao mesmo tempo. Os dados foram recarregados do banco: confira e, se precisar, repita a última operação.'); return; }
+    if (e.status === 423) { aviso('ATENÇÃO: ' + e.message, 'erro'); await recarregarDoServidor(); return; }
+    throw e;
+  }
+}
+async function recarregarDoServidor(msg) {
+  try {
+    const r = await api('dados?versao=1'); const d = r.dados;
+    const okD = d && Array.isArray(d.produtos) && Array.isArray(d.usuarios); db = okD ? d : novoDb(); srvVersao = r.versao || 0; if (okD) montarSnap(); else snap = { col: {}, meta: {} }; normalizar();
+    if (eu) { const u = db.usuarios.find(x => x.id === eu.id); if (u) eu = u; }
+    if (!$('#modal').innerHTML) render();
+  } catch (e) { }
+  if (msg) aviso(msg, 'erro');
+}
+// aplica no db o que outras janelas gravaram (sem trocar os objetos que não mudaram)
+function aplicarMudancas(r) {
+  let n = 0;
+  for (const k in r.colecoes || {}) {
+    const arr = db[k] = Array.isArray(db[k]) ? db[k] : [], idx = new Map(arr.map((x, i) => [String(x.id), i]));
+    const f = snap.col[k] && snap.col[k].modo === 'id' ? snap.col[k] : (snap.col[k] = { modo: 'id', m: new Map() });
+    r.colecoes[k].forEach(rec => { const id = String(rec.id), i = idx.get(id); if (i === undefined) { idx.set(id, arr.length); arr.push(rec); } else arr[i] = rec; f.m.set(id, JSON.stringify(rec)); n++; });
+  }
+  for (const k in r.apagados || {}) {
+    if (k === '__meta') { r.apagados[k].forEach(c => { delete db[c]; delete snap.meta[c]; n++; }); continue; }
+    const arr = db[k]; if (!Array.isArray(arr)) continue; const fora = new Set(r.apagados[k].map(String));
+    for (let i = arr.length - 1; i >= 0; i--) if (fora.has(String(arr[i].id))) { arr.splice(i, 1); n++; }
+    if (snap.col[k] && snap.col[k].m) fora.forEach(id => snap.col[k].m.delete(id));
+  }
+  for (const k in r.listas || {}) { db[k] = r.listas[k]; snap.col[k] = fotografar(db[k]); n++; }
+  for (const k in r.meta || {}) { db[k] = r.meta[k]; snap.meta[k] = JSON.stringify(r.meta[k]); n++; }
+  if (r.meta && r.meta.config) aplicarTipos();
+  srvVersao = r.versao;
+  return n;
+}
+async function sincronizar() {
+  if (!MODO_SERVIDOR || !parcialOk || !srvOk || sincronizando || jsonPendente !== null || srvFalhou) return;
+  sincronizando = true;
+  try {
+    await filaGravacao;   // primeiro termina de gravar o que é desta janela
+    const r = await api('mudancas?desde=' + srvVersao + '&cliente=' + CLIENTE);
+    if (jsonPendente !== null) return;   // gravou algo enquanto buscava: busca de novo na próxima volta
+    const n = aplicarMudancas(r);
+    if (n && eu && !$('#modal').innerHTML && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) render();
+  } catch (e) { } finally { sincronizando = false; }
+}
+
 
 /* ===== Banco de dados =====
    Principal: IndexedDB (sem o limite de ~5 MB), cada gravação com código de conferência (SHA-256) e a gravação anterior guardada.
@@ -902,7 +992,7 @@ function agendarGravacao(json) {
 }
 function salvar() {
   db._salvo = Math.max(Date.now(), (db._salvo || 0) + 1); salvamentos++;
-  const json = JSON.stringify(db);
+  const json = MODO_SERVIDOR && parcialOk ? '' : JSON.stringify(db);   // com o servidor novo, a gravação manda só o que mudou
   let okLs = true;
   try { if (!MODO_SERVIDOR) localStorage.setItem(CHAVE, json); lsCheio = false; } catch (e) { okLs = false; lsCheio = true; }
   if (!okLs && !idbOk) { aviso('ATENÇÃO: não foi possível gravar os dados neste navegador. Faça um backup agora.', 'erro'); return false; }
@@ -912,9 +1002,11 @@ function salvar() {
 async function carregarDados() {
   if (MODO_SERVIDOR) {
     try {
-      srvInfo = await api('status'); const d = await api('dados');
+      srvInfo = await api('status'); let d = await api('dados?versao=1');
+      if (d && d.dados !== undefined && typeof d.versao === 'number') { parcialOk = true; srvVersao = d.versao; d = d.dados; }   // servidor com gravação por registro
       const ok = d && Array.isArray(d.produtos) && Array.isArray(d.usuarios);
       db = ok ? d : novoDb(); dbOrigem = ok ? 'servidor' : 'novo';
+      if (parcialOk) { if (ok) montarSnap(); else snap = { col: {}, meta: {} }; }   // fotografia do banco antes dos ajustes (banco vazio: a 1ª gravação manda tudo, inclusive as listas vazias)
     } catch (e) { srvOk = false; db = novoDb(); dbOrigem = 'sem-servidor'; dbAlerta = 'O servidor local não respondeu (' + (e && e.message || e) + ').'; }
     normalizar(); return;
   }
@@ -3948,9 +4040,10 @@ function erroSenhaNova(s, login) {
   if (!/[0-9]/.test(s) || !/[a-zA-ZÀ-ÿ]/.test(s)) return 'Use letras e números na senha.';
   return '';
 }
+const idAud = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 function registrar(ev, det, quem) {
   if (!db) return;
-  (db.auditoria = db.auditoria || []).push({ q: agora(), u: quem || (eu ? eu.nome : ''), ev, det: det || '' });
+  (db.auditoria = db.auditoria || []).push({ id: idAud(), q: agora(), u: quem || (eu ? eu.nome : ''), ev, det: det || '' });
   if (db.auditoria.length > 2000) db.auditoria.splice(0, db.auditoria.length - 2000);
 }
 const horaDe = ms => { const d = new Date(ms); return `${z(d.getHours())}:${z(d.getMinutes())}`; };
@@ -4101,6 +4194,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-06', itens: ['Gravação por registro: cada gravação manda ao banco só o que mudou (a venda nova, os produtos que saíram, o contador), e não mais o banco inteiro. O sistema continua rápido com anos de dados.',
+    'Duas janelas do sistema abertas ao mesmo tempo se atualizam sozinhas a cada poucos segundos. Se as duas mexerem no mesmo registro ao mesmo tempo, o banco recusa a segunda gravação e o sistema recarrega os dados (nada é sobrescrito sem aviso).',
+    'Servidor do banco atualizado junto (2026.11.04-06): o banco existente é convertido sozinho, sem perder nada.'] },
   { v: '2026.11.04-05', itens: ['Caixa: novo Extrato (débito e crédito), como um extrato bancário: saldo inicial (troco), cada lançamento com entrada, saída e saldo, total de entradas e saídas e saldo final; no caixa fechado, também o contado e a diferença. Filtra por forma (todas, dinheiro, Pix, débito, crédito) e sai em PDF ou Excel. Também no histórico de caixas e ao clicar no card do dinheiro.'] },
   { v: '2026.11.04-04', itens: ['Totais em todos os relatórios: caixa (comprovante, leitura parcial, movimentação com entradas, saídas e saldo, sangrias e suprimentos, histórico de caixas), vendas por forma de pagamento, tipo e marca, coleções, sugestão e lista de compra, comissões, contas a pagar por categoria e fornecedor, condicionais, entradas, trocas, clientes, movimentações de estoque e produtos abaixo do mínimo.'] },
   { v: '2026.11.04-03', itens: ['Caixa: os cards do caixa aberto mostram o detalhe ao clicar (vendas, cada entrada e saída de dinheiro com o saldo, sangrias e suprimentos), com PDF e Excel, e há o botão Relatório parcial para imprimir a posição atual.',
@@ -5206,6 +5302,7 @@ ACT.verVersoes = () => {
   if (atualizacaoConfirmadaAgora) aviso('Atualização confirmada: o sistema está na versão ' + VERSAO_APP + '.', 'ok');
   // backup automático: confere 4 s depois de abrir e depois a cada minuto
   setTimeout(verificarBackup, 4000); setInterval(verificarBackup, 60000);
+  setInterval(sincronizar, 4000); window.addEventListener('focus', () => sincronizar());   // outras janelas / computadores
   setTimeout(verificarNuvemSilencioso, 8000); setInterval(verificarNuvemSilencioso, 3 * 3600 * 1000);   // procura versão nova na nuvem
   window.sistemaPronto = true;
 })();

@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-01'
+VERSAO_SERVIDOR = '2026.11.04-06'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -28,7 +28,7 @@ LIC_N = int('a9b7adfb44d498f7ebae9fc6c25271af4cb6d5d23ea68b708a484183962ff344641
 LIC_E = int('010001', 16)
 CHAVE_E = int('010001', 16)
 NL = chr(10)
-RESERVADAS = {'meta', 'fotos', 'logs', 'copias', 'colecoes', 'sqlite_sequence'}
+RESERVADAS = {'meta', 'fotos', 'logs', 'copias', 'colecoes', 'sqlite_sequence', 'apagados'}
 NOME_OK = re.compile('^[a-z][A-Za-z0-9_]{0,40}$')
 MAX_COPIAS = 20
 MANTER_SQLITE = 30
@@ -66,8 +66,34 @@ class Banco:
             'CREATE TABLE IF NOT EXISTS logs(id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER, quando TEXT, usuario TEXT, categoria TEXT, evento TEXT, registro TEXT NOT NULL);'
             'CREATE TABLE IF NOT EXISTS copias(id INTEGER PRIMARY KEY AUTOINCREMENT, quando TEXT, tipo TEXT, usuario TEXT, tamanho INTEGER, produtos INTEGER, vendas INTEGER, dados TEXT NOT NULL);')
         self.cache = {}
+        self._migrar()
         ok = self.c.execute('PRAGMA quick_check').fetchone()[0]
         log('banco aberto: ' + caminho + ' (verificação: ' + ok + ')')
+
+    def _cols(self, tabela):
+        return [r[1] for r in self.c.execute('PRAGMA table_info("%s")' % tabela)]
+
+    def _migrar(self):
+        # versão 2026.11.04-06: cada registro guarda a versão em que mudou e quem gravou (gravação por registro)
+        for tab, extras in (('meta', ('ver INTEGER DEFAULT 0', 'por TEXT')), ('colecoes', ('ver INTEGER DEFAULT 0', 'modo TEXT', 'por TEXT'))):
+            cs = self._cols(tab)
+            for e in extras:
+                if e.split()[0] not in cs:
+                    self.c.execute('ALTER TABLE %s ADD COLUMN %s' % (tab, e))
+        self.c.execute('CREATE TABLE IF NOT EXISTS apagados(colecao TEXT, id TEXT, ver INTEGER, por TEXT)')
+        self.c.execute('CREATE INDEX IF NOT EXISTS apagados_ver ON apagados(ver)')
+        for nome in self.colecoes():
+            self._preparar(nome)
+
+    def _preparar(self, nome):
+        self.c.execute('CREATE TABLE IF NOT EXISTS "%s"(pos INTEGER PRIMARY KEY, id TEXT, registro TEXT NOT NULL, ver INTEGER DEFAULT 0, por TEXT)' % nome)
+        cs = self._cols(nome)
+        for e in ('ver INTEGER DEFAULT 0', 'por TEXT'):
+            if e.split()[0] not in cs:
+                self.c.execute('ALTER TABLE "%s" ADD COLUMN %s' % (nome, e))
+        self.c.execute('CREATE INDEX IF NOT EXISTS "%s__id" ON "%s"(id)' % (nome, nome))
+        self.c.execute('CREATE INDEX IF NOT EXISTS "%s__ver" ON "%s"(ver)' % (nome, nome))
+        self.c.execute('INSERT OR IGNORE INTO colecoes(nome) VALUES(?)', (nome,))
 
     def colecoes(self):
         return [r[0] for r in self.c.execute('SELECT nome FROM colecoes')]
@@ -81,6 +107,9 @@ class Banco:
         r = self.c.execute("SELECT valor FROM meta WHERE chave='_salvo'").fetchone()
         return r is None
 
+    def versao(self):
+        return int(self.meta_interna('versao') or 0)
+
     def ler_dados(self):
         with self.trava:
             partes = []
@@ -90,47 +119,154 @@ class Banco:
                 partes.append(json.dumps(nome) + ':[' + ','.join(self._lista(nome)) + ']')
             return '{' + ','.join(partes) + '}'
 
-    def gravar_dados(self, obj, forcar=False):
+    @staticmethod
+    def _js(x):
+        return json.dumps(x, ensure_ascii=False, separators=(',', ':'))
+
+    @staticmethod
+    def _modo(lista):
+        ids = [str(x.get('id')) if isinstance(x, dict) and x.get('id') is not None else None for x in lista]
+        return 'id' if all(i is not None for i in ids) and len(set(ids)) == len(ids) else 'lista'
+
+    # ---- aplica uma gravação (parcial ou completa) numa transação; devolve a versão nova ----
+    def _aplicar(self, por, upserts, apagar, listas, meta_set, meta_del):
+        v = self.versao() + 1
+        self.meta_interna('versao', v)
+        for nome in set(upserts) | set(apagar) | set(listas):
+            self._preparar(nome)
+            self.cache.pop(nome, None)
+        for nome, recs in upserts.items():
+            for rec in recs:
+                ident, s = str(rec.get('id')), self._js(rec)
+                row = self.c.execute('SELECT pos, registro FROM "%s" WHERE id=?' % nome, (ident,)).fetchone()
+                if row:
+                    if row[1] != s:
+                        self.c.execute('UPDATE "%s" SET registro=?, ver=?, por=? WHERE pos=?' % nome, (s, v, por, row[0]))
+                else:
+                    pos = self.c.execute('SELECT COALESCE(MAX(pos), -1) + 1 FROM "%s"' % nome).fetchone()[0]
+                    self.c.execute('INSERT INTO "%s"(pos, id, registro, ver, por) VALUES(?,?,?,?,?)' % nome, (pos, ident, s, v, por))
+            self.c.execute("UPDATE colecoes SET ver=?, por=?, modo='id' WHERE nome=?", (v, por, nome))
+        for nome, ids in apagar.items():
+            for ident in ids:
+                if self.c.execute('DELETE FROM "%s" WHERE id=?' % nome, (str(ident),)).rowcount:
+                    self.c.execute('INSERT INTO apagados(colecao, id, ver, por) VALUES(?,?,?,?)', (nome, str(ident), v, por))
+            self.c.execute('UPDATE colecoes SET ver=?, por=? WHERE nome=?', (v, por, nome))
+        for nome, lista in listas.items():
+            self.c.execute('DELETE FROM "%s"' % nome)
+            for i, x in enumerate(lista):
+                ident = x.get('id') if isinstance(x, dict) else None
+                self.c.execute('INSERT INTO "%s"(pos, id, registro, ver, por) VALUES(?,?,?,?,?)' % nome, (i, None if ident is None else str(ident), self._js(x), v, por))
+            self.c.execute("UPDATE colecoes SET ver=?, por=?, modo='lista' WHERE nome=?", (v, por, nome))
+        for k, val in meta_set.items():
+            s, atual = self._js(val), self.c.execute('SELECT valor FROM meta WHERE chave=?', (k,)).fetchone()
+            if not atual or atual[0] != s:   # valor igual não é regravado (não muda a origem nem a versão)
+                self.c.execute('INSERT OR REPLACE INTO meta(chave, valor, ver, por) VALUES(?,?,?,?)', (k, s, v, por))
+        for k in meta_del:
+            self.c.execute('DELETE FROM meta WHERE chave=?', (k,))
+            self.c.execute("INSERT INTO apagados(colecao, id, ver, por) VALUES('__meta',?,?,?)", (k, v, por))
+        return v
+
+    def _transacao(self, fn):
+        self.c.execute('BEGIN IMMEDIATE')
+        try:
+            r = fn()
+            self.c.execute('COMMIT')
+            return r
+        except Exception:
+            self.c.execute('ROLLBACK')
+            self.cache = {}
+            raise
+
+    def _diferenca_completa(self, obj):
+        """compara os dados inteiros recebidos com o banco e devolve o que mudou (para a gravação completa)"""
+        listas_rec = {k: v for k, v in obj.items() if isinstance(v, list) and NOME_OK.match(k) and k not in RESERVADAS}
+        upserts, apagar, listas = {}, {}, {}
+        modos = {n: m for n, m in self.c.execute('SELECT nome, modo FROM colecoes')}
+        for nome, lista in listas_rec.items():
+            if self._modo(lista) == 'id' and modos.get(nome, 'id') != 'lista':
+                atuais = {r[0]: r[1] for r in self.c.execute('SELECT id, registro FROM "%s"' % nome)} if nome in modos else {}
+                novos = {str(x['id']): x for x in lista}
+                up = [x for k, x in novos.items() if atuais.get(k) != self._js(x)]
+                ap = [k for k in atuais if k not in novos]
+                if up or nome not in modos:
+                    upserts[nome] = up
+                if ap:
+                    apagar[nome] = ap
+            elif nome not in modos or [self._js(x) for x in lista] != self._lista(nome):
+                listas[nome] = lista
+        for nome in set(modos) - set(listas_rec):
+            listas[nome] = []
+        atuais_meta = {k: s for k, s in self.c.execute("SELECT chave, valor FROM meta WHERE substr(chave, 1, 2) <> '__'")}
+        outros = {k: v for k, v in obj.items() if k not in listas_rec}
+        meta_set = {k: v for k, v in outros.items() if atuais_meta.get(k) != self._js(v)}
+        meta_del = [k for k in atuais_meta if k not in outros]
+        return upserts, apagar, listas, meta_set, meta_del
+
+    def gravar_dados(self, obj, forcar=False, por='completo'):
         if not isinstance(obj, dict) or not isinstance(obj.get('usuarios'), list) or not isinstance(obj.get('produtos'), list):
             raise ValueError('dados inválidos')
         with self.trava:
             atual = self.c.execute("SELECT valor FROM meta WHERE chave='_salvo'").fetchone()
             if atual and not forcar and float(json.loads(atual[0]) or 0) > float(obj.get('_salvo') or 0):
                 return False
-            listas = {k: v for k, v in obj.items() if isinstance(v, list) and NOME_OK.match(k) and k not in RESERVADAS}
-            novas_cache = {}
-            self.c.execute('BEGIN IMMEDIATE')
-            try:
-                existentes = set(self.colecoes())
-                for nome, lista in listas.items():
-                    if nome not in existentes:
-                        self.c.execute('CREATE TABLE IF NOT EXISTS "%s"(pos INTEGER PRIMARY KEY, id TEXT, registro TEXT NOT NULL)' % nome)
-                        self.c.execute('INSERT OR IGNORE INTO colecoes(nome) VALUES(?)', (nome,))
-                        velhas = []
-                    else:
-                        velhas = self._lista(nome)
-                    novas = [json.dumps(x, ensure_ascii=False, separators=(',', ':')) for x in lista]
-                    for i, s in enumerate(novas):
-                        if i >= len(velhas) or velhas[i] != s:
-                            ident = lista[i].get('id') if isinstance(lista[i], dict) else None
-                            self.c.execute('INSERT OR REPLACE INTO "%s"(pos, id, registro) VALUES(?,?,?)' % nome, (i, None if ident is None else str(ident), s))
-                    if len(velhas) > len(novas):
-                        self.c.execute('DELETE FROM "%s" WHERE pos >= ?' % nome, (len(novas),))
-                    novas_cache[nome] = novas
-                for nome in existentes - set(listas):
-                    self.c.execute('DELETE FROM "%s"' % nome)
-                    novas_cache[nome] = []
-                outros = {k: v for k, v in obj.items() if k not in listas}
-                self.c.execute("DELETE FROM meta WHERE substr(chave, 1, 2) <> '__'")
-                for k, v in outros.items():
-                    self.c.execute('INSERT OR REPLACE INTO meta(chave, valor) VALUES(?,?)', (k, json.dumps(v, ensure_ascii=False, separators=(',', ':'))))
-                self.c.execute('COMMIT')
-            except Exception:
-                self.c.execute('ROLLBACK')
-                self.cache = {}
-                raise
-            self.cache.update(novas_cache)
+            self._transacao(lambda: self._aplicar(por, *self._diferenca_completa(obj)))
             return True
+
+    def conflitos(self, base, por, upserts, apagar, listas, meta_set):
+        """registros que outra janela/computador mudou depois da versão 'base' e que esta gravação também muda"""
+        out = []
+        existentes = set(self.colecoes())
+        for nome, recs in upserts.items():
+            if nome not in existentes:
+                continue
+            for rec in recs:
+                row = self.c.execute('SELECT registro, ver, por FROM "%s" WHERE id=?' % nome, (str(rec.get('id')),)).fetchone()
+                if row and row[1] > base and (row[2] or '') != por and row[0] != self._js(rec):
+                    out.append(nome + ' ' + str(rec.get('id')))
+        for nome, ids in apagar.items():
+            if nome in existentes:
+                for ident in ids:
+                    row = self.c.execute('SELECT ver, por FROM "%s" WHERE id=?' % nome, (str(ident),)).fetchone()
+                    if row and row[0] > base and (row[1] or '') != por:
+                        out.append(nome + ' ' + str(ident))
+        for nome, lista in listas.items():
+            row = self.c.execute('SELECT ver, por FROM colecoes WHERE nome=?', (nome,)).fetchone()
+            if row and (row[0] or 0) > base and (row[1] or '') != por and [self._js(x) for x in lista] != self._lista(nome):
+                out.append(nome)
+        for k, val in meta_set.items():
+            if k == '_salvo':
+                continue
+            row = self.c.execute('SELECT valor, ver, por FROM meta WHERE chave=?', (k,)).fetchone()
+            if row and (row[1] or 0) > base and (row[2] or '') != por and row[0] != self._js(val):
+                out.append(k)
+        return out
+
+    def gravar_parcial(self, base, por, upserts, apagar, listas, meta_set, meta_del, forcar=False):
+        with self.trava:
+            def fazer():
+                c = [] if forcar else self.conflitos(base, por, upserts, apagar, listas, meta_set)
+                if c:
+                    return {'conflitos': c}
+                return {'versao': self._aplicar(por, upserts, apagar, listas, meta_set, meta_del)}
+            return self._transacao(fazer)
+
+    def mudancas(self, desde, por):
+        """o que outras janelas/computadores gravaram depois da versão 'desde' (em texto JSON, sem reconverter)"""
+        with self.trava:
+            partes_c, partes_l = [], []
+            for nome, modo, ver, quem in self.c.execute('SELECT nome, modo, ver, por FROM colecoes').fetchall():
+                if modo == 'lista':
+                    if (ver or 0) > desde and (quem or '') != por:
+                        partes_l.append(json.dumps(nome) + ':[' + ','.join(self._lista(nome)) + ']')
+                else:
+                    regs = [r[0] for r in self.c.execute("""SELECT registro FROM "%s" WHERE ver > ? AND COALESCE(por, '') <> ? ORDER BY pos""" % nome, (desde, por))]
+                    if regs:
+                        partes_c.append(json.dumps(nome) + ':[' + ','.join(regs) + ']')
+            ap = {}
+            for nome, ident in self.c.execute("SELECT colecao, id FROM apagados WHERE ver > ? AND COALESCE(por, '') <> ?", (desde, por)):
+                ap.setdefault(nome, []).append(ident)
+            meta = [json.dumps(k) + ':' + s for k, s in self.c.execute("SELECT chave, valor FROM meta WHERE ver > ? AND COALESCE(por, '') <> ? AND substr(chave, 1, 2) <> '__'", (desde, por))]
+            return '{"versao":%d,"colecoes":{%s},"listas":{%s},"apagados":%s,"meta":{%s}}' % (self.versao(), ','.join(partes_c), ','.join(partes_l), json.dumps(ap, ensure_ascii=False), ','.join(meta))
 
     def config(self):
         with self.trava:
@@ -599,7 +735,13 @@ class Atendente(BaseHTTPRequestHandler):
                                         'vazio': b.vazio(), 'migradoEm': b.meta_interna('migradoEm'), 'banco': b.caminho, 'tamanho': b.tamanho(),
                                         'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config())})
             if caminho == '/api/dados':
-                return self._enviar(200, b.ler_dados() if not b.vazio() else '{}')
+                corpo = b.ler_dados() if not b.vazio() else '{}'
+                if 'versao=1' in self.path:   # sistema novo: dados + versão (gravação por registro)
+                    return self._enviar(200, '{"versao":%d,"dados":%s}' % (b.versao(), corpo))
+                return self._enviar(200, corpo)
+            if caminho == '/api/mudancas':
+                q = urllib.parse.parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
+                return self._enviar(200, b.mudancas(int((q.get('desde') or ['0'])[0] or 0), (q.get('cliente') or [''])[0]))
             if caminho == '/api/fotos':
                 return self._json(200, b.fotos('minis=1' in self.path))
             if caminho.startswith('/api/fotos/'):
@@ -636,6 +778,29 @@ class Atendente(BaseHTTPRequestHandler):
                 de = instalar_versao(corpo, h.get('X-Versao') or '', h.get('X-Sha256') or '', h.get('X-Assinatura') or '')
                 return self._json(200, {'ok': True, 'de': de})
             dados = json.loads(corpo.decode('utf-8') or 'null')
+            if caminho == '/api/gravar':
+                ups = {k: v.get('upsert') or [] for k, v in (dados.get('colecoes') or {}).items()}
+                aps = {k: v.get('apagar') or [] for k, v in (dados.get('colecoes') or {}).items() if v.get('apagar')}
+                lis = dados.get('listas') or {}
+                mset, mdel = (dados.get('meta') or {}).get('set') or {}, (dados.get('meta') or {}).get('del') or []
+                for nome in list(ups) + list(lis):
+                    if not NOME_OK.match(nome) or nome in RESERVADAS:
+                        return self._erro(400, 'coleção inválida: ' + nome)
+                if any(not isinstance(r, dict) or r.get('id') is None for l in ups.values() for r in l):
+                    return self._erro(400, 'registro sem id')
+                cfg = mset.get('config') if isinstance(mset.get('config'), dict) else b.config()
+                if situacao_licenca(b, cfg)['sit'] == 'bloqueada':
+                    mexe = [n for n in PROTEGIDAS if ups.get(n) or aps.get(n) or n in lis]
+                    if mexe:
+                        log('RECUSADO pela licença: alteração em %s com a licença vencida' % mexe[0])
+                        return self._erro(423, 'licença vencida: o sistema está em modo consulta e não registra vendas nem movimentações')
+                r = b.gravar_parcial(int(dados.get('base') or 0), str(dados.get('cliente') or '')[:40], ups, aps, lis, mset, mdel, forcar='forcar=1' in self.path)
+                if 'conflitos' in r:
+                    log('conflito de gravação (outra janela/computador): ' + ', '.join(r['conflitos'][:10]))
+                    return self._json(409, {'erro': 'outra janela ou outro computador alterou os mesmos dados ao mesmo tempo', 'conflitos': r['conflitos'][:50]})
+                if not os.path.exists(os.path.join(PASTA_BACKUP, 'loja_' + datetime.date.today().isoformat() + '.sqlite')):
+                    threading.Thread(target=copia_diaria, args=(b,), daemon=True).start()
+                return self._json(200, {'ok': True, 'versao': r['versao']})
             if caminho == '/api/dados':
                 if isinstance(dados, dict) and situacao_licenca(b, dados.get('config'))['sit'] == 'bloqueada':
                     mudou = b.mudou_protegido(dados)
