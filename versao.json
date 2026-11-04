@@ -1,13 +1,14 @@
 {
- "versao": "2026.11.04-17",
- "publicadoEm": "04/11/2026 15:58",
+ "versao": "2026.11.04-18",
+ "publicadoEm": "04/11/2026 17:06",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "a78a86954b59452facee5d8609710b25a551af5dadf4483415e8c9df833a5c6b",
- "tamanho": 665801,
- "assinatura": "Ruv/1K84u0jfrw6a8TJGRWGxa3yFJISuVp6UHpdVyUMqz60HjQT1E2C296xpEtssyAloI5ntnmkdcnsiPcaO63+ORvA7ARhRjH4nIxw04tVGA7g5iplrD0Xj+WsB92+KLo5PBMweYj31feMQeHVPNh/XPrekEWMmZHcfkeLlX6M/9nIAgmuA+XEcxwgt2PUDxuyL8qQ3Sn/zQ8KBlIeJhKmxpgLyJwMdTn9l5zvMlV6VVboEum0aAY9l4u7yBpoPvm6MkBGfG2ua/U0spszLXCOs+ao/Gu6pNNXUZUf2IwF8PimHPwBXet0MGw+2BWy7ZDg3r7ABz2AByIqVMroqz63QkoTX7il3N3dx9Ys8Pgqa2mxGNXw7AzPx05Ok2Whwstp8DqfTj+dhhNB5WBBeMjN0znABn+3N/CnWOyG7HsM/bH2ukGMI4jopGzB+VjDHbRkeJj/k3l0giUlZ74lOXdPhcgi4DAnSCZ1jZWjsaKtrGTwL0Rpg2JHTkmuJAI4x",
+ "sha256": "0fc5aa33cb5649db3addd49ebd6449cd0d88b1b80917470f29f0f4fcbdf6789e",
+ "tamanho": 682860,
+ "assinatura": "HQAet+eUAehXtOBxGph9uNg843DPPFqrYkzuImNiTsyeucfCQ2qeJxBN6V37lYUJIw60ENpYWDs+PjmMm7F1Fe3IVKKgptoW9+weZAfDlD1dJelJxYyVLCkab0NfRPDuwhValzTSMl1RFOY7GYT4zswwet+LNw4QR7FuLC7M8H3+RrKTmg4FuGC9yfgPcwmqX+iMRD035+7SKDbAfbB7jNYYPTYD5nACbONVeOhGGr8DkMZbyzzVbXV5xUjuj6z1Bs0sH1z3X+QHOOyb5kOEdmy+O2SODKnJJjRD6ZQptGeajgSbNKqsym5isTzAaZpjJB0ePQrxz2O9mL9WIHIVPFr0pyzYTJazId+jQxU7ZG6ljiEmbaYFLMfOeVgYZU3fTHO9i5xnXLTsfTNIaN7N3eNnQSq2cnrAJmv7TDYAhlm9phguaLQ/LbrV4Als3Sm6k2qQKpvDgeR2kkv6nk8cPS5Qba3NXPAxdCw6X33YKfyFjTEPGm6iAyy0qEfbX/FC",
  "novidades": [
-  "Aniversários e cashback: o administrador pode estornar um crédito dado (presente de aniversário ou cashback), informando o motivo. O que já foi usado não volta; estorna o que sobrou. Também na ficha do cliente (Clientes → Ver).",
-  "Os cards do cashback (gerado no mês, em aberto, vence em 7 dias, vencido no mês) abrem o analítico ao clicar, com PDF e Excel. \"Em aberto\" passa a incluir os presentes de aniversário."
+  "Recurso Premium \"Metas das vendedoras\": novo menu Metas. O administrador define a meta do mês de cada vendedora (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).",
+  "Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedora em PDF e Excel.",
+  "A vendedora vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique."
  ],
  "servidor": {
   "versao": "2026.11.04-11",

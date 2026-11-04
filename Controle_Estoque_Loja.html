@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-17">
+<meta name="versao-sistema" content="2026.11.04-18">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -549,6 +549,14 @@ input[data-maiusc]::placeholder{text-transform:none}
   .grid2{grid-template-columns:1fr}
 }
 /* recursos premium */
+.meta-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.meta-banner{padding:0;border:0;background:none;box-shadow:none;cursor:pointer}.meta-banner .meta-card{margin:0}
+.meta-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.meta-num{display:flex;align-items:baseline;gap:10px;margin:8px 0 6px;flex-wrap:wrap}.meta-num span{font-size:22px;font-weight:800}.meta-card.grande .meta-num span{font-size:28px}
+.meta-barra{height:10px;background:#eef0f3;border-radius:6px;overflow:hidden;min-width:80px}.meta-barra span{display:block;height:100%;background:var(--ac);border-radius:6px}.meta-barra span.cheia{background:#12b76a}
+td .meta-barra{display:inline-block;width:calc(100% - 50px);vertical-align:middle;margin-right:6px}
+.meta-info{margin-top:8px;font-size:13px}
+.dias-sem{display:flex;gap:14px;flex-wrap:wrap}
 .cards-clica .rbox{cursor:pointer;transition:box-shadow .15s,transform .05s}.cards-clica .rbox:hover{box-shadow:0 4px 14px rgba(16,24,40,.12)}
 .promo-faixa{background:#ecfdf3;border:1px solid #abefc6;color:#05603a;border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13px}
 .mq-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fafbfc}
@@ -866,7 +874,7 @@ function novoDb() {
       markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: ''
     },
     usuarios: [], produtos: [], entradas: [], vendas: [], condicionais: [], movs: [],
-    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: [], promocoes: []
+    clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: [], promocoes: [], metas: []
   };
 }
 function normalizar() {
@@ -1216,6 +1224,7 @@ const ICONES = {
   inventario: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
   promocoes: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
   fidelidade: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  metas: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
   cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -1226,7 +1235,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['metas', 'Metas'], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1237,8 +1246,9 @@ function render() {
   if (view === 'inventario' && !temRecurso('inventario')) view = MODO_REDE ? 'vendas' : 'premium';
   if (view === 'promocoes' && !temRecurso('promocoes')) view = 'premium';
   if (view === 'fidelidade' && (!temRecurso('cashback') || MODO_REDE)) view = MODO_REDE ? 'vendas' : 'premium';
+  if (view === 'metas' && !temRecurso('metas')) view = MODO_REDE ? 'vendas' : adm() ? 'premium' : 'painel';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes')) && (x[0] !== 'fidelidade' || temRecurso('cashback'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes')) && (x[0] !== 'fidelidade' || temRecurso('cashback')) && (x[0] !== 'metas' || temRecurso('metas'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1313,7 +1323,7 @@ function painel() {
   const b = abaixoMin();
   const ub = db.config.ultimoBackup;
   const lembrete = adm() && db.produtos.length && (!ub || ub < somaDias(-7)) ? `<div class="alerta">Faça um backup dos dados (Configurações → Exportar backup). ${ub ? 'Último backup: ' + fmtDia(ub) + '.' : 'Nenhum backup feito ainda.'}</div>` : '';
-  return `<h2>Painel</h2>${lembrete}${bannerPainel()}
+  return `<h2>Painel</h2>${lembrete}${bannerPainel()}${bannerMeta()}
   <div class="kpis">
     ${kpi('Peças na loja', fmtN(pecas), `${at.length} produto(s) · ${fmtN(pecasCond)} peça(s) fora em condicional`, 'kpiIr', 'data-v="produtos:estoque"')}
     ${kpi('Estoque a preço de venda', fmtR(vVenda), adm() ? 'a preço de custo: ' + fmtR(vCusto) : '', 'kpiEstoque')}
@@ -1617,7 +1627,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, cartoes, inventario, promocoes, fidelidade, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, cartoes, inventario, promocoes, fidelidade, metas, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -4271,6 +4281,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-18', itens: ['Recurso Premium "Metas das vendedoras": novo menu Metas. O administrador define a meta do mês de cada vendedora (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).',
+    'Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedora em PDF e Excel.',
+    'A vendedora vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique.'] },
   { v: '2026.11.04-17', itens: ['Aniversários e cashback: o administrador pode estornar um crédito dado (presente de aniversário ou cashback), informando o motivo. O que já foi usado não volta; estorna o que sobrou. Também na ficha do cliente (Clientes → Ver).',
     'Os cards do cashback (gerado no mês, em aberto, vence em 7 dias, vencido no mês) abrem o analítico ao clicar, com PDF e Excel. "Em aberto" passa a incluir os presentes de aniversário.'] },
   { v: '2026.11.04-16', itens: ['Recurso Premium "Aniversariantes e cashback": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.',
@@ -4804,6 +4817,20 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Definir as metas do mês', quem: 'adm', rec: 'metas', ir: 'metas', p: [
+    'Abra <b>Metas</b>, escolha o <b>Mês</b> e clique em <b>Definir metas do mês</b>.',
+    'Informe a meta em R$ de cada vendedora (em branco = sem meta) e, se quiser, a <b>Meta da loja</b>.',
+    'Bônus: escolha <b>R$</b> (valor fixo) ou <b>% do vendido</b> e o valor. O bônus só vale se a vendedora chegar a 100% da meta.',
+    'Marque os <b>dias de loja aberta</b> (ex.: segunda a sábado): o sistema usa para calcular quanto vender por dia.',
+    'Clique em <b>Salvar metas</b>. No mês seguinte, use <b>Copiar do mês anterior</b> para não digitar tudo de novo.'] },
+  { t: 'Acompanhar as metas e pagar o bônus', quem: 'adm', rec: 'metas', ir: 'metas', p: [
+    'Em <b>Metas</b> aparece o ranking: vendido, % atingido, quanto falta, quanto precisa vender por dia, a projeção pelo ritmo e a situação (no ritmo, abaixo do ritmo, meta batida).',
+    'Vendido = vendas da vendedora no mês menos as devoluções e trocas dessas vendas (o mesmo critério das comissões).',
+    'Clique em <b>dia a dia</b> para ver cada dia: vendido, acumulado e quanto deveria ter acumulado (PDF e Excel).',
+    'Quem bateu a meta mostra o bônus: clique em <b>lançar bônus</b> e ele entra em Financeiro → Contas a pagar, como as comissões.'] },
+  { t: 'Ver a minha meta', quem: 'todos', rec: 'metas', ir: 'metas', p: [
+    'A sua meta do mês aparece no <b>Painel</b>: quanto já vendeu, quanto falta e quanto precisa vender por dia.',
+    'No menu <b>Metas</b> você vê a sua meta e o ranking da equipe (em %). No celular também.'] },
   { t: 'Configurar o cashback e o presente de aniversário', quem: 'adm', rec: 'cashback', ir: 'fidelidade', p: [
     'Abra <b>Aniversários e cashback</b> e clique em <b>Configurar</b>.',
     'Marque <b>Dar cashback</b>, informe a <b>% do valor pago</b> (ex.: 5), por quantos <b>dias</b> o crédito vale (ex.: 60) e, se quiser, a <b>compra mínima</b>.',
@@ -4882,6 +4909,7 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'A venda não entrou na meta da vendedora.', quem: 'adm', rec: 'metas', r: 'A meta conta as vendas feitas no usuário da vendedora (quem estava logado ao finalizar). Venda feita no usuário de outra pessoa entra na meta dessa pessoa. Vendas canceladas e devoluções saem da conta.' },
   { p: 'Dei um presente ou cashback por engano. Como desfaço?', quem: 'adm', rec: 'cashback', r: 'Em Aniversários e cashback, clique em Estornar presente na linha do cliente, ou abra Clientes → Ver e clique em estornar no crédito. Informe o motivo. Só volta o que ainda não foi usado; o estorno fica no extrato e no histórico.' },
   { p: 'O cashback do cliente sumiu.', quem: 'adm', rec: 'cashback', r: 'Provavelmente venceu: crédito com validade que não é usado a tempo vence sozinho e aparece no extrato do cliente como "Cashback vencido". Veja em Aniversários e cashback → Extrato do cashback.' },
   { p: 'Cancelei uma venda que tinha gerado cashback.', quem: 'adm', rec: 'cashback', r: 'O cashback daquela venda é estornado junto. Se o cliente já tinha usado o crédito, o saldo dele pode ficar negativo e é descontado da próxima vez.' },
@@ -5475,7 +5503,7 @@ const PREMIUM = [
     desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
   { k: 'cashback', nome: 'Aniversariantes e cashback', pronto: true, ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
     desc: 'Aniversariantes do mês com mensagem pronta para o WhatsApp e crédito de cashback que o cliente usa na próxima compra.' },
-  { k: 'metas', nome: 'Metas das vendedoras', ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  { k: 'metas', nome: 'Metas das vendedoras', pronto: true, ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
     desc: 'Meta do mês por vendedora, acompanhamento dia a dia e ranking, ligado às comissões.' }
 ];
 const temRecurso = k => !!(licInfo && licInfo.l && licInfo.sit !== 'bloqueada' && (licInfo.l.recursos || []).indexOf(k) >= 0);
@@ -6077,10 +6105,122 @@ ACT.fidCard = el => {
   modalAnalitico('Crédito vencido neste mês', 'Cashback e presentes que venceram sem uso desde ' + fmtDia(mesIni), [C('Venceu em', 's'), C('Cliente', 's'), C('Referência', 's'), C('Valor vencido', 'r')], linhas);
 };
 ACT.ajudaFid = () => ajudaRecurso('cashback', 'Passo a passo – aniversários e cashback');
+/* ===== Premium: metas das vendedoras =====
+   Meta do mês em R$ para cada vendedora e para a loja. Vendido = vendas da vendedora no mês menos as devoluções/trocas
+   dessas vendas no mês (o mesmo critério das comissões). Mostra quanto falta, quanto precisa vender por dia nos dias de
+   loja aberta que restam, a projeção pelo ritmo atual e o ranking. Bônus de meta (R$ fixo ou % do vendido) ao bater 100%,
+   lançado em Contas a pagar como as comissões. */
+let metaMes = '';
+const mesMeta = () => metaMes || (metaMes = hoje().slice(0, 7));
+const diasLoja = () => (db.config.metasDias && db.config.metasDias.length ? db.config.metasDias : [1, 2, 3, 4, 5, 6]);
+function diasUteis(de, ate) { let n = 0; const d = new Date(de + 'T12:00:00'), f = new Date(ate + 'T12:00:00'); while (d <= f) { if (diasLoja().indexOf(d.getDay()) >= 0) n++; d.setDate(d.getDate() + 1); } return n; }
+const metaDe = (mes, uid) => (db.metas || []).find(m => m.id === mes + '|' + (uid == null ? 'loja' : uid));
+function vendidoMes(uid, de, ate) {
+  const vs = vendasValidas().filter(v => (uid == null || v.usuarioId === uid) && noPeriodo(v.data, de, ate));
+  const dev = db.trocas.filter(t => (uid == null || t.vendaUsuarioId === uid) && noPeriodo(t.data, de, ate)).reduce((s, t) => s + (t.valor || 0), 0);
+  return { n: vs.length, vendido: r2(vs.reduce((s, v) => s + v.total, 0) - dev) };
+}
+function situacaoMeta(mes, uid) {
+  const m = metaDe(mes, uid); if (!m || !(m.valor > 0)) return null;
+  const de = mes + '-01', fim = fimMes(de), h = hoje(), ate = h < fim ? h : fim, passou = h > fim, antes = h < de;
+  const { n, vendido } = vendidoMes(uid, de, fim), pct = vendido / m.valor;
+  const total = diasUteis(de, fim), feitos = antes ? 0 : diasUteis(de, ate), resta = antes ? total : passou ? 0 : Math.max(diasUteis(h, fim), 0);
+  const falta = r2(Math.max(0, m.valor - vendido)), porDia = resta ? r2(falta / resta) : 0;
+  const decorridos = antes ? 0 : passou ? total : Math.max(feitos - (diasLoja().indexOf(new Date(h + 'T12:00:00').getDay()) >= 0 ? 1 : 0), 0);   // dias completos (hoje ainda não acabou)
+  const ritmo = decorridos ? vendido / decorridos : 0, proj = passou ? vendido : decorridos >= 3 ? r2(vendido + ritmo * resta) : null;   // projeção só depois de 3 dias de loja
+  const esperado = r2(m.valor * (total ? Math.min(feitos, total) / total : 0));
+  const sit = pct >= 1 ? 'batida' : passou ? 'nao' : vendido >= esperado * 0.95 || (proj != null && proj >= m.valor) ? 'ritmo' : 'abaixo';
+  const bonus = pct >= 1 && m.bonus > 0 ? r2(m.bonusTipo === 'pct' ? vendido * m.bonus / 100 : m.bonus) : 0;
+  return { m, de, fim, n, vendido, pct, falta, porDia, resta, total, proj, esperado, sit, bonus };
+}
+const SIT_META = { batida: ['ok', 'Meta batida'], ritmo: ['ab', 'No ritmo'], abaixo: ['at', 'Abaixo do ritmo'], nao: ['bx', 'Não bateu'] };
+const barraMeta = pct => `<div class="meta-barra"><span style="width:${Math.min(100, Math.round(pct * 100))}%" class="${pct >= 1 ? 'cheia' : ''}"></span></div>`;
+const medalha = i => ['🥇', '🥈', '🥉'][i] || (i + 1) + 'º';
+function cartaoMeta(s, nome, grande) {
+  return `<div class="meta-card${grande ? ' grande' : ''}"><div class="meta-top"><b>${esc(nome)}</b><span class="tag ${SIT_META[s.sit][0]}">${SIT_META[s.sit][1]}</span></div>
+    <div class="meta-num"><span>${fmtR(s.vendido)}</span><small>de ${fmtR(s.m.valor)} · ${Math.round(s.pct * 100)}%</small></div>${barraMeta(s.pct)}
+    <div class="meta-info">${s.falta ? `Falta <b>${fmtR(s.falta)}</b>${s.resta ? ` · precisa <b>${fmtR(s.porDia)}</b> por dia nos ${s.resta} dia(s) de loja que restam` : ''}` : '<b class="ok">Meta batida!</b>'}${s.bonus ? ` · bônus <b>${fmtR(s.bonus)}</b>` : ''}
+      <br><span class="mut">Projeção pelo ritmo: ${s.proj == null ? 'a partir do 3º dia de loja' : fmtR(s.proj)} · esperado até hoje: ${fmtR(s.esperado)} · ${s.n} venda(s)</span></div></div>`;
+}
+const vendedorasMeta = mes => db.usuarios.filter(u => u.perfil !== 'master' && (metaDe(mes, u.id) || (u.ativo !== false && u.perfil === 'vendedora'))).sort((a, b) => a.nome.localeCompare(b.nome));
+function bannerMeta() {
+  if (!temRecurso('metas') || !eu) return '';
+  const s = situacaoMeta(hoje().slice(0, 7), eu.id); if (!s) return '';
+  return `<section class="card meta-banner" data-act="ir" data-v="metas" title="Ver metas">${cartaoMeta(s, 'Minha meta de ' + hoje().slice(5, 7) + '/' + hoje().slice(0, 4))}</section>`;
+}
+function metas() {
+  const mes = mesMeta(), de = mes + '-01', loja = situacaoMeta(mes, null);
+  const ls = vendedorasMeta(mes).map(u => ({ u, s: situacaoMeta(mes, u.id) })), com = ls.filter(x => x.s).sort((a, b) => b.s.pct - a.s.pct);
+  const minha = !adm() ? ls.find(x => x.u.id === eu.id) : null;
+  return `<h2>Metas</h2>
+  <section class="card"><div class="filtros"><label>Mês<input type="month" id="meta-mes" value="${mes}"></label><span style="flex:1"></span>
+    <button class="btn" data-act="ajudaMetas">Passo a passo</button>${adm() ? `<button class="btn" data-act="metaDiaDia" data-id="loja">Dia a dia</button><button class="btn pri" data-act="metaDefinir">Definir metas do mês</button>` : ''}</div>
+    <p class="mut" style="margin:6px 0 0">${diasUteis(de, fimMes(de))} dia(s) de loja aberta no mês. Vendido = vendas menos devoluções/trocas no mês.</p></section>
+  ${!com.length && !loja ? `<section class="card"><p class="vazio">Nenhuma meta definida para ${mes.slice(5)}/${mes.slice(0, 4)}.${adm() ? ' Clique em <b>Definir metas do mês</b>.' : ''}</p></section>` : ''}
+  ${minha && minha.s ? cartaoMeta(minha.s, 'Minha meta', true) : ''}
+  ${loja && adm() ? cartaoMeta(loja, 'Meta da loja', true) : ''}
+  ${com.length ? `<section class="card"><h3>Ranking</h3><div class="tabw"><table class="tb"><thead><tr><th></th><th>Vendedora</th><th style="width:30%">Atingido</th>${adm() ? '<th class="n">Meta</th><th class="n">Vendido</th><th class="n">Falta</th><th class="n">Por dia</th><th class="n">Projeção</th><th class="n">Bônus</th>' : ''}<th>Situação</th>${adm() ? '<th></th>' : ''}</tr></thead><tbody>
+    ${com.map((x, i) => { const s = x.s, lanc = s.m.bonusConta && db.pagar.find(p => p.id === s.m.bonusConta); return `<tr><td>${medalha(i)}</td><td><b>${esc(x.u.nome)}</b></td><td>${barraMeta(s.pct)}<small>${Math.round(s.pct * 100)}%</small></td>
+      ${adm() ? `<td class="n">${fmtR(s.m.valor)}</td><td class="n">${fmtR(s.vendido)}</td><td class="n">${s.falta ? fmtR(s.falta) : '—'}</td><td class="n">${s.falta && s.resta ? fmtR(s.porDia) : '—'}</td><td class="n">${s.proj == null ? '—' : fmtR(s.proj)}</td><td class="n">${s.bonus ? fmtR(s.bonus) : '—'}</td>` : ''}
+      <td><span class="tag ${SIT_META[s.sit][0]}">${SIT_META[s.sit][1]}</span></td>
+      ${adm() ? `<td class="n"><button class="lnk" data-act="metaDiaDia" data-id="${x.u.id}">dia a dia</button>${s.bonus && !lanc ? ` <button class="lnk" data-act="metaBonus" data-id="${x.u.id}">lançar bônus</button>` : lanc ? ` <span class="tag ok">bônus ${lanc.pagoEm ? 'pago' : 'a pagar'}</span>` : ''}</td>` : ''}</tr>`; }).join('')}</tbody>
+    ${adm() ? `<tfoot><tr><td colspan="3">Total · ${com.length} vendedora(s)</td><td class="n">${fmtR(r2(somar(com, x => x.s.m.valor)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.vendido)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.falta)))}</td><td></td><td class="n">${com.some(x => x.s.proj == null) ? '—' : fmtR(r2(somar(com, x => x.s.proj)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.bonus)))}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div></section>` : ''}`;
+}
+document.addEventListener('change', e => { if (e.target && e.target.id === 'meta-mes' && e.target.value) { metaMes = e.target.value; render(); } });
+ACT.metaDefinir = () => {
+  if (!adm()) return;
+  const mes = mesMeta(), us = db.usuarios.filter(u => u.perfil !== 'master' && u.ativo !== false).sort((a, b) => a.nome.localeCompare(b.nome)), ant = addMeses(mes + '-01', -1).slice(0, 7);
+  const lin = (id, nome) => { const m = metaDe(mes, id === 'loja' ? null : id) || {}; return `<tr data-meta="${id}"><td><b>${esc(nome)}</b></td><td><input class="val mt-v" value="${m.valor ? fmtDec(m.valor) : ''}" placeholder="0,00"></td>
+    ${id === 'loja' ? '<td colspan="2" class="mut">—</td>' : `<td><select class="mt-bt"><option value="valor" ${m.bonusTipo !== 'pct' ? 'selected' : ''}>R$</option><option value="pct" ${m.bonusTipo === 'pct' ? 'selected' : ''}>% do vendido</option></select></td><td><input class="val mt-b" value="${m.bonus ? fmtDec(m.bonus) : ''}" placeholder="0"></td>`}</tr>`; };
+  abrirModal('Metas de ' + mes.slice(5) + '/' + mes.slice(0, 4), `<div class="tabw"><table class="tb"><thead><tr><th>Vendedora</th><th>Meta do mês (R$)</th><th colspan="2">Bônus se bater a meta</th></tr></thead><tbody>
+    ${lin('loja', 'Meta da loja (total)')}${us.map(u => lin(u.id, u.nome)).join('')}</tbody></table></div>
+    <p class="mut">Deixe a meta em branco para quem não tem meta. A meta da loja é opcional.</p>
+    <h4 class="rel-sec">Dias de loja aberta (para calcular quanto vender por dia)</h4><div class="dias-sem">${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d, i) => `<label class="chk"><input type="checkbox" class="mt-dia" value="${i}" ${diasLoja().indexOf(i) >= 0 ? 'checked' : ''}> ${d}</label>`).join('')}</div>`,
+    `${(db.metas || []).some(m => m.mes === ant) ? '<button class="btn" data-act="metaCopiar">Copiar do mês anterior</button>' : ''}<button class="btn pri" data-act="metaSalvar">Salvar metas</button>`, true);
+};
+ACT.metaCopiar = () => {
+  const ant = addMeses(mesMeta() + '-01', -1).slice(0, 7);
+  $$('#modal tr[data-meta]').forEach(tr => { const id = tr.dataset.meta, m = metaDe(ant, id === 'loja' ? null : +id); if (!m) return; tr.querySelector('.mt-v').value = fmtDec(m.valor); if (tr.querySelector('.mt-b')) { tr.querySelector('.mt-b').value = m.bonus ? fmtDec(m.bonus) : ''; tr.querySelector('.mt-bt').value = m.bonusTipo || 'valor'; } });
+  aviso('Metas do mês anterior copiadas. Confira e salve.', 'ok');
+};
+ACT.metaSalvar = () => {
+  const mes = mesMeta(), dias = $$('.mt-dia').filter(c => c.checked).map(c => +c.value);
+  if (!dias.length) return aviso('Marque pelo menos um dia de loja aberta.', 'erro');
+  db.metas = db.metas || []; const txt = [];
+  $$('#modal tr[data-meta]').forEach(tr => {
+    const idu = tr.dataset.meta, id = mes + '|' + idu, v = r2(num(tr.querySelector('.mt-v').value)), bt = tr.querySelector('.mt-bt'), b = tr.querySelector('.mt-b');
+    const atual = db.metas.find(m => m.id === id);
+    if (!(v > 0)) { if (atual && !atual.bonusConta) db.metas = db.metas.filter(m => m !== atual); return; }
+    const d = { id, mes, uid: idu === 'loja' ? null : +idu, valor: v, bonusTipo: bt ? bt.value : '', bonus: b ? r2(num(b.value)) : 0, alterada: agora(), por: eu.nome };
+    if (atual) Object.assign(atual, d); else db.metas.push(d);
+    txt.push((idu === 'loja' ? 'loja' : (db.usuarios.find(u => u.id === +idu) || {}).nome) + ' ' + fmtR(v));
+  });
+  db.config.metasDias = dias.sort();
+  registrar('Metas do mês definidas', mes + ': ' + txt.join(', ')); salvar(); fecharModal(); render(); aviso('Metas salvas.', 'ok');
+};
+ACT.metaDiaDia = el => {
+  const mes = mesMeta(), uid = el.dataset.id === 'loja' ? null : +el.dataset.id, s = situacaoMeta(mes, uid), de = mes + '-01', fim = fimMes(de), total = diasUteis(de, fim);
+  const nome = uid == null ? 'Loja' : (db.usuarios.find(u => u.id === uid) || {}).nome, linhas = []; let acum = 0, uteis = 0;
+  for (let d = de; d <= fim && d <= hoje(); d = somaDiasDe(d, 1)) {
+    const v = vendidoMes(uid, d, d).vendido; acum = r2(acum + v); if (diasLoja().indexOf(new Date(d + 'T12:00:00').getDay()) >= 0) uteis++;
+    const esp = s ? r2(s.m.valor * uteis / total) : 0; linhas.push({ c: [fmtDia(d), ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][new Date(d + 'T12:00:00').getDay()], v, acum, esp, s ? r2(acum - esp) : ''] });
+  }
+  linhas.push({ forte: true, c: ['Total', '', acum, acum, s ? s.esperado : '', s ? r2(acum - s.esperado) : ''] });
+  modalAnalitico('Dia a dia – ' + nome, `${mes.slice(5)}/${mes.slice(0, 4)}${s ? ' · meta ' + fmtR(s.m.valor) + ' · ' + Math.round(s.pct * 100) + '% atingido' : ' · sem meta'}`,
+    [C('Dia', 's'), C('Semana', 's'), C('Vendido no dia', 'r'), C('Acumulado', 'r'), C('Esperado acumulado', 'r'), C('Acima / abaixo', 'r')], linhas);
+};
+ACT.metaBonus = el => {
+  const mes = mesMeta(), u = db.usuarios.find(x => x.id === +el.dataset.id), s = u && situacaoMeta(mes, u.id); if (!s || !s.bonus || s.m.bonusConta) return;
+  const venc = addMeses(fimMes(mes + '-01'), 0) < hoje() ? hoje() : somaDiasDe(fimMes(mes + '-01'), 5);
+  const p = { id: db.seq.pag++, descricao: `Bônus de meta ${u.nome} – ${mes.slice(5)}/${mes.slice(0, 4)}`, fornecedor: u.nome, categoria: 'Salários e comissões', vencimento: venc, valor: s.bonus, pagoEm: '', forma: '', doc: 'Meta ' + mes, criadoPor: eu.nome };
+  db.pagar.push(p); s.m.bonusConta = p.id;
+  registrar('Bônus de meta lançado', `${u.nome} ${mes}: ${fmtR(s.bonus)} (meta ${fmtR(s.m.valor)}, vendido ${fmtR(s.vendido)})`); salvar(); render(); aviso(`Bônus de ${fmtR(s.bonus)} lançado em Contas a pagar (vence ${fmtDia(venc)}).`, 'ok');
+};
+ACT.ajudaMetas = () => ajudaRecurso('metas', 'Passo a passo – metas das vendedoras');
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
-const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'inventario', 'ajuda'];
+const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'inventario', 'metas', 'ajuda'];
 function telaLoginRede(msg) {
   let loja = {}; try { loja = JSON.parse(localStorage.getItem(CHAVE + '.redeLoja') || '{}'); } catch (e) { }
   const cab = l => `${l.logo ? `<img class="rede-img" src="${esc(l.logo)}" alt="">` : `<div class="rede-logo">${esc(iniciais(l.loja || 'Controle de Estoque'))}</div>`}<h1>${esc(l.loja || 'Controle de Estoque')}</h1>`;
