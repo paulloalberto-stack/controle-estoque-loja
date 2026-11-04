@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-07'
+VERSAO_SERVIDOR = '2026.11.04-09'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -1233,7 +1233,10 @@ class AtendenteRede(Atendente):
             if caminho == '/api/eu':
                 s = sessao(self.headers.get('X-Sessao'))
                 return self._json(200, {'uid': s['uid'], 'nome': s['nome']})
-            return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'rede': True, 'licenca': situacao_licenca(BANCO_ATIVO, BANCO_ATIVO.config())})
+            cfg = BANCO_ATIVO.config()   # nome e logo da loja para a tela de entrada do celular (já aparecem em qualquer recibo)
+            tema = cfg.get('tema') if isinstance(cfg.get('tema'), dict) else {}
+            return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'rede': True, 'licenca': situacao_licenca(BANCO_ATIVO, cfg),
+                                    'loja': cfg.get('loja') or '', 'logo': tema.get('logoTela') or cfg.get('logo') or ''})
         return Atendente.do_GET(self)
 
     def do_POST(self):
