@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-06">
+<meta name="versao-sistema" content="2026.11.04-07">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -548,6 +548,29 @@ input[data-maiusc]::placeholder{text-transform:none}
   .form2{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
+/* venda pelo celular */
+.leitor{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-height:60vh;margin:0 auto}
+.leitor video{width:100%;height:100%;object-fit:cover;display:block}
+.lt-mira{position:absolute;left:7%;right:7%;top:50%;height:2px;background:#ff3b30;box-shadow:0 0 10px #ff3b30}
+.btn-cam svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px}
+.rede-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#16213a;padding:16px;box-sizing:border-box;font-family:system-ui,'Segoe UI',sans-serif}
+.rede-cx{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:380px;box-sizing:border-box}
+.rede-cx h1{font-size:22px;margin:10px 0 4px}
+.rede-logo{width:52px;height:52px;border-radius:14px;background:#16213a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+.rede-cx label{display:block;margin-top:12px;font-weight:600}
+.rede-cx input{width:100%;padding:12px;font-size:16px;border:1px solid #d0d5dd;border-radius:10px;margin-top:4px;box-sizing:border-box}
+.rede-cx button{width:100%;margin-top:16px;padding:14px;font-size:16px;font-weight:700;background:#16213a;color:#fff;border:0;border-radius:12px}
+.rede-cx .err{color:#b42318;min-height:1.2em}
+.cel-qr{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.cel-qr small{display:block;max-width:230px;margin-top:6px}
+.cel-end code{font-size:15px;word-break:break-all}
+html.rede .topo-acoes,html.rede [data-act="minhaSenha"]{display:none!important}
+@media (max-width:820px){
+  html.rede input,html.rede select,html.rede textarea{font-size:16px}
+  .picker{flex-wrap:wrap}
+  .picker .pk-wrap{flex:1 1 100%}
+  .btn-cam{flex:1 1 auto;padding:12px}
+}
 </style>
 </head>
 <body>
@@ -833,11 +856,16 @@ function clientesMaiusculas() {
    Aberto pelo atalho, o sistema vem do servidor local (http://127.0.0.1:8787) e grava tudo no banco SQLite dados/loja.sqlite:
    limpar os dados do navegador não apaga mais nada. Aberto como arquivo (file://), usa o banco do navegador como antes. */
 const MODO_SERVIDOR = /^https?:$/.test(location.protocol);
+const MODO_REDE = location.protocol === 'https:';   // aberto no celular, pela rede da loja (venda pelo celular)
+const tokenRede = () => { try { return sessionStorage.getItem(CHAVE + '.rede') || ''; } catch (e) { return ''; } };
+if (MODO_REDE) document.documentElement.classList.add('rede');
 let srvOk = true, srvInfo = null, srvFalhou = 0;
 const SERVIDOR_SEGURO = '2026.11.04-01';   // a partir desta versão o servidor recusa pedidos de outros sites e se atualiza pela nuvem
 async function api(caminho, opc) {
   opc = Object.assign({ cache: 'no-store' }, opc || {}); opc.headers = Object.assign({ 'X-Controle-Estoque': '1' }, opc.headers || {});
+  if (MODO_REDE) opc.headers['X-Sessao'] = tokenRede();
   const r = await fetch('/api/' + caminho, opc);
+  if (r.status === 401 && MODO_REDE) { try { sessionStorage.removeItem(CHAVE + '.rede'); } catch (e) { } if (!document.getElementById('rl-ok')) telaLoginRede('Sua sessão terminou. Entre de novo.'); }
   if (!r.ok) { let m = 'o servidor respondeu ' + r.status; try { const j = await r.json(); if (j.erro) m = j.erro; } catch (e) { } const e = new Error(m); e.status = r.status; throw e; }
   return (r.headers.get('content-type') || '').indexOf('json') >= 0 ? r.json() : r.text();
 }
@@ -1165,8 +1193,9 @@ function render() {
   if (!eu) return telaLogin();
   $('#login').hidden = true; $('#app').hidden = false;
   const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || (m[3] === 'master' && !master())) view = 'painel';
+  if (MODO_REDE && VIEWS_REDE.indexOf(view) < 0) view = 'vendas';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm())).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0)).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1203,7 +1232,7 @@ function tabelaVendas(lista) {
 
 /* ===== Carrinho (venda, condicional, entrada) ===== */
 function picker(tipo) {
-  return `<div class="picker"><div class="pk-wrap"><input id="pk-${tipo}" data-pkbusca placeholder="Passe o leitor de código de barras ou digite código, descrição, marca, cor, tamanho" data-enter="addItem" data-tipo="${tipo}" autofocus autocomplete="off"><div class="pk-lista" id="pkl-${tipo}" hidden></div></div><input id="pq-${tipo}" type="number" min="1" value="1" class="qtd" title="Quantidade" data-enter="addItem" data-tipo="${tipo}"><button class="btn" data-act="addItem" data-tipo="${tipo}">Adicionar</button></div>`;
+  return `<div class="picker"><div class="pk-wrap"><input id="pk-${tipo}" data-pkbusca placeholder="Passe o leitor de código de barras ou digite código, descrição, marca, cor, tamanho" data-enter="addItem" data-tipo="${tipo}" autofocus autocomplete="off"><div class="pk-lista" id="pkl-${tipo}" hidden></div></div><input id="pq-${tipo}" type="number" min="1" value="1" class="qtd" title="Quantidade" data-enter="addItem" data-tipo="${tipo}"><button class="btn" data-act="addItem" data-tipo="${tipo}">Adicionar</button>${MODO_REDE ? `<button class="btn pri btn-cam" data-act="lerCamera" data-tipo="${tipo}"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Ler pela câmera</button>` : ''}</div>`;
 }
 function tabelaCarrinho(tipo) {
   const c = carrinho[tipo];
@@ -1479,6 +1508,7 @@ const CFG_ABAS = [
   ['seguranca', 'Segurança', 'Senhas, bloqueio e registro', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>'],
   ['sobre', 'Sobre e atualização', 'Versão, novidades e como atualizar', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'],
   ['licenca', 'Licença', 'Plano, validade e ativação', '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M11.4 11.6L21 2"/><path d="M16 7l3 3"/><path d="M19 4l2 2"/>'],
+  ['celular', 'Venda pelo celular', 'Adicional: liberar celulares', '<rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>'],
   ['backup', 'Backup e dados', 'Cópia de segurança e restauração', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>']
 ];
 const OPCOES_VIAS = [['1', '1 via (só a do cliente)'], ['2', '2 vias (cliente e loja)'], ['3', '3 vias'], ['4', '4 vias']];
@@ -1493,7 +1523,7 @@ function config() {
   const nb = db.config.ultimoBackup, diasBk = nb ? Math.floor((Date.parse(hoje()) - Date.parse(nb.slice(0, 10))) / 864e5) : null;
   return `<h2>Configurações</h2>
   <div class="cfg-layout">
-  <nav class="cfg-nav">${CFG_ABAS.map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
+  <nav class="cfg-nav">${CFG_ABAS.filter(a => a[0] !== 'celular' || master()).map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
   <div class="cfg-corpo">
   <div id="cfg">
   ${pane('empresa', `<section class="card">${cab('Dados da empresa', 'Saem no cabeçalho dos recibos, termos, relatórios e etiquetas.')}
@@ -1534,6 +1564,7 @@ function config() {
   ${pane('seguranca', secaoSeguranca())}
   ${pane('sobre', secaoSobre())}
   ${pane('licenca', secaoLicenca())}
+  ${master() ? pane('celular', secaoCelular()) : ''}
   ${pane('backup', `<section class="card">${cab('Backup', 'Os dados ficam guardados <b>neste computador, neste navegador</b>. Guarde cópias fora dele (pen drive, e-mail, nuvem).')}
     <div class="resumo-tit"><div class="rbox ${nb ? (diasBk > 7 ? 'err' : 'ok') : 'err'}"><small>Último backup</small><b>${nb ? fmtDia(nb) : 'Nunca'}</b><span>${nb ? (diasBk === 0 ? 'hoje' : 'há ' + diasBk + ' dia(s)') : 'faça o primeiro agora'}</span></div><div class="rbox"><small>Produtos</small><b>${fmtN(db.produtos.length)}</b><span>${fmtN(ativos().reduce((s, p) => s + p.estoque, 0))} peça(s)</span></div><div class="rbox"><small>Vendas</small><b>${fmtN(db.vendas.length)}</b><span>${db.clientes.length} cliente(s)</span></div><div class="rbox"><small>Movimentações</small><b>${fmtN(db.movs.length)}</b><span>${db.condicionais.length} condicional(is) · ${db.entradas.length} entrada(s)</span></div></div>
     <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="exportar">Exportar backup</button><button class="btn" data-act="importar">Restaurar backup…</button></div></section>
@@ -4194,6 +4225,10 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-07', itens: ['Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.',
+    'Leitura do código de barras pela câmera do celular: etiquetas do sistema (Code 128) e código do fabricante (EAN-13). Lê um item atrás do outro, com bipe.',
+    'No celular aparecem só Vendas, Produtos, Clientes e Ajuda. Backup, atualização, configurações e senhas ficam só no computador do caixa; o celular não recebe as senhas de ninguém.',
+    'Conexão segura (HTTPS) com certificado próprio da loja, instalado uma vez em cada celular pelo QR Code da tela de liberação.'] },
   { v: '2026.11.04-06', itens: ['Gravação por registro: cada gravação manda ao banco só o que mudou (a venda nova, os produtos que saíram, o contador), e não mais o banco inteiro. O sistema continua rápido com anos de dados.',
     'Duas janelas do sistema abertas ao mesmo tempo se atualizam sozinhas a cada poucos segundos. Se as duas mexerem no mesmo registro ao mesmo tempo, o banco recusa a segunda gravação e o sistema recarrega os dados (nada é sobrescrito sem aviso).',
     'Servidor do banco atualizado junto (2026.11.04-06): o banco existente é convertido sozinho, sem perder nada.'] },
@@ -5290,10 +5325,216 @@ ACT.verVersoes = () => {
     <h4 class="rel-sec">O que mudou em cada versão</h4>${NOVIDADES.map(n => `<div class="ver-bloco"><b>${esc(n.v)}</b>${n.v === VERSAO_APP ? ' <span class="tag ok">em uso</span>' : ja.has(n.v) ? ' <span class="tag ab">instalada</span>' : ''}<ul class="sg-dicas">${n.itens.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}`, '', true);
 };
 
+/* ===== Venda pelo celular (adicional liberado pelo master) =====
+   O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
+   (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
+const VIEWS_REDE = ['vendas', 'produtos', 'clientes', 'ajuda'];
+function telaLoginRede(msg) {
+  document.body.innerHTML = `<div class="rede-login"><div class="rede-cx"><div class="rede-logo">CE</div><h1>Controle de Estoque</h1><p class="mut">Entre com o seu usuário e senha do sistema.</p>
+    <label>Usuário<input id="rl-user" autocomplete="username" autocapitalize="none" autocorrect="off"></label>
+    <label>Senha<input id="rl-senha" type="password" autocomplete="current-password"></label>
+    <button id="rl-ok">Entrar</button><p class="err" id="rl-erro">${esc(msg || '')}</p></div></div>`;
+  const ir = async () => {
+    const b = $('#rl-ok'); b.disabled = true; $('#rl-erro').textContent = '';
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Controle-Estoque': '1' }, body: JSON.stringify({ login: $('#rl-user').value.trim(), senha: $('#rl-senha').value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.erro || 'não foi possível entrar');
+      try { sessionStorage.setItem(CHAVE + '.rede', j.sessao); sessionStorage.setItem(CHAVE + '.sessao', String(j.uid)); sessionStorage.setItem(CHAVE + '.redeNovo', '1'); } catch (e) { }
+      location.reload();
+    } catch (e) { $('#rl-erro').textContent = e.message === 'Failed to fetch' ? 'Sem conexão com o computador da loja. Confira o Wi-Fi.' : e.message; b.disabled = false; }
+  };
+  $('#rl-ok').onclick = ir; $('#rl-senha').onkeydown = e => { if (e.key === 'Enter') ir(); }; $('#rl-user').focus();
+}
+async function entrarRede() {
+  try { const s = await api('eu'); eu = db.usuarios.find(u => u.id === s.uid) || null; } catch (e) { eu = null; }
+  if (!eu || eu.ativo === false) { try { sessionStorage.removeItem(CHAVE + '.rede'); } catch (e) { } telaLoginRede('Entre de novo.'); return false; }
+  view = 'vendas';
+  try { if (sessionStorage.getItem(CHAVE + '.redeNovo')) { sessionStorage.removeItem(CHAVE + '.redeNovo'); registrar('Entrou no sistema pelo celular'); salvar(); } } catch (e) { }
+  return true;
+}
+if (MODO_REDE) {
+  ACT.sair = () => {
+    fetch('/api/sair', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Controle-Estoque': '1', 'X-Sessao': tokenRede() }, body: '{}' }).catch(() => { });
+    try { sessionStorage.removeItem(CHAVE + '.rede'); sessionStorage.removeItem(CHAVE + '.sessao'); } catch (e) { }
+    location.reload();
+  };
+}
+// Configurações → Celular (só o master)
+function secaoCelular() {
+  if (!MODO_SERVIDOR || MODO_REDE) return '<section class="card"><p class="mut">Disponível no computador do caixa, aberto pelo atalho Controle de Estoque.</p></section>';
+  if (!srvInfo || !srvInfo.rede) return '<section class="card"><p class="err">O servidor deste computador precisa ser atualizado (versão 2026.11.04-07 ou mais nova) para liberar a venda pelo celular. Use Atualização do sistema.</p></section>';
+  const r = srvInfo.rede, ligado = !!r.ativo;
+  return `<section class="card"><div class="cfg-cab"><h3>Venda pelo celular <span class="tag ${ligado ? 'ok' : 'in'}">${ligado ? 'liberada' : 'bloqueada'}</span></h3>
+      <p class="mut">Recurso adicional: as vendedoras vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Só o usuário master libera ou bloqueia.</p></div>
+    ${r.erro ? `<p class="err">Não foi possível ligar: ${esc(r.erro)}</p>` : ''}
+    ${ligado ? `<div class="cel-qr"><div>${qrSVG(r.instalar, 4)}<small>1. No celular, leia este QR Code (câmera) para instalar o certificado da loja e abrir o sistema</small></div>
+      <div class="cel-end"><p><b>Instalar no celular:</b><br><code>${esc(r.instalar)}</code></p><p><b>Endereço do sistema no celular:</b><br><code>${esc(r.endereco)}</code></p>
+      <p class="mut">${r.sessoes || 0} celular(es) conectado(s) agora · computador: ${esc(r.host || '')}${r.ips && r.ips.length > 1 ? ' · outros IPs: ' + esc(r.ips.slice(1).join(', ')) : ''}</p></div></div>
+      <ul class="sg-dicas"><li>Na primeira vez, o Windows pode perguntar se permite o acesso à rede: marque <b>Redes privadas</b> e clique em <b>Permitir</b> (precisa da senha de administrador do computador). Se o celular não abrir, o suporte roda <b>LIBERAR_CELULAR_NO_FIREWALL.bat</b> do pacote de instalação.</li>
+      <li>Peça ao técnico da internet para <b>fixar o IP</b> deste computador no roteador. Se o IP mudar, o endereço acima muda (o certificado é refeito sozinho).</li>
+      <li>Cada pessoa entra no celular com o próprio usuário e senha; o celular só vende e consulta.</li></ul>` : ''}
+    <div class="acoes" style="justify-content:flex-start;margin-top:10px">${ligado ? '<button class="btn perigo" data-act="celularRede" data-v="0">Bloquear venda pelo celular</button>' : '<button class="btn pri" data-act="celularRede" data-v="1">Liberar venda pelo celular</button>'}</div></section>`;
+}
+ACT.celularRede = async el => {
+  if (!master()) return aviso('Somente o usuário master libera a venda pelo celular.', 'erro');
+  const ligar = el.dataset.v === '1';
+  try { const r = await apiJson('rede', 'POST', { ativo: ligar }); srvInfo = Object.assign(srvInfo || {}, { rede: r }); registrar(ligar ? 'Venda pelo celular liberada' : 'Venda pelo celular bloqueada', r.endereco || ''); salvar(); }
+  catch (e) { aviso('Não foi possível ' + (ligar ? 'liberar' : 'bloquear') + ': ' + e.message, 'erro'); await atualizarSrvInfo(); }
+  render(); if (ligar && srvInfo.rede && srvInfo.rede.ativo) aviso('Venda pelo celular liberada. Leia o QR Code com o celular.', 'ok');
+};
+
+
+/* ===== Leitor de código de barras pela câmera (celular) =====
+   Android: usa o leitor do próprio navegador (BarcodeDetector). iPhone (Safari não tem): leitor próprio de Code 128 (etiquetas
+   do sistema) e EAN-13 (código do fabricante), lendo várias linhas do quadro da câmera. Só aceita depois de ler o mesmo código 2 vezes. */
+const LEITOR = {};
+const EAN_L = ['3211', '2221', '2122', '1411', '1132', '1231', '1114', '1312', '1213', '3112'];
+const EAN_PAR = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+function maisParecido(runs, ini, n, total, padroes) {   // devolve [índice, distância] do padrão de larguras mais parecido
+  let s = 0; for (let k = 0; k < n; k++) s += runs[ini + k];
+  if (!s) return [-1, 99];
+  let melhor = -1, dist = 99;
+  for (let p = 0; p < padroes.length; p++) {
+    const pd = padroes[p]; if (!pd) continue;
+    let d = 0; for (let k = 0; k < n; k++) d += Math.abs(runs[ini + k] * total / s - pd.charCodeAt(k) + 48);
+    if (d < dist) { dist = d; melhor = p; }
+  }
+  return [melhor, dist];
+}
+function lerCode128(runs) {
+  for (let i = 1; i + 6 * 3 + 7 <= runs.length; i += 2) {   // índices ímpares = barras (o 1º trecho é o fundo claro)
+    const [st, ds] = maisParecido(runs, i, 6, 11, C128.slice(0, 106));
+    if (st < 103 || ds > 2.2) continue;
+    const s0 = runs.slice(i, i + 6).reduce((a, b) => a + b, 0) / 11;
+    if (runs[i - 1] < s0 * 4) continue;   // precisa de margem clara antes do início
+    const cods = [st]; let j = i + 6, fim = false;
+    while (j + 6 <= runs.length) {
+      if (j + 7 <= runs.length) { const [sp, dsp] = maisParecido(runs, j, 7, 13, ['2331112']); const m7 = runs.slice(j, j + 7).reduce((x, y) => x + y, 0) / 13; if (sp === 0 && dsp < 2.6 && (j + 7 >= runs.length || runs[j + 7] >= m7 * 4)) { fim = true; break; } }
+      const [c, d] = maisParecido(runs, j, 6, 11, C128.slice(0, 106));
+      if (c < 0 || d > 2.4 || c >= 103) break;
+      cods.push(c); j += 6;
+    }
+    if (!fim || cods.length < 3) continue;
+    let soma = cods[0]; for (let k = 1; k < cods.length - 1; k++) soma += cods[k] * k;
+    if (soma % 103 !== cods[cods.length - 1]) continue;
+    let modo = st === 103 ? 'A' : st === 104 ? 'B' : 'C', txt = '';
+    for (let k = 1; k < cods.length - 1; k++) {
+      const c = cods[k];
+      if (modo === 'C') { if (c < 100) txt += (c < 10 ? '0' : '') + c; else if (c === 100) modo = 'B'; else if (c === 101) modo = 'A'; }
+      else if (c === 99) modo = 'C';
+      else if (c === 100 && modo === 'A') modo = 'B';
+      else if (c === 101 && modo === 'B') modo = 'A';
+      else if (c < 96) txt += modo === 'B' ? String.fromCharCode(c + 32) : (c < 64 ? String.fromCharCode(c + 32) : '');
+    }
+    if (txt) return txt;
+  }
+  return null;
+}
+function lerEan13(runs) {
+  const G = EAN_L.map(x => x.split('').reverse().join(''));
+  for (let i = 1; i + 59 <= runs.length; i += 2) {
+    const u = (runs[i] + runs[i + 1] + runs[i + 2]) / 3;
+    if (runs[i - 1] < u * 4 || Math.abs(runs[i] - u) > u * .7 || Math.abs(runs[i + 2] - u) > u * .7) continue;
+    let dig = '', par = '', ok = true;
+    for (let k = 0; k < 6 && ok; k++) {
+      const [l, dl] = maisParecido(runs, i + 3 + k * 4, 4, 7, EAN_L), [g, dg] = maisParecido(runs, i + 3 + k * 4, 4, 7, G);
+      if (Math.min(dl, dg) > 1.6) ok = false; else if (dl <= dg) { dig += l; par += 'L'; } else { dig += g; par += 'G'; }
+    }
+    if (!ok) continue;
+    for (let k = 0; k < 6 && ok; k++) { const [r, dr] = maisParecido(runs, i + 32 + k * 4, 4, 7, EAN_L); if (dr > 1.6) ok = false; else dig += r; }
+    const pri = EAN_PAR.indexOf(par);
+    if (!ok || pri < 0) continue;
+    const cod = pri + dig;
+    let s = 0; for (let k = 0; k < 13; k++) s += +cod[k] * (k % 2 ? 3 : 1);
+    if (s % 10 === 0) return cod;
+  }
+  return null;
+}
+function lerLinha(lum) {   // linha de luminosidade → código (ou null)
+  const n = lum.length, W = Math.max(10, n >> 6);
+  let min = 255, max = 0; for (let x = 0; x < n; x++) { if (lum[x] < min) min = lum[x]; if (lum[x] > max) max = lum[x]; }
+  if (max - min < 40) return null;
+  const runs = []; let cor = 0, tam = 0;   // cor 0 = claro; limite = meio entre o mais claro e o mais escuro da vizinhança
+  for (let x = 0; x < n; x++) {
+    let lo = 255, hi = 0; for (let k = Math.max(0, x - W), f = Math.min(n - 1, x + W); k <= f; k++) { const v = lum[k]; if (v < lo) lo = v; if (v > hi) hi = v; }
+    const esc = hi - lo > (max - min) * .3 && lum[x] < (lo + hi) / 2 ? 1 : 0;
+    if (esc === cor) tam++; else { runs.push(tam); cor = esc; tam = 1; }
+  }
+  runs.push(tam); if (cor === 1) runs.push(n);   // termina sempre em claro
+  if (runs.length < 25) return null;
+  for (const r of [runs, runs.slice().reverse()]) {
+    if (r !== runs && r.length % 2 === 0) continue;
+    const c = lerCode128(r) || lerEan13(r); if (c) return c;
+  }
+  return null;
+}
+function lerQuadro(img) {   // ImageData → lista de códigos lidos nas linhas do meio
+  const { width: w, height: h, data: d } = img, achados = [];
+  for (let k = 0; k < 15; k++) {
+    const y = Math.round(h * (.3 + .4 * k / 14)), lum = new Uint8ClampedArray(w), o = y * w * 4;
+    for (let x = 0; x < w; x++) lum[x] = (d[o + x * 4] * 77 + d[o + x * 4 + 1] * 150 + d[o + x * 4 + 2] * 29) >> 8;
+    const c = lerLinha(lum); if (c) achados.push(c);
+  }
+  return achados;
+}
+function bip() {
+  try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 1800; g.gain.value = .15; o.connect(g); g.connect(a.destination); o.start(); setTimeout(() => { o.stop(); a.close(); }, 120); } catch (e) { }
+  try { navigator.vibrate && navigator.vibrate(80); } catch (e) { }
+}
+ACT.lerCamera = async el => {
+  const tipo = el.dataset.tipo;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return aviso('Este navegador não libera a câmera. Abra o sistema pelo endereço https da loja.', 'erro');
+  abrirModal('Ler código de barras', `<div class="leitor"><video id="lt-video" playsinline muted autoplay></video><div class="lt-mira"></div></div>
+    <p class="mut" id="lt-msg" style="text-align:center;margin:10px 0 0">Aponte a câmera para o código de barras da etiqueta, deitado na linha vermelha.</p>
+    <div id="lt-ultimo" class="mut" style="text-align:center"></div>`, '');
+  try { camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+  catch (e) { fecharModal(); return aviso('A câmera não foi liberada (' + (e.name === 'NotAllowedError' ? 'permissão negada: libere a câmera para este site nas configurações do navegador' : e.message) + ').', 'erro'); }
+  const v = $('#lt-video'); if (!v) return pararCamera();
+  v.srcObject = camStream; try { await v.play(); } catch (e) { }
+  let det = null;
+  try { if ('BarcodeDetector' in window) { const f = await BarcodeDetector.getSupportedFormats(); const q = ['code_128', 'ean_13', 'ean_8'].filter(x => f.indexOf(x) >= 0); if (q.length) det = new BarcodeDetector({ formats: q }); } } catch (e) { det = null; }
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+  let antes = '', vezes = 0, pausaAte = 0, ultimo = '', ultimoVisto = 0;
+  const passo = async () => {
+    if (!document.contains(v) || !camStream) return;
+    if (Date.now() > pausaAte && v.videoWidth) {
+      let cods = [];
+      try {
+        if (det) cods = (await det.detect(v)).map(b => b.rawValue);
+        else { const w = Math.min(v.videoWidth, 1600), h = Math.round(v.videoHeight * w / v.videoWidth); cv.width = w; cv.height = h; cx.drawImage(v, 0, 0, w, h); cods = lerQuadro(cx.getImageData(0, 0, w, h)); }
+      } catch (e) { cods = []; }
+      const c = cods[0];
+      if (c && c === ultimo && Date.now() - ultimoVisto < 1500) { ultimoVisto = Date.now(); }   // mesma etiqueta ainda na frente da câmera: não soma de novo
+      else if (c) {
+        const confirmado = det || cods.filter(x => x === c).length >= 2 || (c === antes && ++vezes >= 1);
+        if (c !== antes) { antes = c; vezes = 0; }
+        if (confirmado) {
+          ultimo = c; ultimoVisto = Date.now(); pausaAte = Date.now() + 900; antes = ''; bip();
+          const inp = $('#pk-' + tipo);
+          if (inp) { inp.value = c; ACT.addItem({ dataset: { tipo } }); const i2 = $('#pk-' + tipo); if (i2) i2.blur(); }
+          const p = acharProduto(c), u = $('#lt-ultimo');
+          if (u) u.innerHTML = p && p !== 'varios' ? `<b class="ok">✓ ${esc(nomeCompleto(p))}</b> · leia o próximo ou toque em Fechar` : `<b class="err">Código ${esc(c)} não cadastrado</b>`;
+        }
+      }
+    }
+    setTimeout(passo, det ? 120 : 60);
+  };
+  passo();
+};
+
 /* ===== Início ===== */
 (async () => {
   if (!MODO_SERVIDOR && sistemaMigrado()) return;
-  await carregarDados(); if (MODO_SERVIDOR && !srvOk) return telaSemServidor();
+  if (MODO_REDE && !tokenRede()) return telaLoginRede();
+  await carregarDados(); if (MODO_REDE && !tokenRede()) return;
+  if (MODO_SERVIDOR && !srvOk) return telaSemServidor();
+  if (MODO_REDE) {   // celular: só vender e consultar; backup, nuvem e atualização ficam no computador do caixa
+    if (!(await entrarRede())) return;
+    await carregarMinis(); aplicarFavicon(); await conferirLicenca(); render();
+    setInterval(sincronizar, 4000); window.addEventListener('focus', () => sincronizar());
+    window.sistemaPronto = true; return;
+  }
   await carregarMinis(); conferirVersao(); aplicarFavicon(); if (MODO_SERVIDOR) setTimeout(() => atualizarIconeLoja().catch(() => { }), 3000); confirmarAtualizacaoPendente(); await carregarPacoteBaixado(); await conferirPastaGuardada();
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
   await conferirLicenca(); setInterval(conferirLicenca, 3600 * 1000);

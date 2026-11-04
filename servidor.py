@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-06'
+VERSAO_SERVIDOR = '2026.11.04-07'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -733,7 +733,7 @@ class Atendente(BaseHTTPRequestHandler):
             if caminho == '/api/status':
                 return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'sistema': versao_de(open(ARQ_SISTEMA, encoding='utf-8').read()) if os.path.exists(ARQ_SISTEMA) else '',
                                         'vazio': b.vazio(), 'migradoEm': b.meta_interna('migradoEm'), 'banco': b.caminho, 'tamanho': b.tamanho(),
-                                        'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config())})
+                                        'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config()), 'rede': info_rede()})
             if caminho == '/api/dados':
                 corpo = b.ler_dados() if not b.vazio() else '{}'
                 if 'versao=1' in self.path:   # sistema novo: dados + versão (gravação por registro)
@@ -783,6 +783,8 @@ class Atendente(BaseHTTPRequestHandler):
                 aps = {k: v.get('apagar') or [] for k, v in (dados.get('colecoes') or {}).items() if v.get('apagar')}
                 lis = dados.get('listas') or {}
                 mset, mdel = (dados.get('meta') or {}).get('set') or {}, (dados.get('meta') or {}).get('del') or []
+                mset = {k: v for k, v in mset.items() if not str(k).startswith('__')}
+                mdel = [k for k in mdel if not str(k).startswith('__')]
                 for nome in list(ups) + list(lis):
                     if not NOME_OK.match(nome) or nome in RESERVADAS:
                         return self._erro(400, 'coleção inválida: ' + nome)
@@ -838,6 +840,14 @@ class Atendente(BaseHTTPRequestHandler):
                 if p:
                     threading.Thread(target=copia_diaria, args=(b,), daemon=True).start()
                 return self._json(200, {'ok': True})
+            if caminho == '/api/rede':
+                if isinstance(self, AtendenteRede):
+                    return self._erro(403, 'só no computador do caixa')
+                ligar = bool(dados.get('ativo'))
+                b.meta_interna('rede', ligar)
+                ok = iniciar_rede() if ligar else (parar_rede() or True)
+                log('venda pelo celular %s pelo sistema' % ('liberada' if ligar else 'bloqueada'))
+                return self._json(200 if ok else 500, dict(info_rede(), erro=REDE['erro']))
             if caminho == '/api/icone':
                 nome = gravar_icone(dados.get('hash'), dados.get('pngs') or [])
                 return self._json(200, {'ok': True, 'icone': nome, 'atalhos': atualizar_atalhos(False)})
@@ -858,6 +868,7 @@ class Atendente(BaseHTTPRequestHandler):
                 return self._json(200, {'ok': True, 'produtos': len(lido.get('produtos', [])), 'vendas': len(lido.get('vendas', [])), 'fotos': len(b.fotos(True))})
             if caminho == '/api/parar':
                 self._json(200, {'ok': True})
+                parar_rede()
                 threading.Thread(target=SERVIDOR_HTTP.shutdown, daemon=True).start()
                 return None
             return self._erro(404, 'não encontrado')
@@ -866,6 +877,468 @@ class Atendente(BaseHTTPRequestHandler):
         except Exception as e:
             log('erro POST %s: %r' % (caminho, e))
             return self._erro(500, str(e))
+
+
+
+# ---------------- certificados da loja (gerador embutido; código em texto para ir junto na atualização pela nuvem) ----------------
+import types
+CERTIFICADOS_FONTE = r'''# Certificados da loja para o HTTPS na rede local (venda pelo celular), em Python puro (sem bibliotecas externas).
+# Gera uma "autoridade" da loja (instalada uma vez em cada celular) e o certificado do servidor com os IPs do computador.
+# Se o IP mudar, só o certificado do servidor é refeito; os celulares continuam confiando na autoridade.
+import os, json, base64, hashlib, secrets, datetime, socket
+
+NL = chr(10)
+
+
+# ---------------- RSA ----------------
+def _primo_provavel(n, voltas=40):
+    if n < 4:
+        return n in (2, 3)
+    for p in (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37):
+        if n % p == 0:
+            return n == p
+    d, s = n - 1, 0
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+    for _ in range(voltas):
+        a = secrets.randbelow(n - 3) + 2
+        x = pow(a, d, n)
+        if x in (1, n - 1):
+            continue
+        for _ in range(s - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+
+def _primo(bits):
+    while True:
+        n = secrets.randbits(bits) | (1 << (bits - 1)) | (1 << (bits - 2)) | 1
+        if _primo_provavel(n):
+            return n
+
+
+def gerar_rsa(bits=2048):
+    e = 65537
+    while True:
+        p, q = _primo(bits // 2), _primo(bits // 2)
+        if p == q:
+            continue
+        fi = (p - 1) * (q - 1)
+        try:
+            d = pow(e, -1, fi)
+        except ValueError:
+            continue
+        n = p * q
+        if n.bit_length() == bits:
+            return {'n': n, 'e': e, 'd': d, 'p': p, 'q': q}
+
+
+# ---------------- DER (ASN.1) ----------------
+def _tam(n):
+    if n < 128:
+        return bytes([n])
+    b = n.to_bytes((n.bit_length() + 7) // 8, 'big')
+    return bytes([0x80 | len(b)]) + b
+
+
+def tlv(tag, conteudo):
+    return bytes([tag]) + _tam(len(conteudo)) + conteudo
+
+
+def inteiro(v):
+    b = v.to_bytes(max(1, (v.bit_length() + 8) // 8), 'big')
+    return tlv(0x02, b)
+
+
+def seq(*partes):
+    return tlv(0x30, b''.join(partes))
+
+
+def conj(*partes):
+    return tlv(0x31, b''.join(partes))
+
+
+def oid(texto):
+    nums = [int(x) for x in texto.split('.')]
+    out = bytes([40 * nums[0] + nums[1]])
+    for n in nums[2:]:
+        grupo = [n & 0x7f]
+        n >>= 7
+        while n:
+            grupo.append(0x80 | (n & 0x7f))
+            n >>= 7
+        out += bytes(reversed(grupo))
+    return tlv(0x06, out)
+
+
+def utf8(t):
+    return tlv(0x0c, t.encode('utf-8'))
+
+
+def bits(b):
+    return tlv(0x03, bytes([0]) + b)
+
+
+def octetos(b):
+    return tlv(0x04, b)
+
+
+def tempo(dt):
+    return tlv(0x17, dt.strftime('%y%m%d%H%M%SZ').encode('ascii'))
+
+
+def ctx(n, conteudo, construido=True):
+    return tlv((0xa0 if construido else 0x80) | n, conteudo)
+
+
+SHA256_RSA = seq(oid('1.2.840.113549.1.1.11'), tlv(0x05, b''))
+
+
+def nome(cn):
+    return seq(conj(seq(oid('2.5.4.3'), utf8(cn))), conj(seq(oid('2.5.4.10'), utf8('Controle de Estoque'))))
+
+
+def chave_publica(k):
+    rsa = seq(inteiro(k['n']), inteiro(k['e']))
+    return seq(seq(oid('1.2.840.113549.1.1.1'), tlv(0x05, b'')), bits(rsa))
+
+
+def assinar(k, dados):
+    tam = (k['n'].bit_length() + 7) // 8
+    info = bytes.fromhex('3031300d060960864801650304020105000420') + hashlib.sha256(dados).digest()
+    em = bytes([0, 1]) + bytes([255]) * (tam - 3 - len(info)) + bytes([0]) + info
+    return pow(int.from_bytes(em, 'big'), k['d'], k['n']).to_bytes(tam, 'big')
+
+
+def extensao(o, valor, critica=False):
+    return seq(oid(o), *( [tlv(0x01, bytes([255]))] if critica else []), octetos(valor))
+
+
+def certificado(sujeito, chave_suj, emissor, chave_emissor, dias, ca=False, ips=(), nomes=()):
+    agora = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    exts = [extensao('2.5.29.19', seq(tlv(0x01, bytes([255]))) if ca else seq(), True)]
+    if ca:
+        exts.append(extensao('2.5.29.15', bits(bytes([0x06])), True))   # keyCertSign + cRLSign
+    else:
+        exts.append(extensao('2.5.29.15', bits(bytes([0xa0])), True))   # digitalSignature + keyEncipherment
+        exts.append(extensao('2.5.29.37', seq(oid('1.3.6.1.5.5.7.3.1'))))   # serverAuth
+        alt = b''.join(tlv(0x87, socket.inet_aton(ip)) for ip in ips) + b''.join(tlv(0x82, n.encode('ascii')) for n in nomes)
+        exts.append(extensao('2.5.29.17', seq(alt)))
+    ski = hashlib.sha1(chave_publica(chave_suj)).digest()
+    exts.append(extensao('2.5.29.14', octetos(ski)))
+    tbs = seq(ctx(0, inteiro(2)), inteiro(secrets.randbits(63)), SHA256_RSA, nome(emissor), seq(tempo(agora), tempo(agora + datetime.timedelta(days=dias))),
+              nome(sujeito), chave_publica(chave_suj), ctx(3, seq(*exts)))
+    return seq(tbs, SHA256_RSA, bits(assinar(chave_emissor, tbs)))
+
+
+def pem(rotulo, der):
+    b = base64.b64encode(der).decode('ascii')
+    return '-----BEGIN ' + rotulo + '-----' + NL + NL.join(b[i:i + 64] for i in range(0, len(b), 64)) + NL + '-----END ' + rotulo + '-----' + NL
+
+
+def chave_pem(k):
+    dp, dq, qi = k['d'] % (k['p'] - 1), k['d'] % (k['q'] - 1), pow(k['q'], -1, k['p'])
+    return pem('RSA PRIVATE KEY', seq(inteiro(0), inteiro(k['n']), inteiro(k['e']), inteiro(k['d']), inteiro(k['p']), inteiro(k['q']), inteiro(dp), inteiro(dq), inteiro(qi)))
+
+
+# ---------------- arquivos da loja ----------------
+def ips_locais():
+    ips = set()
+    try:
+        for r in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ips.add(r[4][0])
+    except OSError:
+        pass
+    try:   # IP usado para sair para a rede (não envia nada)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.connect(('10.255.255.255', 1)); ips.add(s.getsockname()[0]); s.close()
+    except OSError:
+        pass
+    return sorted(i for i in ips if not i.startswith('127.') and not i.startswith('169.254.'))
+
+
+def garantir(pasta, nome_loja='Loja'):
+    """cria a autoridade (uma vez) e o certificado do servidor (de novo se os IPs mudarem); devolve os caminhos e os IPs"""
+    os.makedirs(pasta, exist_ok=True)
+    ca_crt, ca_key, srv_crt, srv_key, info = (os.path.join(pasta, n) for n in ('loja-ca.crt', 'loja-ca.json', 'servidor.crt', 'servidor.key', 'servidor.json'))
+    if not os.path.exists(ca_key):
+        k = gerar_rsa()
+        cn = 'Autoridade ' + (nome_loja or 'Loja')[:40] + ' ' + datetime.date.today().isoformat()
+        der = certificado(cn, k, cn, k, 3650, ca=True)
+        open(ca_crt, 'w', encoding='ascii', newline='').write(pem('CERTIFICATE', der))
+        json.dump({'cn': cn, 'n': hex(k['n']), 'e': k['e'], 'd': hex(k['d']), 'p': hex(k['p']), 'q': hex(k['q'])}, open(ca_key, 'w'))
+    ca = json.load(open(ca_key))
+    kca = {'n': int(ca['n'], 16), 'e': ca['e'], 'd': int(ca['d'], 16), 'p': int(ca['p'], 16), 'q': int(ca['q'], 16)}
+    ips, host = ips_locais(), socket.gethostname().lower()
+    nomes = sorted({host, host + '.local', 'localhost'})
+    atual = json.load(open(info)) if os.path.exists(info) else {}
+    vence = atual.get('vence', '')
+    if atual.get('ips') != ips or atual.get('nomes') != nomes or not os.path.exists(srv_key) or vence < (datetime.date.today() + datetime.timedelta(days=30)).isoformat():
+        k = gerar_rsa()
+        der = certificado(host, k, ca['cn'], kca, 800, ips=ips + ['127.0.0.1'], nomes=nomes)   # iPhone aceita no máximo 825 dias
+        open(srv_crt, 'w', encoding='ascii', newline='').write(pem('CERTIFICATE', der) + open(ca_crt).read())
+        open(srv_key, 'w', encoding='ascii', newline='').write(chave_pem(k))
+        json.dump({'ips': ips, 'nomes': nomes, 'vence': (datetime.date.today() + datetime.timedelta(days=799)).isoformat()}, open(info, 'w'))
+    return {'ca': ca_crt, 'crt': srv_crt, 'key': srv_key, 'ips': ips, 'host': host}
+'''
+
+
+def _modulo_certificados():
+    m = types.ModuleType('certificados')
+    exec(CERTIFICADOS_FONTE, m.__dict__)
+    return m
+
+
+# ---------------- venda pelo celular: servidor na rede da loja (HTTPS), só quando o master libera ----------------
+import ssl, secrets
+PORTA_REDE = int(os.environ.get('LOJA_PORTA_REDE') or 8443)
+PORTA_INSTALAR = int(os.environ.get('LOJA_PORTA_INSTALAR') or 8788)
+PASTA_CERTS = os.path.join(PASTA_DADOS, 'certs')
+TEMPO_SESSAO = 12 * 3600
+SESSOES, FALHAS = {}, {}
+REDE = {'https': None, 'http': None, 'ips': [], 'host': '', 'erro': ''}
+API_REDE_GET = ('/api/status', '/api/dados', '/api/mudancas', '/api/fotos', '/api/eu')
+API_REDE_POST = ('/api/gravar', '/api/logs', '/api/login', '/api/sair')
+SEGREDOS_USUARIO = ('hash', 'sal', 'iter', 'alg', 'senha')
+SO_CAIXA = ('usuarios',)          # coleções que o celular não altera
+SO_CAIXA_META = ('config',)       # nem as configurações da loja
+
+
+def sem_senhas(lista):
+    return [{k: v for k, v in u.items() if k not in SEGREDOS_USUARIO} if isinstance(u, dict) else u for u in (lista or [])]
+
+
+def usuario_por_login(b, login):
+    for s in b._lista('usuarios') if 'usuarios' in b.colecoes() else []:
+        u = json.loads(s)
+        if str(u.get('login', '')).lower() == login:
+            return u
+    return None
+
+
+def entrar_rede(b, login, senha):
+    login = (login or '').strip().lower()
+    f = FALHAS.get(login, {'n': 0, 'ate': 0})
+    if f['ate'] > time.time():
+        return None, 'muitas senhas erradas: tente de novo em %d minuto(s)' % (int((f['ate'] - time.time()) / 60) + 1)
+    u = usuario_por_login(b, login)
+    if u and u.get('ativo') is not False and u.get('alg') == 'pbkdf2':
+        h = hashlib.pbkdf2_hmac('sha256', (senha or '').encode('utf-8'), str(u.get('sal')).encode('utf-8'), int(u.get('iter') or 210000), 32).hex()
+        if h == u.get('hash'):
+            FALHAS.pop(login, None)
+            tok = secrets.token_urlsafe(32)
+            SESSOES[tok] = {'uid': u['id'], 'nome': u.get('nome', ''), 'perfil': u.get('perfil', ''), 'exp': time.time() + TEMPO_SESSAO}
+            log('celular: %s entrou' % u.get('nome', login))
+            return tok, None
+    if u and u.get('alg') != 'pbkdf2':
+        return None, 'entre uma vez pelo computador do caixa para atualizar a sua senha'
+    f['n'] += 1
+    if f['n'] >= 5:
+        f = {'n': 0, 'ate': time.time() + 300}
+    FALHAS[login] = f
+    log('celular: senha errada para "%s"' % login)
+    return None, 'usuário ou senha incorretos'
+
+
+def sessao(tok):
+    s = SESSOES.get(tok or '')
+    if s and s['exp'] > time.time():
+        s['exp'] = time.time() + TEMPO_SESSAO
+        return s
+    SESSOES.pop(tok or '', None)
+    return None
+
+
+class AtendenteRede(Atendente):
+    """mesmo sistema, servido em HTTPS para os celulares da rede: exige login e só libera vender e consultar"""
+    def _host_ok(self):
+        h = (self.headers.get('Host') or '').lower()
+        return h in {'%s:%d' % (x, PORTA_REDE) for x in REDE['ips'] + [REDE['host'], REDE['host'] + '.local', '127.0.0.1', 'localhost']}
+
+    def _barrar(self):
+        if not REDE.get('https') or not self._host_ok():   # bloqueado pelo master: conexões já abertas também param
+            self.close_connection = True
+            return 'acesso negado'
+        caminho = self.path.split('?')[0]
+        if not caminho.startswith('/api/'):
+            return None
+        origem = self.headers.get('Origin')
+        if origem is not None and origem != 'https://' + (self.headers.get('Host') or '').lower():
+            return 'pedido de outro site recusado'
+        if (self.headers.get('Sec-Fetch-Site') or '').lower() in ('cross-site', 'same-site'):
+            return 'pedido de outro site recusado'
+        permitido = caminho.startswith('/api/fotos/') if self.command == 'GET' else False
+        if self.command == 'GET' and caminho not in API_REDE_GET and not permitido:
+            return 'função disponível só no computador do caixa'
+        if self.command in ('POST', 'PUT') and caminho not in API_REDE_POST:
+            return 'função disponível só no computador do caixa'
+        if self.command in ('POST', 'PUT') and self.headers.get(MARCA) != '1':
+            return 'pedido sem a marca do sistema recusado'
+        if caminho not in ('/api/status', '/api/login') and not sessao(self.headers.get('X-Sessao')):
+            return 'SESSAO'
+        return None
+
+    def _recusar(self, motivo):
+        if motivo == 'SESSAO':
+            return self._erro(401, 'entre de novo com o seu usuário e senha')
+        return Atendente._recusar(self, motivo)
+
+    def _corpo(self):
+        corpo = Atendente._corpo(self)
+        if self.path.split('?')[0] != '/api/gravar':
+            return corpo
+        d = json.loads(corpo.decode('utf-8') or '{}')   # o celular não grava usuários (senhas) nem configurações
+        for nome in SO_CAIXA:
+            (d.get('colecoes') or {}).pop(nome, None)
+            (d.get('listas') or {}).pop(nome, None)
+        m = d.get('meta') or {}
+        for k in SO_CAIXA_META:
+            (m.get('set') or {}).pop(k, None)
+        if m.get('del'):
+            m['del'] = [k for k in m['del'] if k not in SO_CAIXA_META]
+        return json.dumps(d, ensure_ascii=False).encode('utf-8')
+
+    def do_GET(self):
+        caminho = self.path.split('?')[0]
+        if caminho in ('/api/dados', '/api/mudancas'):   # mesmos dados, sem as senhas (hash) das pessoas
+            motivo = self._barrar()
+            if motivo:
+                return self._recusar(motivo)
+            b = BANCO_ATIVO
+            try:
+                if caminho == '/api/dados':
+                    ver = b.versao()
+                    d = json.loads(b.ler_dados()) if not b.vazio() else {}
+                    if isinstance(d.get('usuarios'), list):
+                        d['usuarios'] = sem_senhas(d['usuarios'])
+                    corpo = json.dumps(d, ensure_ascii=False)
+                    return self._enviar(200, '{"versao":%d,"dados":%s}' % (ver, corpo) if 'versao=1' in self.path else corpo)
+                q = urllib.parse.parse_qs(self.path.split('?', 1)[1] if '?' in self.path else '')
+                m = json.loads(b.mudancas(int((q.get('desde') or ['0'])[0] or 0), (q.get('cliente') or [''])[0]))
+                for grupo in ('colecoes', 'listas'):
+                    if isinstance((m.get(grupo) or {}).get('usuarios'), list):
+                        m[grupo]['usuarios'] = sem_senhas(m[grupo]['usuarios'])
+                return self._enviar(200, json.dumps(m, ensure_ascii=False))
+            except Exception as e:
+                log('erro GET %s (celular): %r' % (caminho, e))
+                return self._erro(500, str(e))
+        if caminho in ('/api/status', '/api/eu'):
+            motivo = self._barrar()
+            if motivo:
+                return self._recusar(motivo)
+            if caminho == '/api/eu':
+                s = sessao(self.headers.get('X-Sessao'))
+                return self._json(200, {'uid': s['uid'], 'nome': s['nome']})
+            return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'rede': True, 'licenca': situacao_licenca(BANCO_ATIVO, BANCO_ATIVO.config())})
+        return Atendente.do_GET(self)
+
+    def do_POST(self):
+        caminho = self.path.split('?')[0]
+        if caminho in ('/api/login', '/api/sair'):
+            motivo = self._barrar()
+            if motivo:
+                return self._recusar(motivo)
+            try:
+                dados = json.loads(self._corpo().decode('utf-8') or '{}')
+            except Exception:
+                return self._erro(400, 'pedido inválido')
+            if caminho == '/api/sair':
+                SESSOES.pop(self.headers.get('X-Sessao') or '', None)
+                return self._json(200, {'ok': True})
+            tok, erro = entrar_rede(BANCO_ATIVO, dados.get('login'), dados.get('senha'))
+            if not tok:
+                return self._erro(401, erro)
+            s = SESSOES[tok]
+            return self._json(200, {'ok': True, 'sessao': tok, 'uid': s['uid'], 'nome': s['nome']})
+        return Atendente.do_POST(self)
+
+
+class AtendenteInstalar(BaseHTTPRequestHandler):
+    """porta sem HTTPS só para o celular baixar a autoridade da loja e ver como instalar"""
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        caminho = self.path.split('?')[0]
+        host = (self.headers.get('Host') or '').split(':')[0]
+        if caminho == '/loja-ca.crt':
+            corpo, tipo = open(os.path.join(PASTA_CERTS, 'loja-ca.crt'), 'rb').read(), 'application/x-x509-ca-cert'
+            extra = [('Content-Disposition', 'attachment; filename="loja-ca.crt"')]
+        elif caminho == '/':
+            url = 'https://%s:%d/' % (host, PORTA_REDE)
+            corpo = PAGINA_INSTALAR.replace('{{URL}}', url).replace('{{CA}}', '/loja-ca.crt').encode('utf-8')
+            tipo, extra = 'text/html; charset=utf-8', []
+        else:
+            corpo, tipo, extra = b'nao encontrado', 'text/plain', []
+            self.send_response(404)
+        if caminho in ('/', '/loja-ca.crt'):
+            self.send_response(200)
+        self.send_header('Content-Type', tipo)
+        self.send_header('Content-Length', str(len(corpo)))
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Frame-Options', 'DENY')
+        for k, v in extra:
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(corpo)
+
+
+PAGINA_INSTALAR = """<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Instalar no celular</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#f4f5f7;color:#141a26}.cx{max-width:560px;margin:0 auto;padding:20px}h1{font-size:22px}
+.passo{background:#fff;border:1px solid #e7e9ee;border-radius:14px;padding:14px 16px;margin:12px 0}.b{display:block;text-align:center;background:#16213a;color:#fff;padding:14px;border-radius:12px;text-decoration:none;font-weight:700;margin-top:10px}
+small{color:#6b7385}</style></head><body><div class="cx"><h1>Controle de Estoque no celular</h1>
+<div class="passo"><b>1. Instale o certificado da loja</b> (só uma vez neste celular)<a class="b" href="{{CA}}">Baixar certificado da loja</a>
+<p><b>iPhone:</b> toque em Permitir · abra Ajustes → Perfil Transferido → Instalar. Depois: Ajustes → Geral → Sobre → Ajustes de Confiança de Certificados → ligue a chave da loja.</p>
+<p><b>Android:</b> Configurações → Segurança → Mais configurações → Criptografia e credenciais → Instalar um certificado → Certificado de CA → escolha <i>loja-ca.crt</i> (o nome do menu muda um pouco conforme o celular).</p></div>
+<div class="passo"><b>2. Abra o sistema</b><a class="b" href="{{URL}}">Abrir o Controle de Estoque</a><p><small>Dica: no menu do navegador, use "Adicionar à tela inicial" para abrir como aplicativo.</small></p></div>
+<p><small>O celular precisa estar no Wi-Fi da loja. Se aparecer aviso de "conexão não particular", o certificado do passo 1 ainda não foi instalado ou não foi marcado como confiável.</small></p></div></body></html>"""
+
+
+def iniciar_rede():
+    certificados = _modulo_certificados()
+    parar_rede()
+    try:
+        cfg = BANCO_ATIVO.config() if BANCO_ATIVO else {}
+        c = certificados.garantir(PASTA_CERTS, cfg.get('loja') or 'Loja')
+        REDE.update(ips=c['ips'], host=c['host'], erro='')
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        ctx.load_cert_chain(c['crt'], c['key'])
+        s1 = ThreadingHTTPServer(('0.0.0.0', PORTA_REDE), AtendenteRede)
+        s1.socket = ctx.wrap_socket(s1.socket, server_side=True)
+        s2 = ThreadingHTTPServer(('0.0.0.0', PORTA_INSTALAR), AtendenteInstalar)
+        for s in (s1, s2):
+            threading.Thread(target=s.serve_forever, daemon=True).start()
+        REDE.update(https=s1, http=s2)
+        log('venda pelo celular LIGADA: https://%s:%d/ (instalar: http://%s:%d/)' % ((c['ips'] or ['?'])[0], PORTA_REDE, (c['ips'] or ['?'])[0], PORTA_INSTALAR))
+        return True
+    except Exception as e:
+        REDE['erro'] = str(e)
+        log('venda pelo celular: não foi possível ligar: %r' % e)
+        parar_rede()
+        return False
+
+
+def parar_rede():
+    for k in ('https', 'http'):
+        if REDE.get(k):
+            try:
+                REDE[k].shutdown()
+                REDE[k].server_close()
+            except Exception:
+                pass
+            REDE[k] = None
+    SESSOES.clear()
+
+
+def info_rede():
+    ip = (REDE['ips'] or [''])[0]
+    return {'ativo': bool(REDE.get('https')), 'liberado': bool(BANCO_ATIVO and BANCO_ATIVO.meta_interna('rede')), 'ips': REDE['ips'], 'host': REDE['host'], 'erro': REDE['erro'],
+            'endereco': 'https://%s:%d/' % (ip, PORTA_REDE) if ip else '', 'instalar': 'http://%s:%d/' % (ip, PORTA_INSTALAR) if ip else '', 'sessoes': len([s for s in SESSOES.values() if s['exp'] > time.time()])}
 
 
 # ---------------- iniciar / abrir ----------------
@@ -891,6 +1364,11 @@ def servir():
         return False
     BANCO_ATIVO = Banco(BANCO)
     threading.Thread(target=laco_copias, args=(BANCO_ATIVO,), daemon=True).start()
+    if BANCO_ATIVO.meta_interna('rede'):
+        for _ in range(20):   # depois de uma atualização, a porta da rede pode levar alguns segundos para ficar livre
+            if iniciar_rede():
+                break
+            time.sleep(0.5)
     log('servidor %s iniciado em http://127.0.0.1:%d (pasta %s)' % (VERSAO_SERVIDOR, PORTA, BASE))
     SERVIDOR_HTTP.serve_forever()
     log('servidor parado')

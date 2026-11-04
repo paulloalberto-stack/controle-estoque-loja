@@ -1,20 +1,21 @@
 {
- "versao": "2026.11.04-06",
- "publicadoEm": "04/11/2026 11:33",
+ "versao": "2026.11.04-07",
+ "publicadoEm": "04/11/2026 12:36",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "dac240a327c49e343aded0514ddae34c3060f187da907a19a968780df7f8251a",
- "tamanho": 553749,
- "assinatura": "KNzvawrmpTIZ6Yy6Xc9eDcGNMmA7C1qabQLSC2CqZ/Fk0df/uZ2LP+piq6i/h6WXhNALzr85DogFmOweXj4ULDpdBRouafi/fdgY/a4tKyvyzPsg9Qd2OeWUGfSvnvsSbGtNdbFVfh9GIFquAHTxRLhjjar4MC/8wmiBrfuEJ4f7ewqdtP0b2zTeC+OcbSeSCH95LOurfv97LFeoqMqKvojfM68BchCktlHr2RA+0kF7ks6Vw1UR6hs5JRBBJIL4IT3eo5NpYW8z1M8NLqmkfzHWca/aO1wICm/emAUJ4M31ZCXCAMcHQfqa8LzKEZ8FYS589vhsybRLOM3/Ai0rdzOXkVFxo2K6gAuqwiPqPrsInILXWK0XpX8ruef4MJml9HngUIDrryi0rYijxTj3Ei+zAn3ZrWxn/GkpBbC6lEUgtCvUaoMRl52+uJCfqyALAGSLOYn2FN7tXLq/Bi0lNdz/cnFy6WoPefJ/ImJbegqBmt6EfSSgfv2ojOcUm6VZ",
+ "sha256": "2e3000d430070eb4584c4c9c03bc167886de3cd7c5a48ecb7baa7dbc197b424f",
+ "tamanho": 572695,
+ "assinatura": "cJzTO701Z05qBzEmlO/E/A9nbTluXajpFSVZTXG5MsPuPln1jgdcUqJRwSfJW/BH9QZKUVp0a05BP2RDKuktySngPbereKhb3JKYUluOPSs2rEZ3FGkpux1qralBnL5DP3EkerK8ZcPpp+ZIiZxiC/DAfN58YDZml9X5yFq7hO0jN879lYn5cYTos13E8z5lu7dnq+5Pil4jCFPbFbwl80L3W30NFIP4OnmzpW8IC0tUoFXQp1A0HdMkzv6a5pxO78N3x3zO1hY6VNTPtXPpYYcakB/WxiTDDUCytSU/L0lcmL5kP/WrLl6uZ9YQHZuAtlCct+sXDSdPKiKsCFVDR03elyzpdh/w7jf53H9ZvoLLwfpAGFisJL5bgVYGirITNhttk49n+KrWwJsDkyg4r9IjIv+RvW8T+YmXxAsTzSqTLsqsImCqoJwb9Wd0wVBjSXHyqjgHSpDJgwX8oD5YGW2BAnTyrBMd+WYFv0pfeip0h87zE/pW7KFlMl2sHvuZ",
  "novidades": [
-  "Gravação por registro: cada gravação manda ao banco só o que mudou (a venda nova, os produtos que saíram, o contador), e não mais o banco inteiro. O sistema continua rápido com anos de dados.",
-  "Duas janelas do sistema abertas ao mesmo tempo se atualizam sozinhas a cada poucos segundos. Se as duas mexerem no mesmo registro ao mesmo tempo, o banco recusa a segunda gravação e o sistema recarrega os dados (nada é sobrescrito sem aviso).",
-  "Servidor do banco atualizado junto (2026.11.04-06): o banco existente é convertido sozinho, sem perder nada."
+  "Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.",
+  "Leitura do código de barras pela câmera do celular: etiquetas do sistema (Code 128) e código do fabricante (EAN-13). Lê um item atrás do outro, com bipe.",
+  "No celular aparecem só Vendas, Produtos, Clientes e Ajuda. Backup, atualização, configurações e senhas ficam só no computador do caixa; o celular não recebe as senhas de ninguém.",
+  "Conexão segura (HTTPS) com certificado próprio da loja, instalado uma vez em cada celular pelo QR Code da tela de liberação."
  ],
  "servidor": {
-  "versao": "2026.11.04-06",
+  "versao": "2026.11.04-07",
   "arquivo": "servidor.py",
-  "sha256": "c6c8ecad0945c4ad7b8d59f50ef48fc6e830e0f1198ba7f49b294bf54752f8ac",
-  "assinatura": "eTWMnemcdNvVVbNxd3fItMFpFt3kKevrh+EoJhcjgQiL6r6vfADg7M7TKaqI/4MRQBo+jvvhIl1oDYbkV1BPvSNYLXzIRX4Ph5LuHGccP82rJuEIdhaoHzN+Nuwe3jpUjk7YLAW2XfFLN4Em4uvnwB7I6TOCA1oULXl1WJsI2RTknW4qb1Pmh605FEUCR84WxmziuVD7iO4VJDSq3hFGXVnaab7Fh9TBeKoY6xYGMEyK6mg3/oeCD6Xc0G3IbNDai3Rf4u4RylEu7AJEGo0e/1pUy5r4+zh/K0oWBuTBa5gGdoGOFTPZ/whhF0ir+26ggYyS0K3BkjwEeisl3M8MYHBKDltYUJseJzNTGlF1dLT/vbY0oY85/DL/hccJsTuYBI+tQ/qKrQvycrm1vaYXxFxVlJOENAzlLkKoZWjJXbjBMLAYCNeFBfJkpYmxuIVAVptQ7z/pNqCF0lDMl+jWMBQT2H8hHDx5fo1Wfn7MFz/+NSX1b1hB56uO7XoRRR+1",
-  "tamanho": 50133
+  "sha256": "20524ebef06bed37a3b60dd94ab040c8ab27f8bb92de5153f7e3e7dd66c09f4d",
+  "assinatura": "BRCRMW9K59tbp1FQ7eUPqakQtPTRw2YUwyfSM2BQVYMeyIeh+pl9fEHlq1j5oFH6xlo3J6sbr4/Ffv7ejxeo0+6N7mfA2eFkngjDshEgNi3M47jS/cubnM7xacuEQUy+cgKrMf6eK0CDqPn7/2Z1Z94hCN5/doIUes7Znljb5WQ1j2R59W4h+f+4aSNu7lOa90nxKV7dnkFpkxZV0fVcE1nouJ3iggb25EUrKqKF0BK8XOSsanUtIj4YFyQwGaUWEQgXQCfJ2S/LXLg9m6l2VHUu6xYzp7OQubXK3oysr3T7jts8hrZPB44WECATQuNyGR4P1GLQEsYcMMcrhYKrcRTmt+6aL4k7BU9T2rZfuftcoCK6qV0nUHQgV/b5ZacfdA4Yr92kDfjfGD2EYFwUUHY0RD5nANYZBJpu0b57gPCiN1vm7S1xwthpSrJfoAoTQWI+tP3DE/cXBlYp0tOoxh39TuAt3Yk6UG2AOo3OciH6PthBL5srVdc1gLThN0gG",
+  "tamanho": 71956
  }
 }
