@@ -1,14 +1,14 @@
 {
- "versao": "2026.11.04-15",
- "publicadoEm": "04/11/2026 15:32",
+ "versao": "2026.11.04-16",
+ "publicadoEm": "04/11/2026 15:44",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "2e602748e7cde998de8c724f57c497be0069d023e469be066e145144a8c081ea",
- "tamanho": 640870,
- "assinatura": "Cb+eVw7ScCYTIXqMmQ6JvkZmVDY8E6PJM/xH2cLeDCf7dEUZMmm8zyuI54y0e4jTlP9CNRLs3g7+2e9qMj13Fu5KX+0yMfs58i1BumVKUhwBbqrNAOry5AExS3bvS697r0En5x/LyG3KudWVAZY6yUFOj5APPITJQxHnJVVyNyi/s/Jn2GXJI+qx+YOcVCO2nwKV6jueg7jFcgMhFv9sHFuWUgZlVQTps5rNGt1V3vEkP45yvBJy0mswbLdqu2XmDLRWogdPC02TfaUHuV9VnuC53hnh46oToD8TzH7LETOmo7HGEUC6Z3yGaCXxxboD7jJG/PJijTpNqopqKIe81Lv0Q5s8JI7xIVOUaOk1AR93x8bnAZfbzrk2tMcqUYZbS4ckntE5hAPDf4h3DqArW8h4FVYdJO7YOrUFDfczR2Kqa2PMpKhmPSQyTV3RZZE8xBBSuxB/lpU7eC/0B7ByLz7JqI31lf8NQUWyJQW0DOxEAyoglhBdfayAcQtDCHIO",
+ "sha256": "37eb03fe37d30fcb75c457478b36c3b60263df40964d259360a056aa5addc883",
+ "tamanho": 659001,
+ "assinatura": "Puu8OahEyopxLeRZoR5jJYgA2nChVIien+F+aQ4gBWceY14r9YPuALE2TMFow0HA+s/OQCEL1SvxYwJuTgO6UVlhY9EzICcebW9ZiRkxMIDhtn7qINDx8dzv0yjoIqUjTJiR9QX5P3CWp7Lh2kk0aBsqJEZybjTGtvlbxpcG64p85r21GCcIoqTau47rCStvIMvpMQuvglDwJ+N8V+RjFcRHG/BLJoQal03s25iD6+UgPse39mV0LMjGNVriETkQK1+YXy4KUk9ucmpIisKMhyFteYrwLoUffYqnMUrfTjVLNK2pD24/9Av+8ufTL37xRohYiouUqgKXH3HBB3ijYXLUQKAJgRifYL7N2B5NXINMfsB9WdFHK3RDO+P9QyN6LcRfu6JOQjeO+LpJS/zkhoj2CFcMHBTfj7buNifAHLRKyXvF5Py5dusqScwjqg9XEhjFSz3mfKZa8R+VfioPyPwadqvj131u+kmrcpnMmZPd54YDPwQCdtraCcdP139K",
  "novidades": [
-  "Recurso Premium \"Promoções programadas\": novo menu Promoções. Desconto em % para a loja toda, um tipo, marca, coleção ou modelos escolhidos, com data de início e fim.",
-  "Na data, o preço já sai com o desconto na venda e na condicional (com a etiqueta \"promoção\" no carrinho e \"de R$ … por R$ …\" no recibo); depois do fim volta ao normal sozinho. Promoções de hoje aparecem no topo de Vendas.",
-  "Resultado de cada promoção: peças vendidas, faturado e desconto dado, com a lista das vendas em PDF e Excel."
+  "Recurso Premium \"Aniversariantes e cashback\": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.",
+  "Cashback: a cada compra de cliente cadastrado, uma % do valor pago volta como crédito para a próxima compra, com validade. O recibo mostra o cashback ganho. O que não for usado vence sozinho; crédito que vence em 7 dias aparece para lembrar o cliente.",
+  "Extrato do cashback (gerado, usado, estornado e vencido) em PDF e Excel."
  ],
  "servidor": {
   "versao": "2026.11.04-11",

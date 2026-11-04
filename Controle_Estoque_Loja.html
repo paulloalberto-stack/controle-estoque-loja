@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-15">
+<meta name="versao-sistema" content="2026.11.04-16">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1214,6 +1214,7 @@ const ICONES = {
   logs: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
   inventario: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
   promocoes: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+  fidelidade: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
   cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -1224,7 +1225,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1234,8 +1235,9 @@ function render() {
   if (view === 'cartoes' && !temRecurso('taxas')) view = 'premium';
   if (view === 'inventario' && !temRecurso('inventario')) view = MODO_REDE ? 'vendas' : 'premium';
   if (view === 'promocoes' && !temRecurso('promocoes')) view = 'premium';
+  if (view === 'fidelidade' && (!temRecurso('cashback') || MODO_REDE)) view = MODO_REDE ? 'vendas' : 'premium';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes')) && (x[0] !== 'fidelidade' || temRecurso('cashback'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1614,7 +1616,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, cartoes, inventario, promocoes, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { premium, cartoes, inventario, promocoes, fidelidade, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1658,6 +1660,7 @@ function reciboHTML(v) {
   <table><thead><tr>${TH_ITEM}<th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${v.itens.map(i => `<tr>${linhaItem(i)}<td style="text-align:right">${i.qtd}</td><td style="text-align:right">${fmtR(i.preco)}</td><td style="text-align:right">${fmtR(i.qtd * i.preco)}</td></tr>`).join('')}</tbody></table>
   <div class="tot">Peças: ${pecasV(v)} · Subtotal: ${fmtR(v.subtotal)}${v.desconto ? ' · Desconto: ' + fmtR(v.desconto) : ''}<br><b>TOTAL: ${fmtR(v.total)}</b></div>
   <div class="tot">${pagsVenda(v).map(p => `${esc(p.forma)}: ${fmtR(p.valor)}`).join(' · ')}${v.troco ? `<br>Dinheiro recebido: ${fmtR(v.dinheiroRecebido)} · <b>Troco: ${fmtR(v.troco)}</b>` : ''}</div>
+  ${v.cashback && !v.cancelada ? `<div class="tot"><b>Você ganhou ${fmtR(v.cashback.valor)} de cashback</b> para usar na próxima compra até ${fmtDia(v.cashback.validade)}.</div>` : ''}
   ${parcelasVenda(v.id).length ? `<div class="parc"><b>Crediário:</b>${parcelasVenda(v.id).map(r => `<span>${r.parcela}/${r.de} · ${fmtDia(r.vencimento)} · ${fmtR(r.valor)}</span>`).join('')}</div>` : ''}
   ${fimDoc(`Declaro que recebi as mercadorias acima relacionadas, em perfeito estado, e que o pagamento foi efetuado na forma indicada.`, [`${esc(v.cliente || 'Cliente')}`, `${esc(v.usuario)} (vendedora)`], qrTexto('Recibo de venda', v.id, v.data, v.total, v.cliente))}`;
 }
@@ -1907,6 +1910,7 @@ function registrarPags(v, pg) {
   gravarTaxasVenda(v);   // Premium: taxa e prazo do cartão
   if (pg.cred) db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: pg.cl.id, valor: -pg.cred, ref: 'Usado na venda nº ' + nDoc(v.id), usuario: eu.nome });
   if (pg.praz) gerarParcelas(v, pg.praz, pg.parc, pg.venc1);
+  gerarCashback(v, pg);   // Premium: cashback
 }
 function addMeses(iso, k) { const [y, m, dd] = iso.split('-').map(Number), dt = new Date(y, m - 1 + k, 1), ult = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate(); dt.setDate(Math.min(dd, ult)); return dataLocal(dt); }
 function gerarParcelas(v, valor, n, venc1) {
@@ -1921,7 +1925,7 @@ function whatsVenda(v) {
   const c = v.clienteId ? cli(v.clienteId) : null, tel = c ? c.telefone : v.doc;
   return linkWhats(tel, `Olá${v.cliente ? ' ' + v.cliente.split(' ')[0] : ''}! Obrigado pela compra na ${db.config.loja || 'nossa loja'}.\nRecibo nº ${nDoc(v.id)} de ${fmtDH(v.data)}\n` +
     v.itens.map(i => `${i.qtd}x ${i.nome} ${i.tamanho} – ${fmtR(i.qtd * i.preco)}`).join('\n') + `\nTotal: ${fmtR(v.total)} (${v.pagamento})` +
-    (parcelasVenda(v.id).length ? '\nParcelas: ' + parcelasVenda(v.id).map(r => `${r.parcela}/${r.de} ${fmtDia(r.vencimento)} ${fmtR(r.valor)}`).join('; ') : '') + (db.config.rodape ? '\n' + db.config.rodape : ''));
+    (parcelasVenda(v.id).length ? '\nParcelas: ' + parcelasVenda(v.id).map(r => `${r.parcela}/${r.de} ${fmtDia(r.vencimento)} ${fmtR(r.valor)}`).join('; ') : '') + (v.cashback && !v.cancelada ? `\nVocê ganhou ${fmtR(v.cashback.valor)} de cashback para usar até ${fmtDia(v.cashback.validade)}.` : '') + (db.config.rodape ? '\n' + db.config.rodape : ''));
 }
 function avisoBaixos(itens) {
   const b = [...new Set(itens.map(i => i.prod))].map(prod).filter(estaBaixo);
@@ -1940,6 +1944,7 @@ ACT.confirmarCancelamento = el => {
   v.itens.forEach(i => { const p = prod(i.prod); p.estoque += i.qtd; mov(p, 'CANCELAMENTO DE VENDA', i.qtd, 'Venda nº ' + nDoc(v.id)); });
   const usado = db.creditos.filter(c => c.ref === 'Usado na venda nº ' + nDoc(v.id)).reduce((s, c) => s + c.valor, 0);
   if (usado) db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: v.clienteId, valor: -usado, ref: 'Estorno – venda nº ' + nDoc(v.id) + ' cancelada', usuario: eu.nome });
+  estornarCashback(v);
   db.receber = db.receber.filter(r => r.venda !== v.id || r.pagoEm);
   salvar(); fecharModal(); render(); aviso('Venda cancelada e peças devolvidas ao estoque.', 'ok');
 };
@@ -4265,6 +4270,9 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-16', itens: ['Recurso Premium "Aniversariantes e cashback": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.',
+    'Cashback: a cada compra de cliente cadastrado, uma % do valor pago volta como crédito para a próxima compra, com validade. O recibo mostra o cashback ganho. O que não for usado vence sozinho; crédito que vence em 7 dias aparece para lembrar o cliente.',
+    'Extrato do cashback (gerado, usado, estornado e vencido) em PDF e Excel.'] },
   { v: '2026.11.04-15', itens: ['Recurso Premium "Promoções programadas": novo menu Promoções. Desconto em % para a loja toda, um tipo, marca, coleção ou modelos escolhidos, com data de início e fim.',
     'Na data, o preço já sai com o desconto na venda e na condicional (com a etiqueta "promoção" no carrinho e "de R$ … por R$ …" no recibo); depois do fim volta ao normal sozinho. Promoções de hoje aparecem no topo de Vendas.',
     'Resultado de cada promoção: peças vendidas, faturado e desconto dado, com a lista das vendas em PDF e Excel.'] },
@@ -4793,6 +4801,21 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Configurar o cashback e o presente de aniversário', quem: 'adm', rec: 'cashback', ir: 'fidelidade', p: [
+    'Abra <b>Aniversários e cashback</b> e clique em <b>Configurar</b>.',
+    'Marque <b>Dar cashback</b>, informe a <b>% do valor pago</b> (ex.: 5), por quantos <b>dias</b> o crédito vale (ex.: 60) e, se quiser, a <b>compra mínima</b>.',
+    'Presente de aniversário: informe o valor em R$ (0 = não dar) e por quantos dias vale.',
+    'Ajuste as mensagens do WhatsApp se quiser. Use {nome}, {loja}, {presente}, {valor} e {data}; o sistema troca pelos dados de cada cliente.',
+    'Clique em <b>Salvar</b>. A partir daí, toda venda com cliente cadastrado gera o cashback, que aparece no recibo.'] },
+  { t: 'Usar o cashback numa venda', quem: 'todos', rec: 'cashback', ir: 'vendas', p: [
+    'Na venda, escolha o <b>Cliente</b> cadastrado: ao lado aparece o <b>crédito disponível</b> (cashback, presente e trocas).',
+    'Em Pagamento escolha <b>Crédito do cliente</b> e o valor; o resto em outra forma, com <b>+ dividir com outra forma de pagamento</b>.',
+    'O crédito que vence antes é usado primeiro. A parte paga com crédito não gera cashback novo.'] },
+  { t: 'Mandar parabéns aos aniversariantes', quem: 'todos', rec: 'cashback', ir: 'fidelidade', p: [
+    'Abra <b>Aniversários e cashback</b> e escolha <b>Hoje</b>, <b>Próximos 7 dias</b>, <b>Este mês</b> ou <b>Próximo mês</b>.',
+    'Se a loja dá presente, o administrador clica em <b>Dar presente</b> antes: o valor vira crédito do cliente com validade.',
+    'Clique em <b>WhatsApp</b>: abre a conversa com a mensagem pronta (com o presente, se houver). A linha fica marcada como "mensagem enviada".',
+    'Só aparecem clientes com <b>data de nascimento</b> no cadastro: peça a data na hora da venda e preencha em Clientes.'] },
   { t: 'Criar uma promoção com data', quem: 'adm', rec: 'promocoes', ir: 'promocoes', p: [
     'Abra <b>Promoções</b> e clique em <b>+ Nova promoção</b>.',
     'Dê um <b>nome</b> (aparece no recibo), informe o <b>desconto em %</b> e as datas de <b>início</b> e <b>fim</b>. A promoção vale o dia inteiro do início até o dia do fim.',
@@ -4856,6 +4879,8 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'O cashback do cliente sumiu.', quem: 'adm', rec: 'cashback', r: 'Provavelmente venceu: crédito com validade que não é usado a tempo vence sozinho e aparece no extrato do cliente como "Cashback vencido". Veja em Aniversários e cashback → Extrato do cashback.' },
+  { p: 'Cancelei uma venda que tinha gerado cashback.', quem: 'adm', rec: 'cashback', r: 'O cashback daquela venda é estornado junto. Se o cliente já tinha usado o crédito, o saldo dele pode ficar negativo e é descontado da próxima vez.' },
   { p: 'O desconto da promoção soma com o desconto da venda?', quem: 'todos', rec: 'promocoes', r: 'Sim. A peça já entra no carrinho com o preço da promoção, e o campo Desconto da venda é aplicado em cima do total, como sempre. Use com cuidado.' },
   { p: 'A promoção não apareceu no preço.', quem: 'todos', rec: 'promocoes', r: 'Confira em Promoções se ela está Ativa (a data de hoje está entre o início e o fim) e se o produto entra no filtro (tipo, marca, coleção ou códigos). Peças que já estavam no carrinho antes da promoção começar precisam ser tiradas e passadas de novo.' },
   { p: 'Posso vender enquanto faço o inventário?', quem: 'adm', rec: 'inventario', r: 'Pode. Para cada produto, o sistema considera o que foi contado mais as vendas e entradas feitas depois da contagem dele. O ideal é não vender uma peça que ainda não foi contada; se vender, conte o produto de novo depois ou corrija a contagem.' },
@@ -5374,6 +5399,7 @@ Object.keys(ACOES_LOG).filter(k => ['Vendas', 'Condicionais', 'Trocas', 'Cliente
 });
 // caixa obrigatório: venda e acerto de condicional só com o caixa aberto
 ['finalizarVenda', 'confirmarAcerto'].forEach(k => { const f = ACT[k]; ACT[k] = el => db.config.caixaObrig && !caixaAberto() ? aviso('Abra o caixa antes de vender (menu Caixa).', 'erro') : f(el); });
+['finalizarVenda', 'confirmarAcerto'].forEach(k => { const f = ACT[k]; ACT[k] = el => { vencerCreditos(); return f(el); }; });   // crédito vencido não pode ser usado
 
 /* tela Histórico de logs */
 const CATS_LOG = ['Acesso', 'Vendas', 'Condicionais', 'Trocas', 'Clientes', 'Estoque', 'Financeiro', 'Comissões', 'Usuários', 'Configurações', 'Backup e dados', 'Documentos', 'Consultas', 'Navegação', 'Sistema', 'Outros'];
@@ -5443,7 +5469,7 @@ const PREMIUM = [
     desc: 'Conte o estoque passando o leitor (ou a câmera do celular) peça por peça; o sistema mostra as diferenças e ajusta tudo de uma vez.' },
   { k: 'promocoes', nome: 'Promoções programadas', pronto: true, ic: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
     desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
-  { k: 'cashback', nome: 'Aniversariantes e cashback', ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  { k: 'cashback', nome: 'Aniversariantes e cashback', pronto: true, ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
     desc: 'Aniversariantes do mês com mensagem pronta para o WhatsApp e crédito de cashback que o cliente usa na próxima compra.' },
   { k: 'metas', nome: 'Metas das vendedoras', ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
     desc: 'Meta do mês por vendedora, acompanhamento dia a dia e ranking, ligado às comissões.' }
@@ -5888,6 +5914,124 @@ ACT.promoVendas = el => {
     [C('Venda', 's'), C('Data', 's'), C('Vendedora', 's'), C('Código', 's'), C('Produto', 's'), C('Qtd', 'i'), C('Preço normal', 'r'), C('Preço promoção', 'r'), C('Total', 'r'), C('Desconto dado', 'r')], linhas);
 };
 ACT.ajudaPromo = () => ajudaRecurso('promocoes', 'Passo a passo – promoções');
+/* ===== Premium: aniversariantes e cashback =====
+   Cashback: a cada compra de cliente cadastrado, uma % do valor pago vira crédito do cliente (o mesmo "Crédito do cliente"
+   que já existe na venda), com validade. O que não for usado até a validade vence sozinho (lançamento "Cashback vencido").
+   O uso consome primeiro o crédito que vence antes. Aniversariantes: lista do período com mensagem pronta para o WhatsApp
+   e, se configurado, um presente de aniversário em crédito com validade. */
+const cfgFid = () => Object.assign({ ativo: false, pct: 5, dias: 60, minimo: 0, presente: 0, diasPresente: 30,
+  msgAniv: 'Olá {nome}! A equipe da {loja} deseja um feliz aniversário! {presente}Esperamos você para comemorar.',
+  msgVence: 'Olá {nome}! Você tem {valor} de crédito na {loja} que vence em {data}. Venha aproveitar!' }, db.config.fidelidade || {});
+// lotes de crédito do cliente: quanto sobra de cada crédito, considerando usos (o que vence antes é usado primeiro) e vencimentos
+function lotesCredito(cid) {
+  const ev = db.creditos.filter(c => c.clienteId === cid).slice().sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id);
+  const lotes = [], vence = ts => lotes.forEach(l => { if (l.validade && l.resto > 0 && l.validade + 'T23:59:59' < ts) { l.vencido = r2(l.resto); l.resto = 0; } });
+  ev.forEach(c => {
+    vence(String(c.data));
+    if (c.expira) return;   // o lançamento de vencimento já é representado pelo próprio vencimento
+    if (c.valor > 0) { lotes.push({ id: c.id, valor: c.valor, resto: c.valor, validade: c.validade || '', cashback: !!c.cashback, ref: c.ref }); return; }
+    let falta = -c.valor;
+    if (c.estornoDe) { const l = lotes.find(x => x.id === c.estornoDe); if (l) { const u = Math.min(l.resto, falta); l.resto = r2(l.resto - u); falta = r2(falta - u); } }
+    lotes.filter(l => l.resto > 0).sort((a, b) => (a.validade || '9999').localeCompare(b.validade || '9999')).forEach(l => { if (falta <= 0) return; const u = Math.min(l.resto, falta); l.resto = r2(l.resto - u); falta = r2(falta - u); });
+  });
+  vence(hoje() + 'T00:00:00');
+  return lotes;
+}
+// lança o vencimento dos créditos com validade que passaram sem uso
+function vencerCreditos(cid) {
+  if (MODO_REDE) return 0;
+  const ids = cid ? [cid] : [...new Set(db.creditos.filter(c => c.validade).map(c => c.clienteId))]; let n = 0;
+  ids.forEach(id => lotesCredito(id).forEach(l => {
+    if (!l.vencido || db.creditos.some(c => c.expira === l.id)) return;
+    db.creditos.push({ id: db.seq.cred++, data: l.validade + 'T23:59:59', clienteId: id, valor: -l.vencido, ref: `${l.cashback ? 'Cashback' : 'Crédito'} vencido em ${fmtDia(l.validade)} (${l.ref})`, expira: l.id, usuario: 'sistema' }); n++;
+  }));
+  if (n) salvar();
+  return n;
+}
+const venceEm = (cid, dias) => lotesCredito(cid).filter(l => l.resto > 0 && l.validade && l.validade <= somaDias(dias));
+function gerarCashback(v, pg) {
+  const f = cfgFid(); if (!temRecurso('cashback') || !f.ativo || !pg.cl) return;
+  const base = r2(v.total - (pg.cred || 0)); if (!(base > 0) || base < num(f.minimo)) return;
+  const val = r2(base * num(f.pct) / 100); if (!(val > 0)) return;
+  db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: pg.cl.id, valor: val, ref: 'Cashback da venda nº ' + nDoc(v.id), cashback: true, validade: somaDias(int(f.dias) || 60), venda: v.id, usuario: eu.nome });
+  v.cashback = { valor: val, validade: somaDias(int(f.dias) || 60) };
+}
+function estornarCashback(v) {
+  const g = db.creditos.find(c => c.cashback && c.venda === v.id && c.valor > 0); if (!g || db.creditos.some(c => c.estornoDe === g.id)) return;
+  db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: g.clienteId, valor: -g.valor, ref: 'Estorno do cashback – venda nº ' + nDoc(v.id) + ' cancelada', estornoDe: g.id, usuario: eu.nome });
+}
+const textoMsg = (t, d) => String(t || '').replace(/\{(\w+)\}/g, (m, k) => d[k] != null ? d[k] : '');
+let fidAba = 'mes';
+function aniversariantes(aba) {
+  const h = hoje(), mmdd = d => d.slice(5, 10), hj = mmdd(h), sem = mmdd(somaDias(6)), mes = h.slice(5, 7), prox = somaDias(32).slice(5, 7);
+  return db.clientes.filter(c => c.nascimento && c.nascimento.length >= 10).filter(c => { const d = mmdd(c.nascimento);
+    return aba === 'hoje' ? d === hj : aba === 'semana' ? (hj <= sem ? d >= hj && d <= sem : d >= hj || d <= sem) : aba === 'mes' ? d.slice(0, 2) === mes : d.slice(0, 2) === prox; })
+    .sort((a, b) => mmdd(a.nascimento).localeCompare(mmdd(b.nascimento)) || a.nome.localeCompare(b.nome));
+}
+function fidelidade() {
+  vencerCreditos();
+  const f = cfgFid(), ano = hoje().slice(0, 4), lista = aniversariantes(fidAba);
+  const ultima = id => { const v = vendasValidas().filter(x => x.clienteId === id).pop(); return v ? fmtDia(v.data.slice(0, 10)) : '—'; };
+  const linhaAniv = c => {
+    const pres = (c.presentes || {})[ano], idade = int(ano) - int(c.nascimento.slice(0, 4));
+    const msg = textoMsg(f.msgAniv, { nome: c.nome.split(' ')[0], loja: db.config.loja || 'loja', presente: pres ? `Você ganhou ${fmtR(pres.valor)} de presente para usar até ${fmtDia(pres.validade)}. ` : '' });
+    const w = linkWhats(c.telefone, msg);
+    return `<tr><td>${c.nascimento.slice(8, 10)}/${c.nascimento.slice(5, 7)}</td><td><b>${esc(c.nome)}</b>${idade > 0 && idade < 120 ? ` <span class="mut">faz ${idade} anos</span>` : ''}</td><td>${esc(c.telefone || '—')}</td><td>${ultima(c.id)}</td><td class="n">${fmtR(saldoCredito(c.id))}</td>
+      <td>${(c.anivMsg || '') === ano ? '<span class="tag ok">mensagem enviada</span>' : ''}${pres ? ' <span class="tag ab">presente dado</span>' : ''}</td>
+      <td class="n">${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener" data-act="fidMsg" data-id="${c.id}">WhatsApp</a>` : '<span class="mut">sem celular</span>'}${adm() && num(f.presente) > 0 && !pres ? ` <button class="btn" data-act="fidPresente" data-id="${c.id}">Dar presente ${fmtR(num(f.presente))}</button>` : ''}</td></tr>`;
+  };
+  // cashback
+  const mesIni = hoje().slice(0, 8) + '01', estornados = new Set(db.creditos.filter(c => c.estornoDe).map(c => c.estornoDe)), cb = db.creditos.filter(c => c.cashback && c.valor > 0 && !estornados.has(c.id));
+  const geradoMes = r2(cb.filter(c => c.data >= mesIni).reduce((s, c) => s + c.valor, 0)), vencidoMes = r2(-db.creditos.filter(c => c.expira && c.data >= mesIni).reduce((s, c) => s + c.valor, 0));
+  const abertos = []; [...new Set(cb.map(c => c.clienteId))].forEach(id => lotesCredito(id).filter(l => l.resto > 0 && l.validade).forEach(l => abertos.push(Object.assign({ cli: cli(id) }, l))));
+  const emAberto = r2(abertos.reduce((s, l) => s + l.resto, 0)), vencendo = abertos.filter(l => l.validade <= somaDias(7)).sort((a, b) => a.validade.localeCompare(b.validade));
+  return `<h2>Aniversários e cashback</h2>
+  <section class="card"><div class="rel-cab"><h3 style="margin:0">Aniversariantes</h3><div class="rel-bts"><div class="seg">${[['hoje', 'Hoje'], ['semana', 'Próximos 7 dias'], ['mes', 'Este mês'], ['prox', 'Próximo mês']].map(([k, t]) => `<button class="${k === fidAba ? 'on' : ''}" data-act="fidAba" data-v="${k}">${t}</button>`).join('')}</div><button class="btn" data-act="ajudaFid">Passo a passo</button>${adm() ? '<button class="btn" data-act="fidConfig">Configurar</button>' : ''}</div></div>
+    ${lista.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Dia</th><th>Cliente</th><th>Telefone</th><th>Última compra</th><th class="n">Crédito</th><th></th><th></th></tr></thead><tbody>${lista.map(linhaAniv).join('')}</tbody><tfoot><tr><td colspan="7">Total · ${lista.length} aniversariante(s)</td></tr></tfoot></table></div>`
+      : `<p class="vazio">Nenhum aniversariante ${{ hoje: 'hoje', semana: 'nos próximos 7 dias', mes: 'neste mês', prox: 'no próximo mês' }[fidAba]}.${db.clientes.filter(c => !c.nascimento).length ? ` ${db.clientes.filter(c => !c.nascimento).length} cliente(s) sem data de nascimento no cadastro.` : ''}</p>`}</section>
+  <section class="card"><h3>Cashback ${f.ativo ? `<span class="tag ok">ligado: ${fmtDec(num(f.pct))}% por ${int(f.dias)} dias${num(f.minimo) ? ', compra mínima ' + fmtR(num(f.minimo)) : ''}</span>` : '<span class="tag in">desligado</span>'}</h3>
+    ${f.ativo ? '' : `<p class="mut">Ligue em <b>Configurar</b>: a cada compra de cliente cadastrado, uma parte do valor volta como crédito para a próxima compra.</p>`}
+    <div class="resumo-tit"><div class="rbox"><small>Gerado neste mês</small><b>${fmtR(geradoMes)}</b><span>${cb.filter(c => c.data >= mesIni).length} venda(s)</span></div>
+      <div class="rbox ok"><small>Em aberto (clientes podem usar)</small><b>${fmtR(emAberto)}</b><span>${new Set(abertos.map(l => l.cli && l.cli.id)).size} cliente(s)</span></div>
+      <div class="rbox ${vencendo.length ? 'at' : ''}"><small>Vence nos próximos 7 dias</small><b>${fmtR(r2(vencendo.reduce((s, l) => s + l.resto, 0)))}</b><span>${vencendo.length} crédito(s)</span></div>
+      <div class="rbox"><small>Vencido neste mês</small><b>${fmtR(vencidoMes)}</b><span>não usado a tempo</span></div></div>
+    ${vencendo.length ? `<h4 class="rel-sec">Lembre o cliente antes de vencer</h4>${tabSimples(['Cliente', 'Valor', 'Vence em', ''], vencendo.map(l => { const c = l.cli || {}, w = linkWhats(c.telefone, textoMsg(f.msgVence, { nome: (c.nome || '').split(' ')[0], loja: db.config.loja || 'loja', valor: fmtR(l.resto), data: fmtDia(l.validade) })); return [esc(c.nome || '?'), fmtR(l.resto), fmtDia(l.validade), w ? `<a class="lnk" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : '']; }))}` : ''}
+    <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="fidExtrato">Extrato do cashback (PDF / Excel)</button></div></section>`;
+}
+ACT.fidAba = el => { fidAba = el.dataset.v; render(); };
+ACT.fidMsg = el => { try { window.open(el.href, '_blank', 'noopener'); } catch (e) { } const c = cli(+el.dataset.id); if (!c) return; c.anivMsg = hoje().slice(0, 4); registrar('Mensagem de aniversário enviada', c.nome); salvar(); setTimeout(render, 300); return true; };
+ACT.fidPresente = el => {
+  const c = cli(+el.dataset.id), f = cfgFid(), ano = hoje().slice(0, 4); if (!c || !adm() || (c.presentes || {})[ano]) return;
+  const val = r2(num(f.presente)), validade = somaDias(int(f.diasPresente) || 30);
+  db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: c.id, valor: val, ref: 'Presente de aniversário ' + ano, validade, presente: true, usuario: eu.nome });
+  c.presentes = Object.assign({}, c.presentes, { [ano]: { valor: val, validade } });
+  registrar('Presente de aniversário', `${c.nome}: ${fmtR(val)} até ${fmtDia(validade)}`); salvar(); render(); aviso(`Presente de ${fmtR(val)} lançado como crédito até ${fmtDia(validade)}. Envie a mensagem pelo WhatsApp.`, 'ok');
+};
+ACT.fidConfig = () => {
+  if (!adm()) return; const f = cfgFid();
+  abrirModal('Aniversários e cashback – configuração', `<label class="chk"><input type="checkbox" id="fd-ativo" ${f.ativo ? 'checked' : ''}> Dar cashback nas compras de clientes cadastrados</label>
+    <div class="form3"><label>Cashback (% do valor pago)<input id="fd-pct" class="val" value="${fmtDec(num(f.pct))}"></label><label>Vale por (dias)<input id="fd-dias" type="number" min="1" value="${int(f.dias)}"></label><label>Compra mínima (R$)<input id="fd-min" class="val" value="${fmtDec(num(f.minimo))}"></label></div>
+    <p class="mut">A parte paga com o próprio crédito do cliente não gera cashback. Venda cancelada estorna o cashback dela.</p>
+    <div class="form3"><label>Presente de aniversário (R$, 0 = não dar)<input id="fd-pres" class="val" value="${fmtDec(num(f.presente))}"></label><label>Presente vale por (dias)<input id="fd-dpres" type="number" min="1" value="${int(f.diasPresente)}"></label></div>
+    <label class="full">Mensagem de aniversário<textarea id="fd-msg" rows="3">${esc(f.msgAniv)}</textarea></label>
+    <label class="full">Mensagem de crédito vencendo<textarea id="fd-msgv" rows="2">${esc(f.msgVence)}</textarea></label>
+    <p class="mut">Use {nome}, {loja} e, na de aniversário, {presente}; na de crédito, {valor} e {data}.</p>`, '<button class="btn pri" data-act="fidSalvar">Salvar</button>', true);
+};
+ACT.fidSalvar = () => {
+  const f = { ativo: $('#fd-ativo').checked, pct: r2(num($('#fd-pct').value)), dias: int($('#fd-dias').value), minimo: r2(num($('#fd-min').value)), presente: r2(num($('#fd-pres').value)), diasPresente: int($('#fd-dpres').value), msgAniv: $('#fd-msg').value.trim(), msgVence: $('#fd-msgv').value.trim() };
+  if (f.ativo && !(f.pct > 0 && f.pct <= 50)) return aviso('O cashback precisa ficar entre 0,1% e 50%.', 'erro');
+  if (f.ativo && !(f.dias >= 1)) return aviso('Informe por quantos dias o cashback vale.', 'erro');
+  db.config.fidelidade = f; registrar('Configuração de cashback e aniversário', `${f.ativo ? 'cashback ' + fmtDec(f.pct) + '% por ' + f.dias + ' dias' : 'cashback desligado'}; presente ${fmtR(f.presente)}`);
+  salvar(); fecharModal(); render(); aviso('Configuração salva.', 'ok');
+};
+ACT.fidExtrato = () => {
+  const l = db.creditos.filter(c => c.cashback || c.presente || c.expira || c.estornoDe || /^Usado na venda/.test(c.ref || '')).slice().sort((a, b) => String(a.data).localeCompare(String(b.data)));
+  const tipo = c => c.cashback ? 'Cashback gerado' : c.presente ? 'Presente de aniversário' : c.expira ? 'Vencido' : c.estornoDe ? 'Estorno' : 'Usado na compra';
+  const linhas = l.map(c => ({ c: [fmtDH(c.data), (cli(c.clienteId) || {}).nome || '?', tipo(c), c.ref || '', c.validade ? fmtDia(c.validade) : '', c.valor] }));
+  linhas.push({ forte: true, c: ['Total', '', '', '', '', r2(l.reduce((s, c) => s + c.valor, 0))] });
+  modalAnalitico('Extrato do cashback e créditos', 'Cashback, presentes, usos, estornos e vencimentos', [C('Data', 's'), C('Cliente', 's'), C('Tipo', 's'), C('Referência', 's'), C('Validade', 's'), C('Valor', 'r')], linhas);
+};
+ACT.ajudaFid = () => ajudaRecurso('cashback', 'Passo a passo – aniversários e cashback');
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
@@ -6111,7 +6255,7 @@ ACT.lerCamera = async el => {
   try { const sid = +sessionStorage.getItem(CHAVE + '.sessao'); const u = db.usuarios.find(x => x.id === sid && x.ativo); if (u) eu = u; } catch (e) { }
   await conferirLicenca(); setInterval(conferirLicenca, 3600 * 1000);
   if (eu && atualizacaoConfirmadaAgora && master()) view = 'atualizacao';
-  render(); if (eu) verNovidadesPendentes();
+  vencerCreditos(); render(); if (eu) verNovidadesPendentes();
   if (atualizacaoConfirmadaAgora) aviso('Atualização confirmada: o sistema está na versão ' + VERSAO_APP + '.', 'ok');
   // backup automático: confere 4 s depois de abrir e depois a cada minuto
   setTimeout(verificarBackup, 4000); setInterval(verificarBackup, 60000);
