@@ -1,14 +1,12 @@
 {
- "versao": "2026.11.04-12",
- "publicadoEm": "04/11/2026 14:38",
+ "versao": "2026.11.04-13",
+ "publicadoEm": "04/11/2026 14:56",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "65bce3d29ce679b33985e11814a522c4c3fa33a71be893576b51406e9f313c01",
- "tamanho": 600007,
- "assinatura": "lR6Vk37o8QLDEi9FB3mGbRrcOC8c0/qV2yRes5SfrwgylqTxEOvls08ZLdVt0/+s8FtuCcZIRMwEKDKRYXiIKDgt9jMQ9sN0xqkcTp2nykhDeHYNI2g67zB2siUm2tlf0i0Hmi8zc5o0xEtMkgI9YLHjtFB9rvUxf91ftDxeOenUMnMOoeBUEf1AEpZAHP/fV08TxZVBl4YQAHswWHqMFpvbXmFzI8aDyA166x1njvtBO2COOoz0osnRcxdlFRrl9vrvrYz/2Ay4DXxzeLSOTE7Ns6jKvOvdsjrxNT1ppdcS86crZwo6IekEFRtHyWCaHQhxQ8s9lUQcTRGgsZ8fRVfRHCTTbKpqj6nibsu0e/ezcntdtMY95zG47dxGXeUoVM/FrG/t2YpY7sCLsv0HPIusiYy8F1kF2mmugQ/uNy5Bm89PVK72xB4wyArKgN/D/R67U4AWPKGg7KzyNkluc0Ugx5IsZAulXezXx+E93XDTAYEXHxEOYhub/hDyW0gP",
+ "sha256": "641df467245af1f6891bf879b0a2dc9ca4f5189fd734f035021ea035350d852b",
+ "tamanho": 605139,
+ "assinatura": "nnYCHGi9CNeDdrlPA/jzP+8SJ4aYwIkAUSRleJzB5Tv41ocgwvValpHa0L6YSFZ6OXzBBxagLmb28tc7bDNfg25708+5PNf9ocQvqCTXVn4d0CAUHIAU066o9ZKnkb1QO24qFlsd/hFYJYmmjOpDs3MnavvtLO6qU5GtMHlu+xGENXBmA8Stqd80OSHS/725n6DWs/GUJ6tyqO3q399aeni8qZnaaYcX0NcqBsxuqvGpw8YqRZHuz9JkFsmci/xulM0sojqYCRPutoRuIf7ayf46Fj5MDdgmGJfqq/azYSOhoo/OXUHkf/lU+okirpsXtLVItXlG4TMjDkoZFxaQ4SQPNNXrjPIo0p5CsuzwJyF91BkWgCXHE2LqJ1ThSllD1AVf3mBsm9Ze9lZZyS+pdX8A7tQ06raNfw3YIAiNU8zllvIGUpCLC/poX9/lvpTbT6gmtkmPnF3Nplod4Xbxrr8+vKuqNCRmJyIH+UJR5AT0LgG24O1HJFd5nPkSmsw4",
  "novidades": [
-  "Recurso Premium \"Taxas de cartão e conciliação\": cadastro das maquininhas com as taxas de débito, crédito à vista e parcelado (2x a 12x) e os prazos de recebimento.",
-  "Na venda com cartão: escolha da maquininha (se houver mais de uma) e das parcelas do crédito. A taxa e o prazo ficam gravados na venda.",
-  "Novo menu Cartões a receber: quanto cai na conta e em que dia, por maquininha, com o total das taxas pagas. Conferência do depósito: digite quanto caiu no banco e o sistema mostra a diferença. Sai em PDF e Excel."
+  "Ajuda: passo a passo para configurar a maquininha e as taxas do cartão, vender no crédito parcelado e conferir o depósito, com perguntas e respostas. Também no botão Passo a passo de Cartões a receber e da janela Maquininhas e taxas (aparece quando o recurso Premium de taxas está liberado)."
  ],
  "servidor": {
   "versao": "2026.11.04-11",

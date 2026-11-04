@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-12">
+<meta name="versao-sistema" content="2026.11.04-13">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -4260,6 +4260,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-13', itens: ['Ajuda: passo a passo para configurar a maquininha e as taxas do cartão, vender no crédito parcelado e conferir o depósito, com perguntas e respostas. Também no botão Passo a passo de Cartões a receber e da janela Maquininhas e taxas (aparece quando o recurso Premium de taxas está liberado).'] },
   { v: '2026.11.04-12', itens: ['Recurso Premium "Taxas de cartão e conciliação": cadastro das maquininhas com as taxas de débito, crédito à vista e parcelado (2x a 12x) e os prazos de recebimento.',
     'Na venda com cartão: escolha da maquininha (se houver mais de uma) e das parcelas do crédito. A taxa e o prazo ficam gravados na venda.',
     'Novo menu Cartões a receber: quanto cai na conta e em que dia, por maquininha, com o total das taxas pagas. Conferência do depósito: digite quanto caiu no banco e o sistema mostra a diferença. Sai em PDF e Excel.'] },
@@ -4781,6 +4782,27 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Configurar a maquininha e as taxas do cartão', quem: 'adm', rec: 'taxas', ir: 'cartoes', p: [
+    'Tenha em mãos as taxas da maquininha: ficam no aplicativo ou no site da operadora (Stone, Cielo, PagSeguro, Mercado Pago, Getnet…), em <b>Taxas</b> ou <b>Meu plano</b>, ou no contrato.',
+    'Abra <b>Cartões a receber</b> e clique em <b>Maquininhas e taxas</b>.',
+    'Em <b>Nome da maquininha</b>, escreva como você a chama (ex.: Stone).',
+    '<b>Débito (%)</b>: a taxa do débito (ex.: 1,49). Em <b>Débito cai em (dias)</b>, normalmente <b>1</b>.',
+    '<b>Crédito à vista (%)</b>: a taxa do crédito em 1x. Em <b>Crédito cai em (dias)</b>, normalmente <b>30</b>.',
+    '<b>Crédito parcelado (%)</b>: a taxa de cada número de parcelas (2x, 3x… 12x). O que ficar em branco usa a taxa do crédito à vista.',
+    'Se a operadora paga o parcelado todo de uma vez (antecipação automática), marque <b>Recebimento antecipado</b>, coloque em <b>Crédito cai em (dias)</b> o prazo da antecipação (ex.: 1) e use nas parcelas a taxa já com a antecipação.',
+    'Tem mais de uma maquininha? Clique em <b>+ Outra maquininha</b> e repita. A primeira da lista é a que vem marcada na venda. Desmarque <b>Em uso</b> na que não usa mais.',
+    'Clique em <b>Salvar taxas</b>. As taxas valem para as próximas vendas; as vendas já feitas ficam com a taxa do dia em que foram feitas.'] },
+  { t: 'Vender no cartão de crédito parcelado', quem: 'todos', rec: 'taxas', ir: 'vendas', p: [
+    'Monte a venda normalmente.',
+    'Em <b>Pagamento</b> escolha <b>Cartão de crédito</b>.',
+    'Escolha a <b>maquininha</b> (só aparece quando a loja tem mais de uma) e as <b>parcelas</b>: à vista, 2x, 3x… Use o mesmo número de parcelas que foi passado na maquininha.',
+    'Clique em <b>Finalizar venda e emitir recibo</b>. O recibo mostra, por exemplo, "Cartão de crédito 3x", e o valor já entra em Cartões a receber com a data em que cai na conta.'] },
+  { t: 'Conferir o depósito do cartão', quem: 'adm', rec: 'taxas', ir: 'cartoes', p: [
+    'Abra <b>Cartões a receber</b>. Cada linha é um dia e uma maquininha: vendido (bruto), taxas e o <b>líquido esperado</b>, que é o que deve cair na conta.',
+    'Quando chega o dia, a linha fica <b>Conferir</b>. Veja no extrato do banco ou no aplicativo da maquininha quanto caiu de fato.',
+    'Clique em <b>Conferir</b>, digite o <b>Valor que caiu na conta</b> e clique em <b>Gravar conferência</b>.',
+    'Se bater, fica <b>Conferido</b>. Se for diferente, fica <b>Diferença</b> com o valor: anote o motivo na observação (ex.: aluguel da maquininha) ou cobre a operadora.',
+    'Clique em <b>Ver</b> para ver as vendas daquele depósito e em <b>PDF / Excel</b> para imprimir ou enviar ao contador. Use o filtro <b>Situação</b> para ver só o que falta conferir.'] },
   { t: 'Fazer uma venda', quem: 'todos', ir: 'vendas', p: ['Abra <b>Vendas</b>.', 'Passe o leitor de código de barras na etiqueta, ou digite o código, a descrição, a marca, a cor ou o tamanho e clique em <b>Adicionar</b>. Repita para cada peça.', 'Se quiser, escolha o <b>Cliente</b> na lista (ou digite o nome) e informe CPF ou telefone.', 'Escolha a forma de <b>Pagamento</b>. Para usar duas formas, clique em <b>+ dividir com outra forma de pagamento</b>.', 'Desconto: informe em <b>R$</b> ou <b>%</b> no campo Desconto.', 'Confira o total e clique em <b>Finalizar venda e emitir recibo</b>.', 'No recibo: imprima, ou envie pelo <b>WhatsApp (PDF)</b>.'] },
   { t: 'Abrir e fechar o caixa', quem: 'todos', ir: 'caixa', p: ['No começo do dia, abra <b>Caixa</b>, informe o troco que está na gaveta e clique em <b>Abrir caixa</b>.', 'Durante o dia: <b>Sangria (retirar dinheiro)</b> para tirar dinheiro da gaveta e <b>Suprimento (colocar dinheiro)</b> para colocar, sempre com o motivo.', 'Durante o dia, clique nos cards para ver o detalhe, em <b>Extrato (débito e crédito)</b> para ver saldo inicial, entradas, saídas e saldo final (por forma, com PDF e Excel) ou em <b>Relatório parcial</b> para imprimir a posição atual.', 'No fim do dia, clique em <b>Fechar caixa</b>, conte e informe o dinheiro da gaveta e o total do Pix e de cada cartão.', 'O sistema gera o comprovante (esperado, contado e diferença de cada forma) e, em seguida, a movimentação completa do caixa. Imprima e assine.', 'Fechou com erro? O administrador pode <b>Reabrir</b> o último caixa em Caixas fechados, informando o motivo.'] },
   { t: 'Receber com Pix (QR Code)', quem: 'todos', ir: 'vendas', p: ['Monte a venda normalmente.', 'Em Pagamento escolha <b>Pix</b>: aparece o botão <b>QR Code Pix</b>.', 'Clique nele e mostre o QR Code ao cliente: ele já vem com a chave da loja e o valor.', 'Depois que o cliente pagar, clique em <b>Finalizar venda e emitir recibo</b>.'] },
@@ -4801,6 +4823,10 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'A taxa da maquininha mudou. O que eu faço?', quem: 'adm', rec: 'taxas', r: 'Em Cartões a receber → Maquininhas e taxas, troque a taxa e clique em Salvar taxas. A taxa nova vale a partir das próximas vendas; as vendas já feitas continuam com a taxa da época.' },
+  { p: 'Passei a venda com a maquininha ou as parcelas erradas.', quem: 'todos', rec: 'taxas', r: 'Peça ao administrador para cancelar a venda (Vendas → Vendas realizadas → Cancelar, na linha da venda) e faça de novo com a maquininha e as parcelas certas.' },
+  { p: 'O que quer dizer o * em Cartões a receber?', quem: 'adm', rec: 'taxas', r: 'É uma venda com cartão feita antes de as taxas serem cadastradas. O sistema calcula com a taxa atual da maquininha, por isso o valor é uma estimativa.' },
+  { p: 'O depósito do cartão não caiu no dia mostrado.', quem: 'adm', rec: 'taxas', r: 'Se o dia cai no sábado ou no domingo, o sistema já passa para segunda-feira, mas não conhece os feriados: nesse caso o dinheiro cai no próximo dia útil. Confira no dia seguinte. Se a operadora usa outro prazo, ajuste os dias em Maquininhas e taxas.' },
   { p: 'Esqueci a minha senha. E agora?', quem: 'todos', r: 'Peça a um administrador: Usuárias / usuários → Editar / senha → digite uma senha nova e salve. No próximo acesso você define a sua.' },
   { p: 'Apareceu que o meu usuário está bloqueado.', quem: 'todos', r: 'Depois de várias senhas erradas seguidas, o usuário fica bloqueado por alguns minutos. Espere ou peça ao administrador: Usuárias / usuários → Editar / senha → Salvar libera na hora.' },
   { p: 'O sistema pediu a senha de novo no meio do trabalho.', quem: 'todos', r: 'É o bloqueio por falta de uso, para ninguém usar o seu usuário quando você sai do caixa. Digite a senha: a venda que estava sendo montada continua lá.' },
@@ -4832,7 +4858,7 @@ const podeVer = q => q === 'todos' || (q === 'adm' && adm()) || (q === 'master' 
 const seloQuem = q => q === 'adm' ? ' <span class="tag in">administrador</span>' : q === 'master' ? ' <span class="tag in">master</span>' : '';
 function ajuda() {
   const nomeTela = k => (MENU.find(x => x[0] === k) || [k, k])[1], txt = h => String(h).replace(/<[^>]+>/g, '');
-  const mapa = AJUDA_MAPA.filter(m => podeVer(m[1])), passos = AJUDA_PASSOS.filter(x => podeVer(x.quem)), pergs = AJUDA_PERGUNTAS.filter(x => podeVer(x.quem));
+  const mapa = AJUDA_MAPA.filter(m => podeVer(m[1])), passos = AJUDA_PASSOS.filter(x => podeVer(x.quem) && (!x.rec || temRecurso(x.rec))), pergs = AJUDA_PERGUNTAS.filter(x => podeVer(x.quem) && (!x.rec || temRecurso(x.rec)));
   return `${cabTela('Ajuda')}
   <section class="card aj-busca"><label>O que você quer fazer? <input id="aj-busca" placeholder="Ex.: troca, Pix, etiqueta, senha, crediário…" autocomplete="off"></label><p class="mut" id="aj-nada" hidden>Nada encontrado. Tente outra palavra.</p></section>
   <section class="card"><div class="cfg-cab"><h3>Mapa do sistema</h3><p class="mut">Cada tela e para que serve. Clique em Abrir para ir até ela.</p></div>
@@ -5468,7 +5494,7 @@ function cartoes() {
   <section class="card"><div class="filtros"><label>Previsão de<input type="date" data-filtro="car.de" value="${f.de}"></label><label>até<input type="date" data-filtro="car.ate" value="${f.ate}"></label>
     <label>Maquininha<select data-filtro="car.maq"><option value="">Todas</option>${nomes.map(n => `<option ${n === f.maq ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
     <label>Situação<select data-filtro="car.sit">${[['', 'Todas'], ['pend', 'A conferir'], ['dif', 'Com diferença'], ['ok', 'Conferidas'], ['futuro', 'A receber']].map(([k, t]) => `<option value="${k}" ${k === f.sit ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
-    <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="maqConfig">Maquininhas e taxas</button><button class="btn" data-act="carExportar">PDF / Excel</button></div></div>
+    <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="maqConfig">Maquininhas e taxas</button><button class="btn" data-act="carExportar">PDF / Excel</button><button class="btn" data-act="ajudaCartao">Passo a passo</button></div></div>
     <div id="car-corpo">${corpoCartoes()}</div></section>`;
 }
 function filtrarCartoes() {
@@ -5523,6 +5549,11 @@ ACT.carExportar = () => {
   modalAnalitico('Cartões a receber', `Previsão de ${fmtDia(f.de)} a ${fmtDia(f.ate)}${f.maq ? ' · ' + f.maq : ''}`,
     [C('Cai na conta', 's'), C('Maquininha', 's'), C('Lançamentos', 'i'), C('Bruto', 'r'), C('Taxas', 'r'), C('Líquido esperado', 'r'), C('Caiu na conta', 'r'), C('Diferença', 'r'), C('Situação', 's')], linhas);
 };
+ACT.ajudaCartao = () => {
+  const ps = AJUDA_PASSOS.filter(x => x.rec === 'taxas' && podeVer(x.quem)), qs = AJUDA_PERGUNTAS.filter(x => x.rec === 'taxas' && podeVer(x.quem));
+  abrirModal('Passo a passo – cartão de crédito e débito', ps.map((x, i) => `<details class="aj-item"${i ? '' : ' open'}><summary><span class="aj-n">${i + 1}</span>${esc(x.t)}</summary><ol>${x.p.map(s => `<li>${s}</li>`).join('')}</ol></details>`).join('')
+    + `<h4 class="rel-sec">Perguntas e respostas</h4>` + qs.map(x => `<details class="aj-item"><summary>${esc(x.p)}</summary><p>${esc(x.r)}</p></details>`).join(''), '', true);
+};
 // cadastro das maquininhas
 function linhaMaq(m, i) {
   const pc = k => `<label>${k}x<input class="val mq-p" data-k="${k}" value="${esc(fmtDec0((m.parcelado || [])[k - 2]))}"></label>`;
@@ -5543,7 +5574,7 @@ ACT.maqConfig = () => {
 function desenharMaq() {
   abrirModal('Maquininhas e taxas', `<p class="mut">Taxas cobradas pela operadora em cada venda. Os dias são corridos a partir da venda; se cair no fim de semana, passa para segunda-feira (feriados não são considerados). A primeira maquininha em uso é a padrão na venda.</p>
     <div id="mq-lista">${maqTemp.map(linhaMaq).join('')}</div><button class="btn" data-act="maqNova">+ Outra maquininha</button>`,
-    '<button class="btn pri" data-act="maqSalvar">Salvar taxas</button>', true);
+    '<button class="btn" data-act="ajudaCartao">Passo a passo</button><button class="btn pri" data-act="maqSalvar">Salvar taxas</button>', true);
 }
 const lerMaqTela = () => $$('.mq-card').forEach(c => {
   const m = maqTemp[+c.dataset.i], q = s => c.querySelector(s), nv = s => { const t = q(s).value.trim(); return t === '' ? '' : r2(num(t)); };
