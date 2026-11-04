@@ -1,20 +1,21 @@
 {
- "versao": "2026.11.04-18",
- "publicadoEm": "04/11/2026 17:06",
+ "versao": "2026.11.04-19",
+ "publicadoEm": "04/11/2026 17:36",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "0fc5aa33cb5649db3addd49ebd6449cd0d88b1b80917470f29f0f4fcbdf6789e",
- "tamanho": 682860,
- "assinatura": "HQAet+eUAehXtOBxGph9uNg843DPPFqrYkzuImNiTsyeucfCQ2qeJxBN6V37lYUJIw60ENpYWDs+PjmMm7F1Fe3IVKKgptoW9+weZAfDlD1dJelJxYyVLCkab0NfRPDuwhValzTSMl1RFOY7GYT4zswwet+LNw4QR7FuLC7M8H3+RrKTmg4FuGC9yfgPcwmqX+iMRD035+7SKDbAfbB7jNYYPTYD5nACbONVeOhGGr8DkMZbyzzVbXV5xUjuj6z1Bs0sH1z3X+QHOOyb5kOEdmy+O2SODKnJJjRD6ZQptGeajgSbNKqsym5isTzAaZpjJB0ePQrxz2O9mL9WIHIVPFr0pyzYTJazId+jQxU7ZG6ljiEmbaYFLMfOeVgYZU3fTHO9i5xnXLTsfTNIaN7N3eNnQSq2cnrAJmv7TDYAhlm9phguaLQ/LbrV4Als3Sm6k2qQKpvDgeR2kkv6nk8cPS5Qba3NXPAxdCw6X33YKfyFjTEPGm6iAyy0qEfbX/FC",
+ "sha256": "14b7b0c54ca18770e13290e04de1385dbe10cc34d83d2e3a0e3df12138446e89",
+ "tamanho": 692171,
+ "assinatura": "Ep0aU5CASZFliBN2GOO+z9Eb8qTCLnq+oXbMP9cMvu/zFafq1i7ARdGr6s+o88yB0aXeZGTET9uuRxT5DQawukwXFxH6jLLk6HCwHz7oyD+OIZVImOy4PSbSjIgmteHPpqyzhTBQjXTkSigUx/DoASBrdl7IoNW3E8emGtM6N41A8rKpYYhrx4tH14vGyal7ccJ0Z6D8rYMMDTAEHHBQRnQw/vE2+4XJAzJg34ANWQON4WByXyG1uuO+k5y6jUmsfrALy9TrOeA+j7H8GNKEunjZLTDlbjixqO43QSWcgaB99AcINbSfnPl7rZnQ8tNUiVTZ3MD17yBpOY1IMYOuv2k9sQGX4eBRiEywX9nvkVJ9g4+ktnxVA1f1zruJwAFjIpIp1i7GV2DHxD6K1/y19VPGjiQiVXlTUN88Q0TX6VHH5GcE6qHBQ1kQn/ojexW2oT1r/29aWKY/elTOtG7qzSfkVcWotcG7UorbsDJi7Q4iXMQerzCubEoyi8hcO29J",
  "novidades": [
-  "Recurso Premium \"Metas das vendedoras\": novo menu Metas. O administrador define a meta do mês de cada vendedora (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).",
-  "Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedora em PDF e Excel.",
-  "A vendedora vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique."
+  "Vendedora da venda: em Vendas e Condicionais há o campo \"Vendedora (quem atendeu)\". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.",
+  "Se a vendedora escolhida não for a logada, ela confirma com o PIN dela (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada uma entra com o próprio usuário, sem PIN.",
+  "O administrador pode corrigir a vendedora de uma venda (Vendas realizadas → vendedora), com motivo. Comissão já fechada vira ajuste no próximo fechamento.",
+  "Opção em Configurações → Vendas e estoque: exigir PIN em toda venda (para computador que fica sempre aberto num usuário só)."
  ],
  "servidor": {
-  "versao": "2026.11.04-11",
+  "versao": "2026.11.04-19",
   "arquivo": "servidor.py",
-  "sha256": "847f6cd0f98e4ccd9c65bf3b69558bfc3dc90b559c452b10e8b2cb443369b10f",
-  "assinatura": "ZljqXDUTZvx4oi69sdNiw8th9PT/qI2a4W3/2Be/NP9xvnpJMe1AOLmhvjEDZs6y96sBLeQTkMyKsRpj1aDezVWDfoKH0ytXJPnqZ60NgRn7nOYFp9Hwkg0aOofKspb4pLK7MYffwKx3tsyhGcmqRXuayZqz3k6rI37oiSDM4xSLSpYsZknhTuqGMDEWmbg3kYnfmGNkdnX9oiNpxMJYuwAGZpYxA8urW+IXRPqUDHmIOVNpKC1MqGaHPHVWGmEJWbT1jbm+9DGSHkqLh4J3hXIQs2zIplDG0lV9SGeM7cMZufZ26ivcUukRKmRk84b/QMJV1NYbCdPwR1tbNKyJSZFe5H1Op/TBUbUyIBM/Bt4mE5nipoeaqKKLfqyVviNA+5yJZMVn/szoCqcOWrZcPYx1K9/ytMYhJf5i3CfNPUOyvnGX+960GxEjl/7EXYD6eeAI/x27zzoXl55lC+IXPqg8Q6CEk4xP+gnyP62K6HuQrCTvdEArtWaCYtmustea",
-  "tamanho": 74069
+  "sha256": "12d17fca733f6a2ed8fef3421026a04245c8a4b2d1752036687a251fd6e2c83f",
+  "assinatura": "jLFkOB/hVmwWLitQpslcHgA+9p1Ii9N8Fb0PwyqNPWV0RLe3Zizs5Wd+BYsqsZ/ZfR4o4K0k/HhVaTzS8w6aKTXMcfugAE6od4ezWXbtW/68NjVVfTtu33zqaGsWLKbQ+UY89xNseVdxW/611iVQEYDxK2KXU603RVg8Ylg1YyMnsqxQwNu74212XGLWVUXFpPbpjVw3uVrG8MI+T2T7DWhzpa12anxRRRTdI4VGKmFpxNgGmgkeGJ79ZT4FvAgq7Jb9X1b5N1I6np2Y/Kz/ZPkz1bopqQACAlXQiIPEiuSdW1x0ogFw4jUsj8PioEMXaLwMpF+pq6THipyx5e3EDj854mKti+yN4kMzPcjPubKlASk6XNn4JMTQHpUg5XsK7eWuQrMR6HlxAAeukDFk0LmveoOnFo8jTqjB3FNmFGHaThdFWhBA7AdVDFUrvS1MP9yvtTrmbEQTqELXBkoz/Q6/KRhkPSXKBVSAtaOn30SC9VwjWWKzNumyYhqAJlj3",
+  "tamanho": 74090
  }
 }

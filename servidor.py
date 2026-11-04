@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-11'
+VERSAO_SERVIDOR = '2026.11.04-19'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -1120,7 +1120,7 @@ SESSOES, FALHAS = {}, {}
 REDE = {'https': None, 'http': None, 'ips': [], 'host': '', 'erro': ''}
 API_REDE_GET = ('/api/status', '/api/dados', '/api/mudancas', '/api/fotos', '/api/eu')
 API_REDE_POST = ('/api/gravar', '/api/logs', '/api/login', '/api/sair')
-SEGREDOS_USUARIO = ('hash', 'sal', 'iter', 'alg', 'senha')
+SEGREDOS_USUARIO = ('hash', 'sal', 'iter', 'alg', 'senha', 'pinHash', 'pinSal')
 SO_CAIXA = ('usuarios',)          # coleções que o celular não altera
 SO_CAIXA_META = ('config',)       # nem as configurações da loja
 

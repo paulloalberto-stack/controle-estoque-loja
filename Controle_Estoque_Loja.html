@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-18">
+<meta name="versao-sistema" content="2026.11.04-19">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1280,7 +1280,7 @@ function tabelaCompra(lista) {
 function tabelaVendas(lista) {
   if (!lista.length) return '<p class="vazio">Nenhuma venda.</p>';
   const tot = lista.filter(v => !v.cancelada);
-  return `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Data</th><th>Vendedora</th><th>Cliente</th><th class="n">Peças</th><th>Pagamento</th><th class="n">Total</th><th></th></tr></thead><tbody>${lista.map(v => `<tr class="${v.cancelada ? 'canc' : ''}"><td>${nDoc(v.id)}</td><td>${fmtDH(v.data)}</td><td>${esc(v.usuario)}</td><td>${esc(v.cliente || '—')}${v.condicional ? ` <span class="tag ab">condicional ${nDoc(v.condicional)}</span>` : ''}</td><td class="n">${pecasV(v)}</td><td>${esc(v.pagamento)}</td><td class="n">${fmtR(v.total)}</td><td class="n"><button class="lnk" data-act="verVenda" data-id="${v.id}">Recibo</button>${adm() && !v.cancelada ? `<button class="lnk perigo" data-act="cancelarVenda" data-id="${v.id}">Cancelar</button>` : ''}${v.cancelada ? ' <span class="tag in">cancelada</span>' : ''}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">${tot.length} venda(s) válidas</td><td class="n">${fmtN(tot.reduce((s, v) => s + pecasV(v), 0))}</td><td></td><td class="n">${fmtR(tot.reduce((s, v) => s + v.total, 0))}</td><td></td></tr></tfoot></table></div>`;
+  return `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Data</th><th>Vendedora</th><th>Cliente</th><th class="n">Peças</th><th>Pagamento</th><th class="n">Total</th><th></th></tr></thead><tbody>${lista.map(v => `<tr class="${v.cancelada ? 'canc' : ''}"><td>${nDoc(v.id)}</td><td>${fmtDH(v.data)}</td><td>${esc(v.usuario)}</td><td>${esc(v.cliente || '—')}${v.condicional ? ` <span class="tag ab">condicional ${nDoc(v.condicional)}</span>` : ''}</td><td class="n">${pecasV(v)}</td><td>${esc(v.pagamento)}</td><td class="n">${fmtR(v.total)}</td><td class="n"><button class="lnk" data-act="verVenda" data-id="${v.id}">Recibo</button>${adm() && !v.cancelada ? `<button class="lnk perigo" data-act="cancelarVenda" data-id="${v.id}">Cancelar</button>${adm() && !v.cancelada ? ` <button class="lnk" data-act="trocarVendedora" data-id="${v.id}">vendedora</button>` : ''}` : ''}${v.cancelada ? ' <span class="tag in">cancelada</span>' : ''}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">${tot.length} venda(s) válidas</td><td class="n">${fmtN(tot.reduce((s, v) => s + pecasV(v), 0))}</td><td></td><td class="n">${fmtR(tot.reduce((s, v) => s + v.total, 0))}</td><td></td></tr></tfoot></table></div>`;
 }
 
 /* ===== Carrinho (venda, condicional, entrada) ===== */
@@ -1347,7 +1347,7 @@ function vendas() {
     ${picker('venda')}
     <div id="cart-venda">${tabelaCarrinho('venda')}</div>
     <div class="form3">
-      ${campo('Cliente (escolha na lista ou digite o nome)', 'venda.cliente', f.cliente, 'list="dl-cli" autocomplete="off" data-maiusc')}
+      ${campoVendedora('venda')}${campo('Cliente (escolha na lista ou digite o nome)', 'venda.cliente', f.cliente, 'list="dl-cli" autocomplete="off" data-maiusc')}
       ${campo('CPF / telefone (opcional)', 'venda.doc', f.doc)}
       <div style="align-self:end"><button class="btn" data-act="novoCliente">+ Cadastrar cliente</button> <span id="cli-info" class="mut"></span></div>
     </div>
@@ -1379,6 +1379,7 @@ function condicionais() {
       ${campo('CPF / CNPJ', 'cond.doc', f.doc, 'data-mask="doc" inputmode="numeric"')}
       ${campo('Endereço', 'cond.end', f.end, 'data-maiusc')}
       <label>Devolver até<input type="date" data-f="cond.prazo" value="${f.prazo}"></label>
+      ${campoVendedora('cond')}
     </div>
     <div class="totais"><span>Peças <b id="t-pc-cond"></b></span><span class="big">Valor das peças <b id="t-tot-cond"></b></span></div>
     <div class="acoes"><button class="btn" data-act="limparCarrinho" data-tipo="cond">Limpar</button><button class="btn pri" data-act="saidaCond">Registrar saída e imprimir termo</button></div>
@@ -1608,6 +1609,7 @@ function config() {
       <label>Markup padrão na importação de XML (preço = custo × )<input id="cf-markup" value="${fmtDec(c.markup)}"></label>
       <label>Reposição: comprar para quantos dias de venda<input id="cf-diasCobertura" type="number" min="7" value="${c.diasCobertura}"></label>
       <label class="chk full"><input type="checkbox" id="cf-caixaObrig" ${c.caixaObrig ? 'checked' : ''}> Exigir caixa aberto para vender (menu Caixa)</label>
+      <label class="chk full"><input type="checkbox" id="cf-pinSempre" ${c.pinSempre ? 'checked' : ''}> Exigir o PIN da vendedora em toda venda e condicional no computador (mesmo quando é a pessoa logada)</label>
       <label class="chk full"><input type="checkbox" id="cf-caixaCego" ${c.caixaCego ? 'checked' : ''}> Fechamento cego: a vendedora não vê o valor esperado no caixa (só o administrador)</label>
     </div></section>${secaoTipos()}`)}
   <div class="cfg-salvar" id="cfg-salvar" ${ABAS_SALVAR.indexOf(aba) < 0 ? 'hidden' : ''}><span class="mut" id="cfg-sujo"></span><button class="btn" data-act="descartarConfig">Descartar</button><button class="btn pri" data-act="salvarConfig">Salvar alterações</button></div>
@@ -1787,7 +1789,7 @@ ACT.login = async () => {
 ACT.sair = () => { if (eu) { registrar('Saiu do sistema'); salvar(); } eu = null; try { sessionStorage.removeItem(CHAVE + '.sessao'); } catch (e) { } fecharModal(); for (const k in carrinho) carrinho[k] = []; telaLogin(); };
 function formSenha(obrigatoria) {
   abrirModal(obrigatoria ? 'Defina uma nova senha' : 'Minha senha', `${obrigatoria ? '<p>O administrador redefiniu sua senha. Escolha uma senha nova.</p>' : ''}<div class="form2">${obrigatoria ? '' : '<label class="full">Senha atual<input id="ms-atual" type="password"></label>'}<label>Nova senha<input id="ms-nova" type="password"></label><label>Repita<input id="ms-nova2" type="password" data-enter="salvarMinhaSenha"></label></div>`,
-    `<button class="btn pri" data-act="salvarMinhaSenha">Salvar senha</button>`);
+    `${obrigatoria ? '' : '<button class="btn" data-act="meuPin">Meu PIN de vendedora</button>'}<button class="btn pri" data-act="salvarMinhaSenha">Salvar senha</button>`);
 }
 ACT.minhaSenha = () => formSenha(false);
 ACT.salvarMinhaSenha = async () => {
@@ -1872,7 +1874,7 @@ ACT.finalizarVenda = () => {
   const cl = acharCliente(f.cliente);
   const pg = validarPags(f.pags, total, cl, f.parc, f.venc1);
   if (!pg) return;
-  const v = { id: db.seq.venda++, data: agora(), usuario: eu.nome, usuarioId: eu.id, cliente: cl ? cl.nome : f.cliente.trim(), clienteId: cl ? cl.id : null, doc: f.doc.trim() || (cl ? cl.telefone : ''), itens, subtotal, desconto, total, condicional: null };
+  const vd = vendDe('venda'), v = { id: db.seq.venda++, data: agora(), usuario: vd.nome, usuarioId: vd.id, registradoPor: eu.nome, cliente: cl ? cl.nome : f.cliente.trim(), clienteId: cl ? cl.id : null, doc: f.doc.trim() || (cl ? cl.telefone : ''), itens, subtotal, desconto, total, condicional: null };
   registrarPags(v, pg);
   itens.forEach(i => { const p = prod(i.prod); p.estoque -= i.qtd; mov(p, 'VENDA', -i.qtd, 'Venda nº ' + nDoc(v.id)); });
   db.vendas.push(v);
@@ -1969,7 +1971,7 @@ ACT.saidaCond = () => {
   if (!conferirCampos('#view')) return;
   if (!conferirEstoque(c)) return;
   const cl = clientePorDados(f.cliente.trim(), f.tel.trim(), f.doc.trim(), f.end.trim());
-  const cd = { id: db.seq.cond++, data: agora(), usuario: eu.nome, usuarioId: eu.id, clienteId: cl.id, cliente: cl.nome, telefone: f.tel.trim(), doc: f.doc.trim(), endereco: MAIUSC(f.end), prazo: f.prazo, status: 'aberta', itens: c.map(it => Object.assign(itemVenda(prod(it.prod), it.qtd), { devolvido: 0, comprado: 0 })) };
+  const vc = vendDe('cond'), cd = { id: db.seq.cond++, data: agora(), usuario: vc.nome, usuarioId: vc.id, registradoPor: eu.nome, clienteId: cl.id, cliente: cl.nome, telefone: f.tel.trim(), doc: f.doc.trim(), endereco: MAIUSC(f.end), prazo: f.prazo, status: 'aberta', itens: c.map(it => Object.assign(itemVenda(prod(it.prod), it.qtd), { devolvido: 0, comprado: 0 })) };
   cd.itens.forEach(i => { const p = prod(i.prod); p.estoque -= i.qtd; mov(p, 'CONDICIONAL SAÍDA', -i.qtd, 'Condicional nº ' + nDoc(cd.id) + ' – ' + cd.cliente); });
   db.condicionais.push(cd);
   if (!salvar()) return;
@@ -2016,7 +2018,7 @@ ACT.confirmarAcerto = el => {
   });
   const comprados = c.itens.filter(i => i.comprado > 0);
   if (comprados.length) {
-    const v = { id: db.seq.venda++, data: agora(), usuario: eu.nome, usuarioId: eu.id, cliente: c.cliente, clienteId: c.clienteId || null, doc: c.doc || c.telefone, itens: comprados.map(i => Object.assign({}, i, { qtd: i.comprado, devolvido: undefined, comprado: undefined })), subtotal: sub, desconto: desc, total: r2(sub - desc), condicional: c.id };
+    const v = { id: db.seq.venda++, data: agora(), usuario: c.usuario || eu.nome, usuarioId: c.usuarioId || eu.id, registradoPor: eu.nome, cliente: c.cliente, clienteId: c.clienteId || null, doc: c.doc || c.telefone, itens: comprados.map(i => Object.assign({}, i, { qtd: i.comprado, devolvido: undefined, comprado: undefined })), subtotal: sub, desconto: desc, total: r2(sub - desc), condicional: c.id };
     v.itens.forEach(i => { delete i.devolvido; delete i.comprado; mov(prod(i.prod), 'VENDA DE CONDICIONAL', 0, `Venda nº ${nDoc(v.id)} – ${i.qtd} peça(s) já tinham saído na ${ref}`); });
     registrarPags(v, pg);
     db.vendas.push(v); c.venda = v.id;
@@ -2282,7 +2284,7 @@ const CFG_CAMPOS = [['loja', 'Nome fantasia', 'Ex.: Estilo Masculino'], ['razao'
 const MASCARA_CFG = { cnpj: 'data-mask="doc" inputmode="numeric" placeholder="00.000.000/0000-00"', cep: 'data-mask="cep" inputmode="numeric" placeholder="00000-000" data-rua="cf-endereco" data-bairro="cf-bairro" data-cidade="cf-cidade"', telefone: 'data-mask="tel" inputmode="tel"', whatsapp: 'data-mask="tel" inputmode="tel"' };
 let logoTemp = '', iconeTemp = '';
 function lerCfg() {
-  const o = { logo: logoTemp, icone: iconeTemp, caixaObrig: !!($('#cf-caixaObrig') || {}).checked, caixaCego: !!($('#cf-caixaCego') || {}).checked, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
+  const o = { logo: logoTemp, icone: iconeTemp, caixaObrig: !!($('#cf-caixaObrig') || {}).checked, pinSempre: !!($('#cf-pinSempre') || {}).checked, caixaCego: !!($('#cf-caixaCego') || {}).checked, cor: $('#cf-cor').value, papel: $('#cf-papel').value, vias: int($('#cf-vias').value) || 2, qr: $('#cf-qr').value, qrLink: $('#cf-qrLink').value.trim(), pixChave: $('#cf-pixChave').value.trim(), pixNome: $('#cf-pixNome').value.trim(), pixCidade: $('#cf-pixCidade').value.trim(), rodape: $('#cf-rodape').value.trim(), prazoCond: int($('#cf-prazoCond').value) || 3, markup: num($('#cf-markup').value) || 2, diasCobertura: int($('#cf-diasCobertura').value) || 30 };
   CFG_CAMPOS.forEach(([k]) => o[k] = $('#cf-' + k).value.trim());
   return o;
 }
@@ -4281,6 +4283,10 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.04-19', itens: ['Vendedora da venda: em Vendas e Condicionais há o campo "Vendedora (quem atendeu)". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.',
+    'Se a vendedora escolhida não for a logada, ela confirma com o PIN dela (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada uma entra com o próprio usuário, sem PIN.',
+    'O administrador pode corrigir a vendedora de uma venda (Vendas realizadas → vendedora), com motivo. Comissão já fechada vira ajuste no próximo fechamento.',
+    'Opção em Configurações → Vendas e estoque: exigir PIN em toda venda (para computador que fica sempre aberto num usuário só).'] },
   { v: '2026.11.04-18', itens: ['Recurso Premium "Metas das vendedoras": novo menu Metas. O administrador define a meta do mês de cada vendedora (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).',
     'Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedora em PDF e Excel.',
     'A vendedora vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique.'] },
@@ -4817,6 +4823,12 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
 ];
 const AJUDA_PASSOS = [
+  { t: 'Vender para outra vendedora no mesmo computador (PIN)', quem: 'todos', ir: 'vendas', p: [
+    'Monte a venda normalmente, mesmo com outra pessoa logada.',
+    'Em <b>Vendedora (quem atendeu)</b>, escolha o seu nome.',
+    'Ao finalizar, digite o seu <b>PIN</b> (ou a sua senha). A venda, a comissão e a meta ficam no seu nome; o sistema guarda também quem estava logado.',
+    'Para cadastrar o PIN: clique no cadeado ao lado do seu nome → <b>Meu PIN de vendedora</b>, digite a senha atual e um PIN de 4 a 6 números.',
+    'No celular não precisa: você já entra com o seu usuário.'] },
   { t: 'Definir as metas do mês', quem: 'adm', rec: 'metas', ir: 'metas', p: [
     'Abra <b>Metas</b>, escolha o <b>Mês</b> e clique em <b>Definir metas do mês</b>.',
     'Informe a meta em R$ de cada vendedora (em branco = sem meta) e, se quiser, a <b>Meta da loja</b>.',
@@ -4909,6 +4921,7 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
+  { p: 'A venda saiu no nome da vendedora errada.', quem: 'adm', r: 'Em Vendas → Vendas realizadas, clique em vendedora na linha da venda, escolha a vendedora certa e informe o motivo. A comissão e a meta passam para ela; se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento.' },
   { p: 'A venda não entrou na meta da vendedora.', quem: 'adm', rec: 'metas', r: 'A meta conta as vendas feitas no usuário da vendedora (quem estava logado ao finalizar). Venda feita no usuário de outra pessoa entra na meta dessa pessoa. Vendas canceladas e devoluções saem da conta.' },
   { p: 'Dei um presente ou cashback por engano. Como desfaço?', quem: 'adm', rec: 'cashback', r: 'Em Aniversários e cashback, clique em Estornar presente na linha do cliente, ou abra Clientes → Ver e clique em estornar no crédito. Informe o motivo. Só volta o que ainda não foi usado; o estorno fica no extrato e no histórico.' },
   { p: 'O cashback do cliente sumiu.', quem: 'adm', rec: 'cashback', r: 'Provavelmente venceu: crédito com validade que não é usado a tempo vence sozinho e aparece no extrato do cliente como "Cashback vencido". Veja em Aniversários e cashback → Extrato do cashback.' },
@@ -6217,6 +6230,79 @@ ACT.metaBonus = el => {
   registrar('Bônus de meta lançado', `${u.nome} ${mes}: ${fmtR(s.bonus)} (meta ${fmtR(s.m.valor)}, vendido ${fmtR(s.vendido)})`); salvar(); render(); aviso(`Bônus de ${fmtR(s.bonus)} lançado em Contas a pagar (vence ${fmtDia(venc)}).`, 'ok');
 };
 ACT.ajudaMetas = () => ajudaRecurso('metas', 'Passo a passo – metas das vendedoras');
+/* ===== Vendedora da venda (comissão e meta justas) =====
+   A venda fica no nome de quem atendeu, não de quem está logado. No computador, o campo "Vendedora" vem com a pessoa
+   logada; se for outra, ela confirma com o PIN dela (ou a senha). No celular cada uma entra com o próprio usuário, então
+   não há escolha nem PIN. O administrador pode corrigir a vendedora de uma venda depois, com motivo; se a comissão do mês
+   já foi fechada, a diferença vira ajuste no próximo fechamento (como nas devoluções). */
+const ITER_PIN = 60000;
+const vendedorasLista = () => db.usuarios.filter(u => u.ativo !== false && u.perfil !== 'master').sort((a, b) => a.nome.localeCompare(b.nome));
+const vendDe = tipo => { const id = +((form[tipo] || {}).vend || 0); return (!MODO_REDE && id && db.usuarios.find(u => u.id === id && u.ativo !== false)) || eu; };
+function campoVendedora(tipo) {
+  if (MODO_REDE) return '';
+  const v = vendDe(tipo), l = vendedorasLista(); if (l.length < 2) return '';
+  return `<label>Vendedora (quem atendeu)<select data-f="${tipo}.vend">${l.map(u => `<option value="${u.id}" ${u.id === v.id ? 'selected' : ''}>${esc(u.nome)}${u.id === eu.id ? ' (logada)' : ''}</option>`).join('')}</select></label>`;
+}
+let pinOk = null;
+const precisaPin = tipo => { if (MODO_REDE) return null; const v = vendDe(tipo); return v && (v.id !== eu.id || db.config.pinSempre) ? v : null; };
+[['finalizarVenda', 'venda'], ['saidaCond', 'cond']].forEach(([k, tipo]) => {
+  const f = ACT[k];
+  ACT[k] = el => {
+    const v = precisaPin(tipo);
+    if (v && !(pinOk && pinOk.uid === v.id && pinOk.tipo === tipo && Date.now() - pinOk.em < 60000)) return pedirPin(v, k, tipo);
+    pinOk = null; return f(el);
+  };
+});
+function pedirPin(u, acao, tipo) {
+  abrirModal('Confirmar a vendedora', `<p>${tipo === 'venda' ? 'Esta venda' : 'Esta condicional'} vai ficar no nome de <b>${esc(u.nome)}</b>${u.id !== eu.id ? ` (está logado: ${esc(eu.nome)})` : ''}.</p>
+    <label>${esc(u.nome.split(' ')[0])}, digite o seu PIN${u.pinHash ? '' : ' (ainda não cadastrado: use a sua senha)'}<input id="pin-v" type="password" inputmode="${u.pinHash ? 'numeric' : 'text'}" autocomplete="off" data-enter="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}" autofocus></label>
+    <p class="mut">Pode usar o PIN ou a senha do sistema. O PIN é cadastrado em Minha senha (cadeado, embaixo do nome).</p>`,
+    `<button class="btn pri" data-act="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}">Confirmar</button>`);
+  setTimeout(() => { const i = $('#pin-v'); if (i) i.focus(); }, 50);
+}
+async function conferePin(u, v) {
+  if (!v) return false;
+  if (u.pinHash && (await pbkdf2Hex(v, u.pinSal, ITER_PIN)) === u.pinHash) return true;
+  return !!u.hash && conferirSenha(u, v);
+}
+ACT.pinConfirmar = async el => {
+  const u = db.usuarios.find(x => x.id === +el.dataset.id), v = ($('#pin-v') || {}).value || ''; if (!u) return;
+  if (!(await conferePin(u, v))) { registrar('PIN/senha errada ao confirmar vendedora', u.nome); salvar(); const i = $('#pin-v'); if (i) { i.value = ''; i.focus(); } return aviso('PIN ou senha incorreto.', 'erro'); }
+  pinOk = { uid: u.id, tipo: el.dataset.tipo, em: Date.now() }; fecharModal(); ACT[el.dataset.acao]();
+};
+// PIN da própria vendedora
+ACT.meuPin = () => abrirModal('Meu PIN de vendedora', `<p class="mut">O PIN confirma que a venda é sua quando outra pessoa está logada no computador do caixa. Use de 4 a 6 números.</p>
+  <div class="form2"><label class="full">Senha atual (para confirmar)<input id="mp-senha" type="password"></label><label>Novo PIN<input id="mp-pin" type="password" inputmode="numeric" maxlength="6"></label><label>Repita o PIN<input id="mp-pin2" type="password" inputmode="numeric" maxlength="6" data-enter="salvarMeuPin"></label></div>`,
+  `${eu.pinHash ? '<button class="btn perigo" data-act="tirarMeuPin">Apagar PIN</button>' : ''}<button class="btn pri" data-act="salvarMeuPin">Salvar PIN</button>`);
+ACT.salvarMeuPin = async () => {
+  if (!(await conferirSenha(eu, $('#mp-senha').value))) return aviso('Senha atual incorreta.', 'erro');
+  const p = $('#mp-pin').value.trim();
+  if (!/^\d{4,6}$/.test(p)) return aviso('O PIN precisa ter de 4 a 6 números.', 'erro');
+  if (/^(\d)\1+$/.test(p) || '0123456789'.indexOf(p) >= 0 || '9876543210'.indexOf(p) >= 0) return aviso('PIN muito fácil (números repetidos ou em sequência). Escolha outro.', 'erro');
+  if (p !== $('#mp-pin2').value.trim()) return aviso('Os PINs não conferem.', 'erro');
+  eu.pinSal = novoSal() + novoSal(); eu.pinHash = await pbkdf2Hex(p, eu.pinSal, ITER_PIN); eu.pinEm = agora();
+  registrar('Cadastrou o próprio PIN'); salvar(); fecharModal(); aviso('PIN salvo.', 'ok');
+};
+ACT.tirarMeuPin = () => { delete eu.pinHash; delete eu.pinSal; registrar('Apagou o próprio PIN'); salvar(); fecharModal(); aviso('PIN apagado. Para confirmar vendas, use a senha.', 'ok'); };
+// correção pelo administrador
+ACT.trocarVendedora = el => {
+  if (!adm()) return;
+  const v = db.vendas.find(x => x.id === +el.dataset.id); if (!v) return;
+  abrirModal('Vendedora da venda nº ' + nDoc(v.id), `<p>${fmtDH(v.data)} · ${esc(v.cliente || 'Consumidor')} · ${fmtR(v.total)}<br>Hoje no nome de <b>${esc(v.usuario)}</b>${v.registradoPor && v.registradoPor !== v.usuario ? ` (registrada por ${esc(v.registradoPor)})` : ''}.</p>
+    <div class="form2"><label>Passar para<select id="tv-u">${vendedorasLista().map(u => `<option value="${u.id}" ${u.id === v.usuarioId ? 'selected' : ''}>${esc(u.nome)}</option>`).join('')}</select></label><label>Motivo<input id="tv-mot" placeholder="ex.: venda feita no usuário da Ana"></label></div>
+    <p class="mut">A comissão e a meta passam para a vendedora escolhida. Se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento das duas.</p>
+    ${(v.vendHist || []).length ? '<h4 class="rel-sec">Alterações anteriores</h4>' + tabSimples(['Quando', 'De', 'Para', 'Por', 'Motivo'], v.vendHist.map(h => [fmtDH(h.em), esc(h.de), esc(h.para), esc(h.por), esc(h.motivo)])) : ''}`,
+    `<button class="btn pri" data-act="trocarVendedoraOk" data-id="${v.id}">Salvar</button>`);
+};
+ACT.trocarVendedoraOk = el => {
+  const v = db.vendas.find(x => x.id === +el.dataset.id), u = db.usuarios.find(x => x.id === +$('#tv-u').value), mot = $('#tv-mot').value.trim();
+  if (!v || !u) return; if (u.id === v.usuarioId) return fecharModal();
+  if (mot.length < 5) return aviso('Informe o motivo.', 'erro');
+  v.vendHist = (v.vendHist || []).concat([{ em: agora(), de: v.usuario, para: u.nome, por: eu.nome, motivo: mot }]);
+  const de = v.usuario; v.usuario = u.nome; v.usuarioId = u.id;
+  db.trocas.filter(t => t.venda === v.id).forEach(t => { t.vendaUsuarioId = u.id; });
+  registrar('Vendedora da venda alterada', `venda nº ${nDoc(v.id)}: ${de} → ${u.nome} – ${mot}`); salvar(); fecharModal(); render(); aviso(`Venda nº ${nDoc(v.id)} passou para ${u.nome}.`, 'ok');
+};
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */
