@@ -1,15 +1,12 @@
 {
- "versao": "2026.11.04-19",
- "publicadoEm": "04/11/2026 17:36",
+ "versao": "2026.11.04-20",
+ "publicadoEm": "04/11/2026 18:05",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "14b7b0c54ca18770e13290e04de1385dbe10cc34d83d2e3a0e3df12138446e89",
- "tamanho": 692171,
- "assinatura": "Ep0aU5CASZFliBN2GOO+z9Eb8qTCLnq+oXbMP9cMvu/zFafq1i7ARdGr6s+o88yB0aXeZGTET9uuRxT5DQawukwXFxH6jLLk6HCwHz7oyD+OIZVImOy4PSbSjIgmteHPpqyzhTBQjXTkSigUx/DoASBrdl7IoNW3E8emGtM6N41A8rKpYYhrx4tH14vGyal7ccJ0Z6D8rYMMDTAEHHBQRnQw/vE2+4XJAzJg34ANWQON4WByXyG1uuO+k5y6jUmsfrALy9TrOeA+j7H8GNKEunjZLTDlbjixqO43QSWcgaB99AcINbSfnPl7rZnQ8tNUiVTZ3MD17yBpOY1IMYOuv2k9sQGX4eBRiEywX9nvkVJ9g4+ktnxVA1f1zruJwAFjIpIp1i7GV2DHxD6K1/y19VPGjiQiVXlTUN88Q0TX6VHH5GcE6qHBQ1kQn/ojexW2oT1r/29aWKY/elTOtG7qzSfkVcWotcG7UorbsDJi7Q4iXMQerzCubEoyi8hcO29J",
+ "sha256": "b81cec2ddc28b8acf54571e27d4dfb846dda7bf9ce2852d8531254518e709f27",
+ "tamanho": 693358,
+ "assinatura": "llJvaA7rNh7JSCYKg1zT8JhoTtWY4DI/X4yr0KQfoSJYUGs84LV21RrvcTHYGEvNi7+V/PC64KZkoiXh7cvguxGDmtdhZFVMSDw0EbfCsIepgqT2oYKC8BmWHcxSt11D/ctzdjCKSIpcjuCR5y3TrJzlHADxDNXcb4lsdBtyP+JU51tjz3lCdEQTAqPqV6OeBVUnUuGyNJidC1X9zQ6VBaKaG+xwep6EcimdxAsD4Qi2KgDrnQfer+tG4IzLcfvIrA2bLuWwSSs9JM3Js3lid6/ytNes/n7VxhtrPxiNRjqLcq9ApPbY+ZRTvAadwIWnTD9O0f+8f/d39yFmEQHzY+tGvMa69Yo1XAxTXYns9+1cqckcRewYx+hVBR/mgM9DpLPabLU5Qnh7lhDvT7h3w987ImxbkLFZmbipBvfpKo+ZYUL0ixJIXRvaL+uf3FVHOwCTZ7nWdVwTeTZXuNdWnFMY05NLh80IJ0P3tCHGYPnzo5psKaiHJ0zAsuudWBRo",
  "novidades": [
-  "Vendedora da venda: em Vendas e Condicionais há o campo \"Vendedora (quem atendeu)\". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.",
-  "Se a vendedora escolhida não for a logada, ela confirma com o PIN dela (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada uma entra com o próprio usuário, sem PIN.",
-  "O administrador pode corrigir a vendedora de uma venda (Vendas realizadas → vendedora), com motivo. Comissão já fechada vira ajuste no próximo fechamento.",
-  "Opção em Configurações → Vendas e estoque: exigir PIN em toda venda (para computador que fica sempre aberto num usuário só)."
+  "PIN de vendedora mais fácil de achar: botão próprio (teclado numérico) ao lado do seu nome, link \"cadastrar meu PIN\" embaixo do campo Vendedora e aviso no Painel para quem ainda não cadastrou."
  ],
  "servidor": {
   "versao": "2026.11.04-19",
