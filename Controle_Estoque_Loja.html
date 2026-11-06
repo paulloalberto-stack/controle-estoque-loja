@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.04-21">
+<meta name="versao-sistema" content="2026.11.06-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1427,7 +1427,7 @@ function produtos() {
       <div class="seg" title="Como mostrar a lista">${[['modelo', 'Por modelo'], ['tamanho', 'Por tamanho']].map(([v, t]) => `<button class="${(f.modo || 'modelo') === v ? 'on' : ''}" data-act="prodModo" data-v="${v}">${t}</button>`).join('')}</div></div>
     <div class="acoes" style="justify-content:space-between">
       <span class="mut" id="prod-resumo"></span>
-      <span>${adm() ? '<button class="btn pri" data-act="novoProduto">+ Novo produto</button> <button class="btn ac" data-act="importarPlanilha">Importar planilha</button> <button class="btn" data-act="modeloPlanilha" title="Planilha de exemplo com as colunas que o sistema entende">Modelo da planilha</button> <button class="btn perigo" data-act="excluirSelecionados">Excluir selecionados</button> ' : ''}<button class="btn" data-act="etiquetasFiltro">Etiquetas dos produtos listados</button> <button class="btn" data-act="imprimirCompra">Imprimir lista de compra</button></span>
+      <span>${adm() ? '<button class="btn pri" data-act="novoProduto">+ Novo produto</button> <button class="btn ac" data-act="importarPlanilha">Importar planilha</button> <button class="btn" data-act="modeloPlanilha" title="Planilha de exemplo com as colunas que o sistema entende">Modelo da planilha</button> <button class="btn perigo" data-act="excluirSelecionados">Excluir selecionados</button> ' : ''}${adm() ? '<button class="btn pri" data-act="etiquetasSel">Etiquetas dos selecionados</button> ' : ''}<button class="btn" data-act="etiquetasFiltro">Etiquetas dos produtos listados</button> <button class="btn" data-act="imprimirCompra">Imprimir lista de compra</button></span>
     </div>
     <div id="tb-prod">${tabelaProdutos()}</div>
   </section>`;
@@ -2166,6 +2166,11 @@ function previaEtq() {
   $('#etq-prev').innerHTML = `<div class="etqs">${etqLista.filter((i, k) => q[k] > 0).slice(0, 6).map(i => etiquetaHTML(prod(i.prod), fmt)).join('')}</div>`;
 }
 ACT.etiquetas = el => { const p = prod(+el.dataset.id); formEtiquetas([{ prod: p.id, qtd: Math.max(1, p.estoque) }], 'Etiquetas – ' + esc(nomeCompleto(p))); };
+ACT.etiquetasSel = () => {
+  const ids = [...new Set([].concat(...$$('.sel-prod:checked').map(c => c.value.split(',').map(Number))))].filter(id => prod(id));
+  if (!ids.length) return aviso('Marque na caixinha da linha os produtos que quer etiquetar.', 'erro');
+  formEtiquetas(ids.map(id => ({ prod: id, qtd: Math.max(0, prod(id).estoque) })), `Etiquetas dos selecionados (${ids.length} produto(s))`);
+};
 ACT.etiquetasFiltro = () => formEtiquetas(produtosFiltrados().map(p => ({ prod: p.id, qtd: Math.max(0, p.estoque) })), 'Etiquetas dos produtos listados');
 ACT.etiquetasEntrada = el => { const e = db.entradas.find(x => x.id === +el.dataset.id); formEtiquetas(e.itens.map(i => ({ prod: i.prod, qtd: i.qtd })), 'Etiquetas da entrada nº ' + nDoc(e.id)); };
 ACT.imprimirEtq = () => {
@@ -4283,6 +4288,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.06-01', itens: ['Produtos e estoque: novo botão "Etiquetas dos selecionados". Marque os produtos na caixinha da linha e imprima só as etiquetas deles (o botão "Etiquetas dos produtos listados" continua imprimindo tudo o que está na lista).'] },
   { v: '2026.11.04-21', itens: ['Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.',
     'Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.',
     'O histórico registra como a vendedora confirmou (PIN ou senha) em cada venda e condicional.'] },
@@ -4915,7 +4921,7 @@ const AJUDA_PASSOS = [
   { t: 'Fazer uma troca ou devolução', quem: 'todos', ir: 'trocas', p: ['Abra <b>Trocas e devoluções</b>.', 'Digite o número do recibo da venda e clique em <b>Buscar venda</b>. (Sem o recibo em mãos: procure a venda em Vendas → Vendas realizadas.)', 'Informe a quantidade de cada peça que volta.', 'Escolha se o valor vira <b>vale-troca</b> (crédito do cliente, precisa de nome e telefone) ou é <b>devolvido</b>.', 'Confirme. As peças voltam ao estoque. Para levar outra peça na troca, faça uma venda nova usando o vale-troca.'] },
   { t: 'Dar entrada de mercadoria', quem: 'todos', ir: 'entradas', p: ['Abra <b>Entrada de mercadoria</b>.', 'Com nota fiscal eletrônica: clique em <b>Importar XML da NF-e do fornecedor</b> e escolha o arquivo XML. Os itens novos são cadastrados na hora.', 'Sem XML: preencha Fornecedor e Nota fiscal e adicione os produtos e as quantidades. (Produto novo precisa ser cadastrado antes em Produtos e estoque.)', 'Clique em <b>Confirmar entrada no estoque</b>.', 'Em <b>Últimas entradas</b>, clique em <b>Etiquetas</b> para imprimir as etiquetas das peças que chegaram.'] },
   { t: 'Cadastrar um produto', quem: 'adm', ir: 'produtos', p: ['Abra <b>Produtos e estoque</b> e clique em <b>+ Novo produto</b>.', 'Preencha tipo, descrição, marca, cor, tamanhos, preço de venda, custo e estoque mínimo.', 'Se quiser, coloque a foto (arquivo ou câmera).', 'Salve. Para muitos produtos de uma vez, use <b>Importar planilha</b> (baixe antes o <b>Modelo da planilha</b>).'] },
-  { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b>, ou em <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
+  { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b> para etiquetar tudo o que está na lista, ou marque a caixinha dos produtos que quer e clique em <b>Etiquetas dos selecionados</b>. Também há <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
   { t: 'Ajustar o estoque (contagem)', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, clique no <b>tamanho</b> do produto.', 'Escolha <b>Ajustar</b>.', 'Informe a <b>Quantidade contada na loja</b> e o <b>Motivo</b>.', 'Clique em <b>Salvar ajuste</b>. O ajuste fica registrado em Movimentações.'] },
   { t: 'Cancelar uma venda', quem: 'adm', ir: 'vendas', p: ['Em <b>Vendas → Vendas realizadas</b>, ache a venda (use as datas De / Até).', 'Clique em <b>Cancelar</b> e informe o <b>Motivo do cancelamento</b>.', 'Confirme. As peças voltam ao estoque. Se havia parcelas já pagas, devolva o valor ao cliente.'] },
   { t: 'Cadastrar uma vendedora', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Nova vendedora / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedora</b> e a senha inicial.', 'Defina a regra de comissão dela.', 'Salve. No primeiro acesso, ela troca a senha.'] },

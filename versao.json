@@ -1,14 +1,12 @@
 {
- "versao": "2026.11.04-21",
- "publicadoEm": "04/11/2026 18:12",
+ "versao": "2026.11.06-01",
+ "publicadoEm": "06/11/2026 08:04",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "e80eecc95a536e631e0b28281a307af79267161bcd32a21af50dca5c7b6c5047",
- "tamanho": 695193,
- "assinatura": "NA2Uy+rSiKmjWrJpJOLZcOVgyVcJ8NgjlJ+FkkWJn9OP/IgdUGTpATiP7li2TNM5ZoqSO654kr+ubBzev1k8ihuVQa9du33WKPInbce75CeXST1EQwjY9Qvc4KVYFJaA92IGupH6untyVo7FmB7mgtCB5BGDQmTA6FmG54Bof9NHs9OD1w5zmMCQ1FSgbN47Mbk/S9DrY6gOrbrOatUlGyGuus6sv3W/ecA+M2VbcNgWq5wrE999FFW/QbcIys2wy1l7WrL7YMkoVqymIQZ5XKLzknEVujmQ5r1bgI6UYMg+Z3WcBdqyZ8YTSf0HaUIsuncjHwXeG0xVXFX6e5pAUZ/kKv1jkjT3/MuLvTQQAYWqD5Sb8GCb89QXVUy6TcXtD79e4SFgN2MybI+T08Wsq93wTAJg/V5iW/QDPFAquNFxooFI6yfkYelq/jddqT3NKQn7GOHB88oOOPR9xRexagEo+H6uF9pPtx/EovvKwArjyiuw7fI6AYWT/e67Zxet",
+ "sha256": "c06f9fd2dbc21eea5ed0d8cb80d30e0a8c04812d4c6feb477d9b1adf7f73966e",
+ "tamanho": 696103,
+ "assinatura": "o/V8daQ8ksCj3yFM7/ql4X8FtDZek8i4ZLrYw2zRFSd6RjMwwYJy6ale3jiqtfCEGRjdQaV+wpfs5fdyY/C5yX1YhYpTt5TqazbJIcwbFEwDbX3QJrT9tAn1d0kHlf56H5Y+Nhxt9f69GZqrwEJ+Iz/YsMKeuGWJoGBWnVHCzgw67rrnsQyf5Go5isBqzOiu/zYF+bcNcwP0BmkFo3bBHZFUvTlcDddw5+aSBE5DDUGZzG3J594AJi73OyHq83gWyb5rHT+bfjMSi6wZ8KUFO+Ji/HEUzLm+GPjuuB8gtukmnE0aqK3hJ30R6LW1QGDxfe0Ea0mKkVTAVX5JvkuamMtI6iQfkPtvdsuMZoThM9Z7CzyBT9Z3bSUJ6Rm/uHYDGn++Ll6FSGZGtE7/pHl5cFMvrXti3algn+2zbr+SYewnNyfE992cA8Tj1vFypDi1a94l55v9wGlcNxyNSRYJVuTYLY5gdcuFibkyYziHmzcVdw9w3ZIx4tawRXa2zays",
  "novidades": [
-  "Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.",
-  "Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.",
-  "O histórico registra como a vendedora confirmou (PIN ou senha) em cada venda e condicional."
+  "Produtos e estoque: novo botão \"Etiquetas dos selecionados\". Marque os produtos na caixinha da linha e imprima só as etiquetas deles (o botão \"Etiquetas dos produtos listados\" continua imprimindo tudo o que está na lista)."
  ],
  "servidor": {
   "versao": "2026.11.04-19",
