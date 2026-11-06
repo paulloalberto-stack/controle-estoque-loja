@@ -1,12 +1,15 @@
 {
- "versao": "2026.11.06-01",
- "publicadoEm": "06/11/2026 08:04",
+ "versao": "2026.11.06-02",
+ "publicadoEm": "06/11/2026 11:45",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "c06f9fd2dbc21eea5ed0d8cb80d30e0a8c04812d4c6feb477d9b1adf7f73966e",
- "tamanho": 696103,
- "assinatura": "o/V8daQ8ksCj3yFM7/ql4X8FtDZek8i4ZLrYw2zRFSd6RjMwwYJy6ale3jiqtfCEGRjdQaV+wpfs5fdyY/C5yX1YhYpTt5TqazbJIcwbFEwDbX3QJrT9tAn1d0kHlf56H5Y+Nhxt9f69GZqrwEJ+Iz/YsMKeuGWJoGBWnVHCzgw67rrnsQyf5Go5isBqzOiu/zYF+bcNcwP0BmkFo3bBHZFUvTlcDddw5+aSBE5DDUGZzG3J594AJi73OyHq83gWyb5rHT+bfjMSi6wZ8KUFO+Ji/HEUzLm+GPjuuB8gtukmnE0aqK3hJ30R6LW1QGDxfe0Ea0mKkVTAVX5JvkuamMtI6iQfkPtvdsuMZoThM9Z7CzyBT9Z3bSUJ6Rm/uHYDGn++Ll6FSGZGtE7/pHl5cFMvrXti3algn+2zbr+SYewnNyfE992cA8Tj1vFypDi1a94l55v9wGlcNxyNSRYJVuTYLY5gdcuFibkyYziHmzcVdw9w3ZIx4tawRXa2zays",
+ "sha256": "be4495695b437821695ca39f11bb0c90d4cd21e1e1e7487d63a1a9203e28e342",
+ "tamanho": 702034,
+ "assinatura": "AtVhYENGxlX97gDdEd7zUvtYFT+NP6zprv151AUv/SEDkiHtBr8DUkMp/G/lIS2mzGKjpR55z/ucmDLf/WY04u+O+13FW2W9IgTI6azhLzluutmAKkNapr0KSNsFzieylFfCaxyl/7H7Y/VXOMvXa6C03Xfn4PS4XMLl2AS+GVVrxXI9HpG1nM8tmLOLs67sMTIKbUt4+d75Thrsnae4oCidVONZ1WBPqI2Ukf5FnqHkEfTXbnlyFhTPj0pewZSM+MeT9HGnuCA6btrcpKInsBiuOwYgXzhwZ4+7zqVRQxhl9p8XkVGSWzcL++HXbiG7DC14YTw058oslrmn+e7fCzFXcEysn1w/NqAqtmmX4r+ZQswpyhuOdfPTOFTRnWUqliIPwsKfEo1M40ATNem4Lfev4YQdwaWSWha/ILir5JOLKj5z6cp1V+rWM//lndfG1f0rDA/DU3eTUip/w5dqZbkMRUlgQgmS74pZ6iPzuZ5JYht93JSw5jRNhB3uEyiL",
  "novidades": [
-  "Produtos e estoque: novo botão \"Etiquetas dos selecionados\". Marque os produtos na caixinha da linha e imprima só as etiquetas deles (o botão \"Etiquetas dos produtos listados\" continua imprimindo tudo o que está na lista)."
+  "Taxas de cartão por bandeira (Visa, Mastercard, Elo, American Express, Hipercard): em Maquininhas e taxas cada maquininha tem uma tabela com débito, crédito 1x e 2x a 12x por bandeira; o que ficar em branco usa a linha \"Todas as bandeiras\".",
+  "Na venda com cartão escolhe-se a bandeira; o recibo mostra, por exemplo, \"Cartão de crédito Visa 3x\". Cartões a receber mostra a bandeira no detalhe e um resumo \"Taxas por bandeira\".",
+  "Cashback e crédito: se uma venda paga com crédito for cancelada, o valor volta para o mesmo crédito, com a mesma validade (antes voltava sem validade).",
+  "Configurações e telas com campos alinhados: as caixas de uma mesma linha ficam na mesma altura, mesmo quando o título do campo ocupa duas linhas."
  ],
  "servidor": {
   "versao": "2026.11.04-19",

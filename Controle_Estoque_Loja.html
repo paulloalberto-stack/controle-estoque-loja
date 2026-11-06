@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.06-01">
+<meta name="versao-sistema" content="2026.11.06-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -548,7 +548,16 @@ input[data-maiusc]::placeholder{text-transform:none}
   .form2{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
+/* campos alinhados: em cada linha da grade as caixas ficam na mesma altura, mesmo quando o título quebra em duas linhas */
+.form2>label:not(.chk):not(.full),.form3>label:not(.chk):not(.full){display:flex;flex-direction:column;justify-content:flex-end}
+.form2>label:not(.chk)>input,.form2>label:not(.chk)>select,.form3>label:not(.chk)>input,.form3>label:not(.chk)>select{margin-top:4px}
+.form2>div,.form3>div{align-self:end}
+.form2>.btn,.form3>.btn{align-self:end;justify-content:center;min-height:38px}
+.cfg-pane [data-act=pixTeste]{white-space:nowrap;padding:9px 8px;font-size:12.5px;align-self:end;min-height:38px;justify-content:center}
+input[type=color]{height:38px;padding:3px 5px;cursor:pointer}
+.cfg-pane .acoes{align-items:center}
 /* recursos premium */
+.mq-tab th,.mq-tab td{padding:4px 5px;white-space:nowrap}.mq-tab input{width:50px;padding:5px 5px;text-align:right}.mq-tab tbody th{text-align:left;font-weight:600;font-size:12.5px;background:none;text-transform:none;letter-spacing:0;color:var(--ink)}
 .meta-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
 .meta-banner{padding:0;border:0;background:none;box-shadow:none;cursor:pointer}.meta-banner .meta-card{margin:0}
 .meta-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -1886,7 +1895,7 @@ ACT.finalizarVenda = () => {
 /* pagamentos: várias formas, troco, crediário e crédito do cliente */
 function totalVenda() { const sub = r2(carrinho.venda.reduce((s, i) => s + i.qtd * i.valor, 0)); return r2(sub - calcDesconto(sub, form.venda.desc, form.venda.desct)); }
 function calcPags(pags, total) {
-  const l = pags.map(p => ({ forma: p.forma, valor: String(p.valor).trim() === '' ? null : r2(num(p.valor)), maq: p.maq, parc: p.parc }));
+  const l = pags.map(p => ({ forma: p.forma, valor: String(p.valor).trim() === '' ? null : r2(num(p.valor)), maq: p.maq, parc: p.parc, band: p.band }));
   const resto = r2(total - l.reduce((s, x) => s + (x.valor || 0), 0));
   let primeira = true; l.forEach(x => { if (x.valor == null) { x.valor = primeira ? Math.max(0, resto) : 0; primeira = false; } });
   const soma = r2(l.reduce((s, x) => s + x.valor, 0)), dif = r2(soma - total);
@@ -1914,7 +1923,7 @@ function validarPags(pags, total, cl, parc, venc1) {
   if ((cred || praz) && !cl) { aviso('Crediário e crédito do cliente exigem cliente cadastrado. Escolha o cliente na lista ou cadastre.', 'erro'); return null; }
   if (cred && cred > saldoCredito(cl.id) + 0.001) { aviso(`Crédito disponível do cliente: ${fmtR(saldoCredito(cl.id))}.`, 'erro'); return null; }
   let troco = r.troco; const linhas = [];
-  r.linhas.slice().reverse().forEach(x => { let v = x.valor; if (troco && x.forma === 'Dinheiro') { const t = Math.min(troco, v); v = r2(v - t); troco = r2(troco - t); } if (v > 0) linhas.unshift(Object.assign({ forma: x.forma, valor: v }, x.maq != null && x.maq !== '' ? { maq: x.maq } : {}, x.parc ? { parc: x.parc } : {})); });
+  r.linhas.slice().reverse().forEach(x => { let v = x.valor; if (troco && x.forma === 'Dinheiro') { const t = Math.min(troco, v); v = r2(v - t); troco = r2(troco - t); } if (v > 0) linhas.unshift(Object.assign({ forma: x.forma, valor: v }, x.maq != null && x.maq !== '' ? { maq: x.maq } : {}, x.parc ? { parc: x.parc } : {}, x.band ? { band: x.band } : {})); });
   return { linhas, troco: r.troco, recebidoDinheiro: din, cred, praz, parc: Math.max(1, Math.min(24, int(parc) || 1)), venc1: venc1 || somaDias(30), cl };
 }
 function registrarPags(v, pg) {
@@ -4288,6 +4297,10 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.06-02', itens: ['Taxas de cartão por bandeira (Visa, Mastercard, Elo, American Express, Hipercard): em Maquininhas e taxas cada maquininha tem uma tabela com débito, crédito 1x e 2x a 12x por bandeira; o que ficar em branco usa a linha "Todas as bandeiras".',
+    'Na venda com cartão escolhe-se a bandeira; o recibo mostra, por exemplo, "Cartão de crédito Visa 3x". Cartões a receber mostra a bandeira no detalhe e um resumo "Taxas por bandeira".',
+    'Cashback e crédito: se uma venda paga com crédito for cancelada, o valor volta para o mesmo crédito, com a mesma validade (antes voltava sem validade).',
+    'Configurações e telas com campos alinhados: as caixas de uma mesma linha ficam na mesma altura, mesmo quando o título do campo ocupa duas linhas.'] },
   { v: '2026.11.06-01', itens: ['Produtos e estoque: novo botão "Etiquetas dos selecionados". Marque os produtos na caixinha da linha e imprima só as etiquetas deles (o botão "Etiquetas dos produtos listados" continua imprimindo tudo o que está na lista).'] },
   { v: '2026.11.04-21', itens: ['Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.',
     'Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.',
@@ -4894,16 +4907,15 @@ const AJUDA_PASSOS = [
     'Tenha em mãos as taxas da maquininha: ficam no aplicativo ou no site da operadora (Stone, Cielo, PagSeguro, Mercado Pago, Getnet…), em <b>Taxas</b> ou <b>Meu plano</b>, ou no contrato.',
     'Abra <b>Cartões a receber</b> e clique em <b>Maquininhas e taxas</b>.',
     'Em <b>Nome da maquininha</b>, escreva como você a chama (ex.: Stone).',
-    '<b>Débito (%)</b>: a taxa do débito (ex.: 1,49). Em <b>Débito cai em (dias)</b>, normalmente <b>1</b>.',
-    '<b>Crédito à vista (%)</b>: a taxa do crédito em 1x. Em <b>Crédito cai em (dias)</b>, normalmente <b>30</b>.',
-    '<b>Crédito parcelado (%)</b>: a taxa de cada número de parcelas (2x, 3x… 12x). O que ficar em branco usa a taxa do crédito à vista.',
+    'Em <b>Débito cai em (dias)</b>, normalmente <b>1</b>; em <b>Crédito cai em (dias)</b>, normalmente <b>30</b>.',
+        '<b>Taxas por bandeira</b>: na linha <b>Todas as bandeiras</b>, preencha débito, crédito 1x e o parcelado (2x a 12x). Se alguma bandeira (Visa, Mastercard, Elo, American Express, Hipercard) tem taxa diferente, preencha só o que muda na linha dela; o que ficar em branco usa a linha de cima. Parcelado em branco usa a taxa de 1x. Cielo, Stone, Rede e PagSeguro são operadoras: cada uma é uma maquininha.',
     'Se a operadora paga o parcelado todo de uma vez (antecipação automática), marque <b>Recebimento antecipado</b>, coloque em <b>Crédito cai em (dias)</b> o prazo da antecipação (ex.: 1) e use nas parcelas a taxa já com a antecipação.',
     'Tem mais de uma maquininha? Clique em <b>+ Outra maquininha</b> e repita. A primeira da lista é a que vem marcada na venda. Desmarque <b>Em uso</b> na que não usa mais.',
     'Clique em <b>Salvar taxas</b>. As taxas valem para as próximas vendas; as vendas já feitas ficam com a taxa do dia em que foram feitas.'] },
   { t: 'Vender no cartão de crédito parcelado', quem: 'todos', rec: 'taxas', ir: 'vendas', p: [
     'Monte a venda normalmente.',
     'Em <b>Pagamento</b> escolha <b>Cartão de crédito</b>.',
-    'Escolha a <b>maquininha</b> (só aparece quando a loja tem mais de uma) e as <b>parcelas</b>: à vista, 2x, 3x… Use o mesmo número de parcelas que foi passado na maquininha.',
+    'Escolha a <b>bandeira</b> do cartão (Visa, Mastercard…), a <b>maquininha</b> (só aparece quando a loja tem mais de uma) e as <b>parcelas</b>: à vista, 2x, 3x… Use o mesmo número de parcelas que foi passado na maquininha.',
     'Clique em <b>Finalizar venda e emitir recibo</b>. O recibo mostra, por exemplo, "Cartão de crédito 3x", e o valor já entra em Cartões a receber com a data em que cai na conta.'] },
   { t: 'Conferir o depósito do cartão', quem: 'adm', rec: 'taxas', ir: 'cartoes', p: [
     'Abra <b>Cartões a receber</b>. Cada linha é um dia e uma maquininha: vendido (bruto), taxas e o <b>líquido esperado</b>, que é o que deve cair na conta.',
@@ -5552,11 +5564,18 @@ function premium() {
 const CARTOES = ['Cartão de débito', 'Cartão de crédito'];
 const maquininhas = () => (db.config.maquininhas || []).filter(m => m.ativa !== false);
 const maqPorId = id => (db.config.maquininhas || []).find(m => m.id === id) || null;
-function taxaMaq(m, forma, parc) {
+const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'American Express', 'Hipercard'];
+const temVal = x => x !== '' && x != null;
+// taxa da bandeira; o que estiver em branco na bandeira usa a linha "Todas as bandeiras"
+function taxaMaq(m, forma, parc, band) {
   if (!m) return 0;
-  if (forma === 'Cartão de débito') return num(m.debito);
+  const b = (m.bandeiras || {})[band] || {}, ou = (x, y) => temVal(x) ? num(x) : num(y);
+  if (forma === 'Cartão de débito') return ou(b.debito, m.debito);
   parc = int(parc) || 1;
-  return parc <= 1 ? num(m.credito) : num((m.parcelado || [])[parc - 2]) || num(m.credito);
+  const vista = ou(b.credito, m.credito);
+  if (parc <= 1) return vista;
+  const bp = (b.parcelado || [])[parc - 2], mp = (m.parcelado || [])[parc - 2];
+  return temVal(bp) ? num(bp) : temVal(mp) ? num(mp) : vista;
 }
 const prazoMaq = (m, forma) => forma === 'Cartão de débito' ? (m && m.diasDeb !== '' && m.diasDeb != null ? int(m.diasDeb) : 1) : (m && m.diasCred !== '' && m.diasCred != null ? int(m.diasCred) : 30);
 function diaUtil(iso) { const d = new Date(iso + 'T12:00:00'); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1); return dataLocal(d); }
@@ -5564,12 +5583,13 @@ function diaUtil(iso) { const d = new Date(iso + 'T12:00:00'); while (d.getDay()
 function gravarTaxasVenda(v) {
   if (!temRecurso('taxas')) return;
   (v.pagamentos || []).forEach(p => {
-    if (CARTOES.indexOf(p.forma) < 0) { delete p.maq; delete p.parc; return; }
+    if (CARTOES.indexOf(p.forma) < 0) { delete p.maq; delete p.parc; delete p.band; return; }
     const m = maqPorId(+p.maq) || maquininhas()[0]; if (!m) return;
     p.maq = m.id; p.maqNome = m.nome; p.parc = p.forma === 'Cartão de crédito' ? Math.max(1, Math.min(12, int(p.parc) || 1)) : 1;
-    p.taxa = taxaMaq(m, p.forma, p.parc); p.dias = prazoMaq(m, p.forma); p.antecipa = !!m.antecipa;
+    p.band = BANDEIRAS.indexOf(p.band) >= 0 ? p.band : '';
+    p.taxa = taxaMaq(m, p.forma, p.parc, p.band); p.dias = prazoMaq(m, p.forma); p.antecipa = !!m.antecipa;
   });
-  v.pagamento = (v.pagamentos || []).map(p => p.forma + (p.parc > 1 ? ' ' + p.parc + 'x' : '')).join(' + ');
+  v.pagamento = (v.pagamentos || []).map(p => p.forma + (p.band ? ' ' + p.band : '') + (p.parc > 1 ? ' ' + p.parc + 'x' : '')).join(' + ');
 }
 // recebíveis de cartão (uma linha por parcela)
 function recebiveis() {
@@ -5577,14 +5597,14 @@ function recebiveis() {
   vendasValidas().forEach(v => pagsVenda(v).forEach(p => {
     if (CARTOES.indexOf(p.forma) < 0 || !(p.valor > 0)) return;
     const est = p.taxa == null, m = est ? (maqPorId(+p.maq) || pad) : null;
-    const taxa = est ? taxaMaq(m, p.forma, p.parc) : num(p.taxa), dias = est ? prazoMaq(m, p.forma) : int(p.dias);
+    const taxa = est ? taxaMaq(m, p.forma, p.parc, p.band) : num(p.taxa), dias = est ? prazoMaq(m, p.forma) : int(p.dias);
     const n = p.forma === 'Cartão de crédito' && !(est ? m && m.antecipa : p.antecipa) ? Math.max(1, int(p.parc) || 1) : 1;
     const maq = est ? (m ? m.nome : '(sem maquininha)') : (p.maqNome || '—'), dv = v.data.slice(0, 10);
     const taxaV = r2(p.valor * taxa / 100), liq = r2(p.valor - taxaV);
     const bB = Math.floor(p.valor / n * 100) / 100, bL = Math.floor(liq / n * 100) / 100;
     for (let k = 1; k <= n; k++) {
       const bruto = k === n ? r2(p.valor - bB * (n - 1)) : bB, liquido = k === n ? r2(liq - bL * (n - 1)) : bL;
-      out.push({ venda: v.id, dataVenda: dv, forma: p.forma, parc: k, de: int(p.parc) || 1, maq, taxa, bruto, tarifa: r2(bruto - liquido), liquido, est,
+      out.push({ venda: v.id, dataVenda: dv, forma: p.forma, band: p.band || '', parc: k, de: int(p.parc) || 1, maq, taxa, bruto, tarifa: r2(bruto - liquido), liquido, est,
         prev: diaUtil(somaDiasDe(dv, dias + 30 * (k - 1))) });
     }
   }));
@@ -5615,6 +5635,13 @@ function cartoes() {
     <div style="align-self:end;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="maqConfig">Maquininhas e taxas</button><button class="btn" data-act="carExportar">PDF / Excel</button><button class="btn" data-act="ajudaCartao">Passo a passo</button></div></div>
     <div id="car-corpo">${corpoCartoes()}</div></section>`;
 }
+function resumoBandeiras(ag) {
+  const g = {}; ag.forEach(x => x.itens.forEach(r => { const k = (r.band || 'Não informada') + '|' + r.forma; const a = g[k] = g[k] || { band: r.band || 'Não informada', forma: r.forma, n: 0, bruto: 0, tarifa: 0, liquido: 0 }; a.n++; a.bruto = r2(a.bruto + r.bruto); a.tarifa = r2(a.tarifa + r.tarifa); a.liquido = r2(a.liquido + r.liquido); }));
+  const l = Object.values(g).sort((a, b) => b.bruto - a.bruto); if (!l.length) return '';
+  return `<details class="aj-item"><summary>Taxas por bandeira (${l.length})</summary>${tabSimples(['Bandeira', 'Forma', 'Lanç.', 'Bruto', 'Taxas', 'Taxa média', 'Líquido'],
+    l.map(a => [esc(a.band), esc(a.forma.replace('Cartão de ', '')), a.n, fmtR(a.bruto), fmtR(a.tarifa), a.bruto ? fmtDec(a.tarifa / a.bruto * 100) + '%' : '—', fmtR(a.liquido)]),
+    ['Total', '', l.reduce((s, a) => s + a.n, 0), fmtR(r2(somar(l, a => a.bruto))), fmtR(r2(somar(l, a => a.tarifa))), '', fmtR(r2(somar(l, a => a.liquido)))])}</details>`;
+}
 function filtrarCartoes() {
   const f = filtros.car;
   return agendaCartoes(recebiveis().filter(r => r.prev >= f.de && r.prev <= f.ate && (!f.maq || r.maq === f.maq))).filter(x => !f.sit || x.sit === f.sit);
@@ -5628,6 +5655,7 @@ function corpoCartoes() {
       <div class="rbox"><small>Taxas da maquininha</small><b class="err">${fmtR(soma(ag, 'tarifa'))}</b><span>${soma(ag, 'bruto') ? (soma(ag, 'tarifa') / soma(ag, 'bruto') * 100).toFixed(2).replace('.', ',') + '% do bruto' : ''}</span></div>
       <div class="rbox ok"><small>Líquido que cai na conta</small><b>${fmtR(soma(ag, 'liquido'))}</b><span>a receber: ${fmtR(soma(fut, 'liquido'))}</span></div>
       <div class="rbox ${pend.length || dif.length ? 'at' : ''}"><small>Conferência</small><b>${pend.length} a conferir</b><span>${dif.length ? dif.length + ' com diferença (' + fmtR(r2(dif.reduce((s, x) => s + x.dif, 0))) + ')' : 'nenhuma diferença'}</span></div></div>
+    ${resumoBandeiras(ag)}
     ${est ? '<p class="mut">Vendas feitas antes do cadastro das taxas aparecem com a taxa atual da maquininha (estimada, marcada com *).</p>' : ''}
     ${ag.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Cai na conta</th><th>Maquininha</th><th class="n">Lanç.</th><th class="n">Bruto</th><th class="n">Taxas</th><th class="n">Líquido esperado</th><th class="n">Caiu na conta</th><th class="n">Diferença</th><th>Situação</th><th></th></tr></thead><tbody>
       ${ag.map(x => `<tr><td>${fmtDia(x.data)}</td><td>${esc(x.maq)}${x.itens.some(r => r.est) ? ' *' : ''}</td><td class="n">${x.itens.length}</td><td class="n">${fmtR(x.bruto)}</td><td class="n">${fmtR(x.tarifa)}</td><td class="n"><b>${fmtR(x.liquido)}</b></td>
@@ -5640,9 +5668,9 @@ const grupoCartao = k => { const [data, maq] = k.split('|'); return agendaCartoe
 ACT.carDetalhe = el => {
   const x = grupoCartao(el.dataset.k); if (!x) return;
   modalAnalitico(`Cartões – ${x.maq} – ${fmtDia(x.data)}`, `Lançamentos que caem na conta em ${fmtDia(x.data)}`,
-    [C('Venda', 's'), C('Data da venda', 's'), C('Forma', 's'), C('Parcela', 's'), C('Bruto', 'r'), C('Taxa %', 's'), C('Taxa R$', 'r'), C('Líquido', 'r')],
-    x.itens.map(r => ({ c: [nDoc(r.venda), fmtDia(r.dataVenda), r.forma, r.de > 1 ? r.parc + '/' + r.de : 'à vista', r.bruto, fmtDec(r.taxa) + '%' + (r.est ? ' *' : ''), r.tarifa, r.liquido] }))
-      .concat([{ forte: true, c: ['Total', '', '', '', x.bruto, '', x.tarifa, x.liquido] }]));
+    [C('Venda', 's'), C('Data da venda', 's'), C('Forma', 's'), C('Bandeira', 's'), C('Parcela', 's'), C('Bruto', 'r'), C('Taxa %', 's'), C('Taxa R$', 'r'), C('Líquido', 'r')],
+    x.itens.map(r => ({ c: [nDoc(r.venda), fmtDia(r.dataVenda), r.forma, r.band || '—', r.de > 1 ? r.parc + '/' + r.de : 'à vista', r.bruto, fmtDec(r.taxa) + '%' + (r.est ? ' *' : ''), r.tarifa, r.liquido] }))
+      .concat([{ forte: true, c: ['Total', '', '', '', '', x.bruto, '', x.tarifa, x.liquido] }]));
 };
 ACT.carConferir = el => {
   const x = grupoCartao(el.dataset.k); if (!x) return;
@@ -5675,12 +5703,14 @@ function ajudaRecurso(rec, titulo) {
 }
 // cadastro das maquininhas
 function linhaMaq(m, i) {
-  const pc = k => `<label>${k}x<input class="val mq-p" data-k="${k}" value="${esc(fmtDec0((m.parcelado || [])[k - 2]))}"></label>`;
-  return `<div class="mq-card" data-i="${i}"><div class="form3"><label>Nome da maquininha<input class="mq-nome" value="${esc(m.nome || '')}" placeholder="ex.: Stone, Cielo, PagSeguro"></label>
-      <label>Débito (%)<input class="val mq-deb" value="${esc(fmtDec0(m.debito))}"></label><label>Débito cai em (dias)<input class="val mq-ddeb" type="number" min="0" value="${m.diasDeb == null ? 1 : m.diasDeb}"></label>
-      <label>Crédito à vista (%)<input class="val mq-cred" value="${esc(fmtDec0(m.credito))}"></label><label>Crédito cai em (dias)<input class="val mq-dcred" type="number" min="0" value="${m.diasCred == null ? 30 : m.diasCred}"></label>
-      <label class="chk" style="align-self:end"><input type="checkbox" class="mq-ant" ${m.antecipa ? 'checked' : ''}> Recebimento antecipado (parcelado cai todo de uma vez)</label></div>
-    <p class="mut" style="margin:8px 0 4px">Crédito parcelado (%) – deixe em branco para usar a taxa do crédito à vista</p><div class="mq-parc">${[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(pc).join('')}</div>
+  const cel = (o, k) => { const v = k === 'd' ? o.debito : k === 1 ? o.credito : (o.parcelado || [])[k - 2]; return `<td><input class="val mq-t" data-k="${k}" value="${esc(fmtDec0(v))}" inputmode="decimal"></td>`; };
+  const linha = (rot, b, o) => `<tr data-b="${esc(b)}"><th>${rot}</th>${['d', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(k => cel(o || {}, k)).join('')}</tr>`;
+  return `<div class="mq-card" data-i="${i}"><div class="form3"><label>Nome da maquininha (operadora)<input class="mq-nome" value="${esc(m.nome || '')}" placeholder="ex.: Stone, Cielo, Rede, PagSeguro"></label>
+      <label>Débito cai em (dias)<input class="val mq-ddeb" type="number" min="0" value="${m.diasDeb == null ? 1 : m.diasDeb}"></label><label>Crédito cai em (dias)<input class="val mq-dcred" type="number" min="0" value="${m.diasCred == null ? 30 : m.diasCred}"></label></div>
+    <label class="chk"><input type="checkbox" class="mq-ant" ${m.antecipa ? 'checked' : ''}> Recebimento antecipado (o parcelado cai todo de uma vez)</label>
+    <p class="mut" style="margin:10px 0 4px">Taxas (%) por bandeira. Preencha a linha <b>Todas as bandeiras</b>; nas bandeiras, só o que for diferente (em branco = usa a linha de cima). Parcelado em branco = usa a taxa de 1x.</p>
+    <div class="tabw"><table class="tb mq-tab"><thead><tr><th>Bandeira</th><th>Débito</th><th>Crédito 1x</th>${[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(k => `<th>${k}x</th>`).join('')}</tr></thead><tbody>
+      ${linha('Todas as bandeiras', '', m)}${BANDEIRAS.map(b => linha(b, b, (m.bandeiras || {})[b])).join('')}</tbody></table></div>
     <div class="acoes" style="justify-content:space-between"><label class="chk"><input type="checkbox" class="mq-ativa" ${m.ativa !== false ? 'checked' : ''}> Em uso</label><button class="lnk perigo" data-act="maqTirar" data-i="${i}">remover</button></div></div>`;
 }
 const fmtDec0 = v => v === '' || v == null ? '' : fmtDec(v);
@@ -5697,8 +5727,13 @@ function desenharMaq() {
 }
 const lerMaqTela = () => $$('.mq-card').forEach(c => {
   const m = maqTemp[+c.dataset.i], q = s => c.querySelector(s), nv = s => { const t = q(s).value.trim(); return t === '' ? '' : r2(num(t)); };
-  m.nome = q('.mq-nome').value.trim(); m.debito = nv('.mq-deb'); m.credito = nv('.mq-cred'); m.diasDeb = int(q('.mq-ddeb').value); m.diasCred = int(q('.mq-dcred').value);
-  m.antecipa = q('.mq-ant').checked; m.ativa = q('.mq-ativa').checked; m.parcelado = [...c.querySelectorAll('.mq-p')].map(x => x.value.trim() === '' ? '' : r2(num(x.value)));
+  m.nome = q('.mq-nome').value.trim(); m.diasDeb = int(q('.mq-ddeb').value); m.diasCred = int(q('.mq-dcred').value);
+  m.antecipa = q('.mq-ant').checked; m.ativa = q('.mq-ativa').checked; m.bandeiras = {};
+  c.querySelectorAll('.mq-tab tbody tr').forEach(tr => {
+    const v = k => { const x = tr.querySelector(`.mq-t[data-k="${k}"]`).value.trim(); return x === '' ? '' : r2(num(x)); };
+    const o = { debito: v('d'), credito: v(1), parcelado: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(v) };
+    if (!tr.dataset.b) Object.assign(m, o); else if ([o.debito, o.credito].concat(o.parcelado).some(temVal)) m.bandeiras[tr.dataset.b] = o;
+  });
 });
 ACT.maqNova = () => { lerMaqTela(); maqTemp.push({ id: Math.max(0, ...maqTemp.map(m => m.id || 0)) + 1, nome: '', ativa: true }); desenharMaq(); };
 ACT.maqTirar = el => { lerMaqTela(); maqTemp.splice(+el.dataset.i, 1); desenharMaq(); };
@@ -5707,7 +5742,7 @@ ACT.maqSalvar = () => {
   const ok = maqTemp.filter(m => m.nome);
   if (maqTemp.some(m => !m.nome)) return aviso('Dê um nome a cada maquininha (ou remova a que está em branco).', 'erro');
   if (new Set(ok.map(m => m.nome.toLowerCase())).size !== ok.length) return aviso('Há duas maquininhas com o mesmo nome.', 'erro');
-  if (ok.some(m => [m.debito, m.credito].concat(m.parcelado).some(t => t !== '' && (t < 0 || t > 30)))) return aviso('Confira as taxas: use o percentual (ex.: 1,99), entre 0 e 30.', 'erro');
+  if (ok.some(m => [m.debito, m.credito].concat(m.parcelado || [], ...Object.values(m.bandeiras || {}).map(b => [b.debito, b.credito].concat(b.parcelado || []))).some(t => t !== '' && (t < 0 || t > 30)))) return aviso('Confira as taxas: use o percentual (ex.: 1,99), entre 0 e 30.', 'erro');
   db.config.maquininhas = ok; registrar('Taxas das maquininhas alteradas', ok.map(m => `${m.nome}: déb ${fmtDec0(m.debito) || 0}% cré ${fmtDec0(m.credito) || 0}%`).join('; '));
   salvar(); fecharModal(); render(); aviso('Taxas salvas. Valem para as próximas vendas.', 'ok');
 };
@@ -5715,7 +5750,8 @@ ACT.maqSalvar = () => {
 function extraPagCartao(p, i) {
   if (!temRecurso('taxas') || CARTOES.indexOf(p.forma) < 0 || !maquininhas().length) return '';
   const ms = maquininhas(), m = maqPorId(+p.maq) || ms[0];
-  return `${ms.length > 1 ? `<select data-pag="${i}" data-campo="maq" title="Maquininha">${ms.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>` : ''}
+  return `<select data-pag="${i}" data-campo="band" title="Bandeira do cartão"><option value="">Bandeira…</option>${BANDEIRAS.map(b => `<option ${b === p.band ? 'selected' : ''}>${b}</option>`).join('')}<option value="" disabled>──</option><option value="">Outra</option></select>
+    ${ms.length > 1 ? `<select data-pag="${i}" data-campo="maq" title="Maquininha">${ms.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>` : ''}
     ${p.forma === 'Cartão de crédito' ? `<select data-pag="${i}" data-campo="parc" title="Parcelas no cartão">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(k => `<option value="${k}" ${k === (int(p.parc) || 1) ? 'selected' : ''}>${k === 1 ? 'à vista' : k + 'x'}</option>`).join('')}</select>` : ''}`;
 }
 /* ===== Premium: inventário em lote com leitor =====
@@ -5981,13 +6017,23 @@ const cfgFid = () => Object.assign({ ativo: false, pct: 5, dias: 60, minimo: 0, 
 function lotesCredito(cid) {
   const ev = db.creditos.filter(c => c.clienteId === cid).slice().sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id);
   const lotes = [], vence = ts => lotes.forEach(l => { if (l.validade && l.resto > 0 && l.validade + 'T23:59:59' < ts) { l.vencido = r2(l.resto); l.resto = 0; } });
+  const usos = {}, vendaDe = ref => (String(ref || '').match(/venda nº (\S+)/) || [])[1];
   ev.forEach(c => {
     vence(String(c.data));
     if (c.expira) return;   // o lançamento de vencimento já é representado pelo próprio vencimento
+    if (c.valor > 0 && /^Estorno – venda nº .* cancelada$/.test(c.ref || '')) {   // venda cancelada: o crédito volta para os mesmos lotes, com a validade deles
+      let falta = c.valor; (usos[vendaDe(c.ref)] || []).forEach(x => {
+        if (falta <= 0) return; const u = Math.min(x.u, falta); falta = r2(falta - u); x.u = r2(x.u - u);
+        if (x.l.validade && x.l.validade + 'T23:59:59' < String(c.data)) x.l.vencido = r2((x.l.vencido || 0) + u); else x.l.resto = r2(x.l.resto + u);
+      });
+      if (falta > 0.005) lotes.push({ id: c.id, valor: falta, resto: falta, validade: '', cashback: false, ref: c.ref });
+      return;
+    }
     if (c.valor > 0) { lotes.push({ id: c.id, valor: c.valor, resto: c.valor, validade: c.validade || '', cashback: !!c.cashback, ref: c.ref }); return; }
     let falta = -c.valor;
+    const uso = /^Usado na venda nº /.test(c.ref || '') ? (usos[vendaDe(c.ref)] = usos[vendaDe(c.ref)] || []) : null;
     if (c.estornoDe) { const l = lotes.find(x => x.id === c.estornoDe); if (l) { const u = Math.min(l.resto, falta); l.resto = r2(l.resto - u); falta = r2(falta - u); } }
-    lotes.filter(l => l.resto > 0).sort((a, b) => (a.validade || '9999').localeCompare(b.validade || '9999')).forEach(l => { if (falta <= 0) return; const u = Math.min(l.resto, falta); l.resto = r2(l.resto - u); falta = r2(falta - u); });
+    lotes.filter(l => l.resto > 0).sort((a, b) => (a.validade || '9999').localeCompare(b.validade || '9999')).forEach(l => { if (falta <= 0) return; const u = Math.min(l.resto, falta); l.resto = r2(l.resto - u); falta = r2(falta - u); if (uso) uso.push({ l, u }); });
   });
   vence(hoje() + 'T00:00:00');
   return lotes;
@@ -5997,8 +6043,10 @@ function vencerCreditos(cid) {
   if (MODO_REDE) return 0;
   const ids = cid ? [cid] : [...new Set(db.creditos.filter(c => c.validade).map(c => c.clienteId))]; let n = 0;
   ids.forEach(id => lotesCredito(id).forEach(l => {
-    if (!l.vencido || db.creditos.some(c => c.expira === l.id)) return;
-    db.creditos.push({ id: db.seq.cred++, data: l.validade + 'T23:59:59', clienteId: id, valor: -l.vencido, ref: `${l.cashback ? 'Cashback' : 'Crédito'} vencido em ${fmtDia(l.validade)} (${l.ref})`, expira: l.id, usuario: 'sistema' }); n++;
+    if (!l.vencido) return;
+    const ja = -db.creditos.filter(c => c.expira === l.id).reduce((s, c) => s + c.valor, 0), dif = r2(l.vencido - ja);   // pode vencer de novo: crédito devolvido depois da validade
+    if (dif < 0.01) return;
+    db.creditos.push({ id: db.seq.cred++, data: ja ? agora() : l.validade + 'T23:59:59', clienteId: id, valor: -dif, ref: `${l.cashback ? 'Cashback' : 'Crédito'} vencido em ${fmtDia(l.validade)} (${l.ref})${ja ? ' – devolvido depois do vencimento' : ''}`, expira: l.id, usuario: 'sistema' }); n++;
   }));
   if (n) salvar();
   return n;
@@ -6251,7 +6299,7 @@ const vendDe = tipo => { const id = +((form[tipo] || {}).vend || 0); return (!MO
 function campoVendedora(tipo) {
   if (MODO_REDE) return '';
   const v = vendDe(tipo), l = vendedorasLista(); if (l.length < 2) return '';
-  return `<label>Vendedora (quem atendeu)<select data-f="${tipo}.vend">${l.map(u => `<option value="${u.id}" ${u.id === v.id ? 'selected' : ''}>${esc(u.nome)}${u.id === eu.id ? ' (logada)' : ''}</option>`).join('')}</select><small><button type="button" class="lnk" data-act="meuPin">${eu.pinHash ? 'trocar meu PIN' : 'cadastrar meu PIN'}</button></small></label>`;
+  return `<label><span>Vendedora (quem atendeu) · <button type="button" class="lnk" data-act="meuPin" style="font-size:inherit;padding:0">${eu.pinHash ? 'trocar meu PIN' : 'cadastrar meu PIN'}</button></span><select data-f="${tipo}.vend">${l.map(u => `<option value="${u.id}" ${u.id === v.id ? 'selected' : ''}>${esc(u.nome)}${u.id === eu.id ? ' (logada)' : ''}</option>`).join('')}</select></label>`;
 }
 let pinOk = null;
 const precisaPin = tipo => { if (MODO_REDE) return null; const v = vendDe(tipo); return v && (v.id !== eu.id || db.config.pinSempre) ? v : null; };
