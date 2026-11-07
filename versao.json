@@ -1,15 +1,12 @@
 {
- "versao": "2026.11.07-06",
- "publicadoEm": "07/11/2026 15:02",
+ "versao": "2026.11.07-07",
+ "publicadoEm": "07/11/2026 15:16",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "daddfb5929033228f316d0570c3d3fca8a16c4a1238b22962d680145e963a248",
- "tamanho": 762234,
- "assinatura": "KGhP3kNnt5NprO8bK1IcM+WTNWGiri0uwzLT6yzEySYHfMhiTbgdYAMOK5YIxFBGTrtPNrn2nLoS8aGQ+6xg5GjL3swmljdi2T4lZbU/8cCGL8/9egJHf6+hsPD1+hzRpFTD/NYKEpa9fr3kOjsw27jqSBNEBHQHUKNlY8FullAFP4/dmtjmqGWMWIzaEZMI8sENDx98hIn7Clj/5NSHYsld8JZcOf75bzQlLtXpJ6QattLAjsx33YR1ueDcugR3uB89pCmaxNbCn8tWWX1bsL+XihXeFCIWCuN9akN8ncarxbOVn6aj3TfT6TkNKaDJZ99yEldUIPaeOYccBFytWgm/Q1XlO7luDzQni9iu7WjfufPDffL3JHqlVm94xOIriDkOpLu7xNgVVMdKtwhnosgVQjvaxIDiWXuZ3iZUk3yZAYqoCAtkA3vrKwmVRVYN3/qsSkrW6Fm428MEPCrpzQYc1r3KWHhoQ3EC+n5d/o/BdnUgD33bB+rrpEop6cH5",
+ "sha256": "c3351fa0839f961a50eeb3a1e87439252429e6a486b47bf1fb19413091450aeb",
+ "tamanho": 772426,
+ "assinatura": "COpmYK7jZqoeSQ4UJ30ysucSHeFV9ooLxJQao6S2sC0Eyxd3U2zbfA3NLO1AIfEM5bSd8YYKyaC3kQSBJurSA+IZ22+oQVlcC+wAoJFxjanhP9oH+467/oabbEkE6Vk2y8RWqXLa74r7oi2AWvTV5v3ZivnTuNRYLJCD6XVgV5tOUXcIiqxZoJqVMhVqt4hluew2tWb3TiSgkRfoPrG4ivD9Cc0shmyJECFY1IbT8qQ1wcClVTAAl3hIYPT0uMfCU6j/R/ap575GpjNKzCVpsMDkeyMPSByNNGCEr/OD6kMn/u7H5s0G/kB2pP6ZklOuQH2nMbxmmUq5Dckf4q43E9PLsmCPnR61orfR4HeYVED+WDqy5QEMhsSGyQ97Fn5VUYZqaDoTnz3jq6pc2LIgDwm+3q9Hxb9uG9ngvjMWRqPnHp19QGCvxvkktsBGmbxO+qDqEXXa9nINLkOJ+ohK1B9ONBfQRVKKxsaErs4wWRIi6tG+kdVgRQGrfzQ4LXar",
  "novidades": [
-  "LGPD (privacidade dos clientes): no cadastro do cliente, campo \"Mensagens de promoção e aniversário\" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.",
-  "Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.",
-  "Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.",
-  "Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero)."
+  "Ajuda e Manual do suporte atualizados: LGPD (autorização de mensagens, cópia dos dados, anonimização e aviso de privacidade), backup na nuvem, e-mail de monitoramento, gerador de licenças com tela e o botão Voltar que zera ao clicar no logo da loja."
  ],
  "servidor": {
   "versao": "2026.11.07-06",

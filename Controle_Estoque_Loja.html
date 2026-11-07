@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-06">
+<meta name="versao-sistema" content="2026.11.07-07">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -4469,6 +4469,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.07-07', itens: ['Ajuda e Manual do suporte atualizados: LGPD (autorização de mensagens, cópia dos dados, anonimização e aviso de privacidade), backup na nuvem, e-mail de monitoramento, gerador de licenças com tela e o botão Voltar que zera ao clicar no logo da loja.'] },
   { v: '2026.11.07-06', itens: ['LGPD (privacidade dos clientes): no cadastro do cliente, campo "Mensagens de promoção e aniversário" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.', 'Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.', 'Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.', 'Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero).'] },
   { v: '2026.11.07-05', itens: ['E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.', 'Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular).'] },
   { v: '2026.11.07-04', itens: ['Backup na nuvem: Configurações → Backup e dados → Backup na nuvem. Com o aplicativo do Google Drive (ou o OneDrive) instalado e conectado com o e-mail da loja, o sistema cria a pasta "Controle de Estoque - <loja>/Backups" no Drive e o backup diário criptografado vai para lá. Aviso no topo se o envio parar.'] },
@@ -5011,18 +5012,25 @@ const AJUDA_MAPA = [
   ['vendas', 'todos', 'Registrar a venda (leitor de código de barras ou busca), escolher o pagamento (dinheiro, Pix com QR Code, cartões, crediário, vale-troca), dar desconto e emitir o recibo. Embaixo ficam as vendas realizadas.'],
   ['condicionais', 'todos', 'Peças que o cliente leva para provar em casa: registrar a saída com termo e, na volta, fazer o acerto (o que voltou entra no estoque, o que ficou vira venda).'],
   ['trocas', 'todos', 'Troca ou devolução pelo número do recibo: as peças voltam ao estoque e o valor vira vale-troca ou é devolvido.'],
-  ['clientes', 'todos', 'Cadastro de clientes, compras, condicionais e créditos (vale-troca) de cada um.'],
+  ['clientes', 'todos', 'Cadastro de clientes, compras, condicionais e créditos (vale-troca) de cada um, com a autorização de mensagens de promoção (LGPD). O administrador tem o botão Privacidade (LGPD) e, em Ver, a cópia dos dados e a anonimização.'],
+  ['fidelidade', 'todos', 'Aniversariantes do dia, da semana e do mês com WhatsApp pronto, presente de aniversário e cashback das compras (recurso Premium).'],
   ['entradas', 'todos', 'Entrada de mercadoria no estoque, à mão ou importando o XML da nota fiscal do fornecedor, com impressão das etiquetas.'],
   ['produtos', 'todos', 'Lista de produtos por modelo e tamanho, com foto e abas (com estoque, sem estoque, abaixo do mínimo, em condicional, inativos). O administrador cadastra, edita, ajusta estoque e imprime etiquetas e a lista de compra.'],
+  ['inventario', 'todos', 'Contagem do estoque pelo leitor ou pela câmera do celular, com sobras, faltas e ajuste no final (recurso Premium).'],
+  ['promocoes', 'adm', 'Promoções com desconto em % e data de início e fim, por tipo, marca, coleção ou código (recurso Premium).'],
   ['movs', 'todos', 'Histórico de tudo o que entrou e saiu do estoque: entradas, vendas, condicionais, trocas, cancelamentos e ajustes.'],
   ['financeiro', 'adm', 'Contas a receber (crediário e outros títulos), contas a pagar e caixa e resultado.'],
+  ['cartoes', 'adm', 'Cartões a receber: quanto cai de cada maquininha e em que dia, já com as taxas, e conferência com o extrato (recurso Premium).'],
   ['comissoes', 'adm', 'Comissão de cada vendedora pela regra dela: extrato, fechamento do mês, recibo, PDF e Excel.'],
+  ['metas', 'todos', 'Metas do mês por vendedora, com faixas de bônus, ranking, ritmo e dia a dia (recurso Premium).'],
   ['relatorios', 'adm', 'Vendas do período por vendedora, forma de pagamento, tipo e marca, e estoque por tipo e tamanho (sintético ou analítico, em PDF ou Excel).'],
   ['usuarios', 'adm', 'Cadastro de vendedoras e administradores: perfil, senha e regra de comissão.'],
   ['logs', 'adm', 'Histórico de logs: quem fez o quê e quando no sistema.'],
-  ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, licença, backup e dados.'],
+  ['premium', 'adm', 'Recursos Premium: o que a licença libera (celular, taxas, inventário, promoções, cashback, metas) e onde configurar cada um.'],
+  ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, licença, backup e dados (com backup na nuvem). O master vê também o E-mail de monitoramento.'],
   ['atualizacao', 'master', 'Atualização do sistema pela internet: verificar, baixar, instalar com a senha do master e confirmar.'],
-  ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas.']
+  ['suporte', 'master', 'Manual do suporte: implantação, configurações, licença, atualização, backup, diagnóstico e treinamento.'],
+  ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas. Dica: clicar no logo ou no nome da loja, no alto do menu, volta ao Painel e limpa o botão Voltar.']
 ];
 const AJUDA_PASSOS = [
   { t: 'Vender para outra vendedora no mesmo computador (PIN)', quem: 'todos', ir: 'vendas', p: [
@@ -5117,6 +5125,35 @@ const AJUDA_PASSOS = [
   { t: 'Cancelar uma venda', quem: 'adm', ir: 'vendas', p: ['Em <b>Vendas → Vendas realizadas</b>, ache a venda (use as datas De / Até).', 'Clique em <b>Cancelar</b> e informe o <b>Motivo do cancelamento</b>.', 'Confirme. As peças voltam ao estoque. Se havia parcelas já pagas, devolva o valor ao cliente.'] },
   { t: 'Cadastrar uma vendedora', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Nova vendedora / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedora</b> e a senha inicial.', 'Defina a regra de comissão dela.', 'Salve. No primeiro acesso, ela troca a senha.'] },
   { t: 'Fechar as comissões do mês', quem: 'adm', ir: 'comissoes', p: ['Abra <b>Comissões</b> e escolha o mês.', 'Confira o valor de cada vendedora (o botão <b>Extrato</b> mostra o detalhe).', 'Clique em <b>Fechar comissões do período</b>.', 'Imprima o <b>Recibo</b> de cada vendedora ou gere o PDF / Excel.'] },
+  { t: 'Registrar se o cliente aceita mensagens (LGPD)', quem: 'todos', ir: 'clientes', p: [
+    'Ao cadastrar ou editar o cliente (Clientes → <b>+ Novo cliente</b> ou <b>Editar</b>), pergunte se ele quer receber promoções e mensagem de aniversário pelo WhatsApp.',
+    'Em <b>Mensagens de promoção e aniversário pelo WhatsApp (LGPD)</b>, escolha <b>Autoriza</b> ou <b>Não autoriza</b>. Quem ainda não foi perguntado fica como <b>Não perguntado</b>.',
+    'Salve. O sistema guarda a data e quem registrou. Com <b>Não autoriza</b>, o botão de WhatsApp de aniversário e do lembrete de cashback fica bloqueado para esse cliente.',
+    'Recibo, termo de condicional, troca e cobrança continuam podendo ser enviados: são mensagens do serviço, não promoção.'] },
+  { t: 'Atender o cliente que pede os dados dele ou para apagar (LGPD)', quem: 'adm', ir: 'clientes', p: [
+    'Confira o documento da pessoa: só entregue os dados ao próprio cliente.',
+    'Em <b>Clientes</b>, clique em <b>Ver</b> no cliente.',
+    'Para entregar os dados: <b>Cópia dos dados (LGPD)</b> → <b>Imprimir / PDF</b> ou <b>Baixar arquivo</b>. Sai o cadastro, a autorização de mensagens, as compras, trocas, condicionais, créditos e crediário.',
+    'Para apagar: se o cliente não tem compras, use <b>Excluir</b> na lista. Se tem, use <b>Anonimizar</b>: digite ANONIMIZAR e confirme. O nome vira "CLIENTE ANONIMIZADO" e telefone, CPF, endereço e nascimento são apagados; as vendas e os valores continuam nos relatórios.',
+    'Não dá para anonimizar quem tem crediário em aberto, crédito para usar ou condicional aberta: resolva antes. A anonimização não pode ser desfeita.'] },
+  { t: 'Imprimir o aviso de privacidade (LGPD)', quem: 'adm', ir: 'clientes', p: [
+    'Em <b>Clientes</b>, clique em <b>Privacidade (LGPD)</b>.',
+    'Confira o texto do aviso: ele já vem com o nome, o CNPJ e o contato da loja. Se quiser, edite e clique em <b>Salvar texto</b> (<b>Texto padrão</b> volta ao original).',
+    'Clique em <b>Imprimir aviso</b> e deixe no balcão, ou mande pelo WhatsApp quando o cliente pedir.',
+    'Na mesma tela aparecem quantos clientes autorizam, não autorizam, ainda não foram perguntados e foram anonimizados.'] },
+  { t: 'Ligar o backup na nuvem (Google Drive ou OneDrive)', quem: 'adm', ir: 'config', p: [
+    'Instale no computador do caixa o <b>Google Drive para computador</b> (ou use o OneDrive do Windows) e entre na conta da loja.',
+    'Abra <b>Configurações → Backup e dados</b> e vá até <b>Backup na nuvem</b>.',
+    'Antes, ligue a <b>criptografia do backup</b> (Configurações → Segurança): só o backup criptografado vai para a nuvem, e sem ela o botão de ligar fica apagado. Anote a senha fora do computador.',
+    'Em <b>Serviço</b> escolha Google Drive ou OneDrive, informe o <b>E-mail da conta</b>, clique em <b>Procurar a pasta</b> e depois em <b>Ligar backup na nuvem</b>: o sistema cria a pasta <b>Controle de Estoque – (loja)/Backups</b> dentro do Drive.',
+    'Use <b>Enviar backup agora</b> para testar e confira a pasta no Drive.',
+    'Todo dia o backup é gravado nessa pasta e o Drive sobe sozinho. Se atrasar, aparece aviso na tela.'] },
+  { t: 'Ligar o e-mail de monitoramento (resumo às 10h e 17h)', quem: 'master', ir: 'config', p: [
+    'Crie (ou use) uma conta Gmail só para isso, ligue a <b>Verificação em duas etapas</b> e crie uma <b>Senha de app</b> (Conta Google → Segurança → Senhas de app). Copie as 16 letras.',
+    'Entre como master e abra <b>Configurações → E-mail de monitoramento</b>.',
+    'Marque <b>Enviar o e-mail de monitoramento</b>, escolha Gmail, informe o e-mail que envia, cole a senha de app e os destinatários (separados por vírgula). Ajuste os horários se quiser.',
+    'Clique em <b>Salvar</b> e depois em <b>Enviar e-mail de teste agora</b>. Confira a caixa de entrada e o spam.',
+    'Se o computador estiver desligado no horário, o resumo vai quando ele for ligado, no mesmo dia. Com <b>Avisar quando alguém entrar como master</b>, chega um e-mail na hora de cada entrada do master.'] },
   { t: 'Fazer backup', quem: 'adm', ir: 'config', p: ['Abra <b>Configurações → Backup e dados</b>.', 'Clique em <b>Exportar backup</b> e guarde o arquivo fora do computador (pen drive, nuvem).', 'Deixe o <b>backup automático</b> ligado e preencha a <b>pasta extra</b> (pen drive ou pasta de rede) para as cópias diárias.'] },
   { t: 'Instalar uma atualização do sistema', quem: 'master', ir: 'atualizacao', p: ['Abra <b>Atualização do sistema</b> (pelo aviso azul ou em Configurações → Sobre e atualização).', '<b>Verificar agora</b> → <b>Baixar</b>: o sistema confere o código e a assinatura digital.', 'Digite a sua senha e clique em <b>Instalar</b>.', 'Clique em <b>Abrir a versão nova</b> e confira a confirmação.'] },
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
@@ -5135,6 +5172,11 @@ const AJUDA_PERGUNTAS = [
   { p: 'Passei a venda com a maquininha ou as parcelas erradas.', quem: 'todos', rec: 'taxas', r: 'Peça ao administrador para cancelar a venda (Vendas → Vendas realizadas → Cancelar, na linha da venda) e faça de novo com a maquininha e as parcelas certas.' },
   { p: 'O que quer dizer o * em Cartões a receber?', quem: 'adm', rec: 'taxas', r: 'É uma venda com cartão feita antes de as taxas serem cadastradas. O sistema calcula com a taxa atual da maquininha, por isso o valor é uma estimativa.' },
   { p: 'O depósito do cartão não caiu no dia mostrado.', quem: 'adm', rec: 'taxas', r: 'Se o dia cai no sábado ou no domingo, o sistema já passa para segunda-feira, mas não conhece os feriados: nesse caso o dinheiro cai no próximo dia útil. Confira no dia seguinte. Se a operadora usa outro prazo, ajuste os dias em Maquininhas e taxas.' },
+  { p: 'O botão de WhatsApp do aniversariante sumiu e aparece "não autoriza mensagens".', quem: 'todos', r: 'O cliente não autorizou mensagens de promoção e aniversário (LGPD). Se ele mudar de ideia, edite o cadastro em Clientes e escolha Autoriza no campo de mensagens.' },
+  { p: 'O cliente pediu para apagar o cadastro dele.', quem: 'adm', r: 'Clientes → Ver → Anonimizar (ou Excluir, se ele nunca comprou). Antes, se ele quiser, entregue a Cópia dos dados. Veja o passo a passo "Atender o cliente que pede os dados dele ou para apagar".' },
+  { p: 'Como faço o botão "Voltar para…" do topo sumir?', quem: 'todos', r: 'Clique no logo ou no nome da loja, no alto do menu: abre o Painel e o Voltar começa do zero.' },
+  { p: 'O e-mail de monitoramento não chegou ou deu erro.', quem: 'master', r: 'Configurações → E-mail de monitoramento mostra o último envio e o último erro. "O Gmail recusou o e-mail ou a senha" = use a senha de app de 16 letras (não a senha normal) da mesma conta que envia. Confira também o spam e se a caixa Enviar o e-mail de monitoramento está marcada.' },
+  { p: 'O backup na nuvem está com aviso de atraso.', quem: 'adm', r: 'Confira se o Google Drive (ou o OneDrive) está aberto e conectado no computador do caixa e se a pasta indicada em Configurações → Backup e dados → Backup na nuvem existe. O sistema só envia backup criptografado.' },
   { p: 'Esqueci a minha senha. E agora?', quem: 'todos', r: 'Peça a um administrador: Usuárias / usuários → Editar / senha → digite uma senha nova e salve. No próximo acesso você define a sua.' },
   { p: 'Apareceu que o meu usuário está bloqueado.', quem: 'todos', r: 'Depois de várias senhas erradas seguidas, o usuário fica bloqueado por alguns minutos. Espere ou peça ao administrador: Usuárias / usuários → Editar / senha → Salvar libera na hora.' },
   { p: 'O sistema pediu a senha de novo no meio do trabalho.', quem: 'todos', r: 'É o bloqueio por falta de uso, para ninguém usar o seu usuário quando você sai do caixa. Digite a senha: a venda que estava sendo montada continua lá.' },
@@ -6602,7 +6644,9 @@ const MANUAL = [
       <li><b>Usuários:</b> cadastre vendedoras com senha provisória; cada uma entra uma vez, troca a senha e cadastra o PIN.</li>
       <li><b>Recibo e Pix:</b> Configurações → Recibos e impressão: papel, vias, chave Pix (gere o Pix de teste de R$ 1,00).</li>
       <li><b>Regras:</b> Configurações → Vendas e estoque: caixa obrigatório, PIN em toda venda (opcional), fechamento cego. Segurança: bloqueio por falta de uso e tentativas de senha.</li>
-      <li><b>Backup:</b> Configurações → Backup e dados: pasta extra (pen drive/OneDrive), horário, e ligue a criptografia do backup anotando a senha <b>fora do computador</b>.</li>
+      <li><b>Backup:</b> Configurações → Backup e dados: pasta extra (pen drive/OneDrive), horário, e ligue a criptografia do backup anotando a senha <b>fora do computador</b>. Ligue o <b>backup na nuvem</b> (Google Drive para computador instalado e conectado na conta da loja).</li>
+      <li><b>Monitoramento:</b> como master, Configurações → E-mail de monitoramento: Gmail da loja com senha de app, seu e-mail de suporte nos destinatários, aviso de entrada do master ligado. Envie o e-mail de teste.</li>
+      <li><b>LGPD:</b> Clientes → Privacidade (LGPD): confira o aviso de privacidade (nome, CNPJ, contato), imprima para o balcão e oriente a equipe a perguntar a autorização de mensagens no cadastro.</li>
       <li><b>Premium:</b> configure cada recurso liberado (maquininhas e taxas, cashback, metas, celular).</li>
       <li><b>Teste final:</b> abra o caixa, faça uma venda em dinheiro e uma no cartão, emita o recibo, cancele uma venda de teste, feche o caixa e confira o relatório.</li>
       <li><b>Entrega:</b> apague a pasta e o zip de instalação do computador da loja e faça o treinamento (item Treinamento).</li></ol>` },
@@ -6613,12 +6657,13 @@ const MANUAL = [
     <h4>Vendas e estoque</h4><p>Prazo da condicional, markup da importação de XML, dias de cobertura da reposição, <b>caixa obrigatório</b>, <b>PIN em toda venda</b>, fechamento cego; tipos de peça e grades de tamanho.</p>${mnP('cfg_operacao', 'Configurações → Vendas e estoque.')}
     <h4>Segurança</h4><p>Quadro de verificação (senhas fortes, administradores, master, bloqueio, backup), minutos para bloquear a tela, tentativas antes de bloquear o usuário (5 erradas = 5 min, depois 10, 20…), criptografia do backup e registro de atividades.</p>${mnP('cfg_seguranca', 'Configurações → Segurança.')}
     <h4>Sobre e atualização</h4><p>Versão instalada, banco em uso, botão da tela de atualização (master) e histórico de versões.</p>${mnP('cfg_sobre', 'Configurações → Sobre e atualização.')}
-    <h4>Licença</h4><p>Situação, cliente, plano, validade e recursos Premium; campo para colar o código.</p>${mnP('cfg_licenca', 'Configurações → Licença.')}
-    <h4>Backup e dados</h4><p>Exportar/restaurar backup, backup automático (frequência, horário, pasta), cópias internas, versões e a zona de cuidado (apagar todos os dados).</p>${mnP('cfg_backup', 'Configurações → Backup e dados.')}` },
+    <h4>Licença</h4><p>Situação, cliente, plano, validade e recursos Premium; campo para colar o código.</p>
+    <h4>E-mail de monitoramento (só master)</h4><p>Conta que envia (Gmail com senha de app), destinatários, dois horários (padrão 10h e 17h) e aviso quando alguém entra como master. Botões de teste e prévia; mostra o último envio e o último erro. A senha fica só no servidor do computador, embaralhada.</p>${mnP('cfg_licenca', 'Configurações → Licença.')}
+    <h4>Backup e dados</h4><p>Exportar/restaurar backup, backup automático (frequência, horário, pasta), <b>backup na nuvem</b> (Google Drive ou OneDrive; só vai o backup criptografado), cópias internas, versões e a zona de cuidado (apagar todos os dados).</p>${mnP('cfg_backup', 'Configurações → Backup e dados.')}` },
   { id: 'licenca', t: 'Licença e Recursos Premium', h: `
     <ol class="mn-passos">
-      <li>No computador do suporte, rode <code>ferramentas\\GERAR_LICENCA.bat</code>: cliente, CNPJ, plano (Essencial/Profissional), meses, computadores e os números dos recursos Premium (1 celular, 2 taxas, 3 inventário, 4 promoções, 5 cashback, 6 metas).</li>
-      <li>O código fica copiado e salvo em <code>ferramentas\\licencas</code> (registro em <code>registro_licencas.csv</code>). Envie pelo WhatsApp.</li>
+      <li>No computador do suporte, abra o atalho <b>Gerador de Licenças</b> (área de trabalho; arquivo <code>Gerador_de_Licencas.html</code> na pasta ferramentas). Clique em <b>Carregar chave</b> e escolha <code>chave_privada_licenca.xml</code>. Preencha cliente, CNPJ, plano, validade, computadores e marque os recursos Premium (celular, taxas, inventário, promoções, cashback, metas). <b>Gerar licença</b> confere a assinatura antes de mostrar o código. (O <code>GERAR_LICENCA.bat</code> continua como reserva.)</li>
+      <li>Envie com <b>Mensagem para o WhatsApp</b> (texto pronto com o passo a passo) ou <b>Baixar arquivo .txt</b>. Para renovar, cole o código atual em <b>Ler / renovar</b> → <b>Renovar com estes dados</b>. O histórico fica no navegador: exporte o CSV e junte ao <code>registro_licencas.csv</code>.</li></li>
       <li>Na loja: Configurações → Licença → colar → <b>Ativar</b>. O CNPJ em Empresa tem de ser o mesmo da licença.</li></ol>
     <table class="tb mn-tb"><thead><tr><th>Situação</th><th>O que acontece</th></tr></thead><tbody>
       <tr><td>Sem licença</td><td>30 dias de avaliação, sem recursos Premium.</td></tr>
@@ -6650,11 +6695,11 @@ const MANUAL = [
       <li>Abrir o sistema e entrar com o usuário da vendedora.${mnP('cel_login', 'Entrada no celular com logo e nome da loja.', 1)}${mnP('cel_vendas', 'Vendas no celular: botão Ler pela câmera.', 1)}${mnP('cel_camera', 'Leitura do código de barras pela câmera.', 1)}</li>
       <li>Peça ao técnico da internet para fixar o IP do computador do caixa (reserva de DHCP).</li></ol>` },
   { id: 'telas', t: 'Telas principais (referência)', h: `
-    <h4>Painel</h4>${mnP('painel', 'Painel: avisos, indicadores do dia e listas de atenção.')}
+    <h4>Painel</h4><p>Clicar no logo ou no nome da loja (alto do menu) abre o Painel e limpa o botão "Voltar para…".</p>${mnP('painel', 'Painel: avisos, indicadores do dia e listas de atenção.')}
     <h4>Vendas</h4><p>Leitor ou busca → carrinho → vendedora (PIN se não for a logada) → cliente → pagamento (bandeira, maquininha e parcelas no cartão) → finalizar e recibo.</p>${mnP('vendas', 'Venda com promoção, crédito do cliente e cartão Visa 2x.')}
     <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo).</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
-    <h4>Clientes</h4>${mnP('clientes', 'Clientes, crédito e histórico.')}
+    <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
     <h4>Produtos e estoque</h4><p>Filtros, grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
     <h4>Entrada de mercadoria</h4>${mnP('entradas', 'Entrada manual ou pelo XML da NF-e.')}
     <h4>Financeiro</h4>${mnP('financeiro', 'Contas a receber e a pagar.')}
@@ -6680,6 +6725,9 @@ const MANUAL = [
       <tr><td>Usuário bloqueado</td><td>Senhas erradas seguidas</td><td>Usuárias / usuários → Editar → Salvar libera.</td></tr>
       <tr><td>Venda no nome errado</td><td>Vendas realizadas</td><td>Link "vendedora", com motivo.</td></tr>
       <tr><td>Etiqueta saiu errada</td><td>Formato em Etiquetas (A4/bobina)</td><td>Ajustar formato e quantidade antes de imprimir.</td></tr>
+      <tr><td>E-mail de monitoramento: "o Gmail recusou o e-mail ou a senha"</td><td>Senha normal em vez de senha de app; conta diferente da que criou a senha</td><td>Gerar senha de app na mesma conta (verificação em duas etapas ligada) e colar de novo.</td></tr>
+      <tr><td>E-mail não chega</td><td>Caixa "Enviar" marcada? Spam? Último erro na tela</td><td>Enviar e-mail de teste; olhar <code>dados</code>/servidor.log.</td></tr>
+      <tr><td>Backup na nuvem atrasado / pasta inacessível</td><td>Google Drive aberto e conectado? Criptografia ligada?</td><td>Abrir o Drive, conferir a pasta Backups; ligar a criptografia.</td></tr>
       <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
     <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
   { id: 'treinamento', t: 'Roteiro de treinamento', h: `
@@ -6692,7 +6740,8 @@ const MANUAL = [
   { id: 'rotina', t: 'Rotina do suporte', h: `
     <table class="tb mn-tb"><thead><tr><th>Quando</th><th>O que conferir</th></tr></thead><tbody>
       <tr><td>Semanal</td><td>Último backup e pasta extra; avisos no painel; Configurações → Segurança sem alertas.</td></tr>
-      <tr><td>Mensal</td><td>Versão instalada × nuvem; licença (validade e recursos); histórico de logs (senhas erradas, estornos, reaberturas de caixa).</td></tr>
+      <tr><td>Diária</td><td>E-mails de monitoramento das 10h e 17h (vendas, backup, licença, ações de atenção); aviso de entrada do master que você não reconhece.</td></tr>
+      <tr><td>Mensal</td><td>Versão instalada × nuvem; licença (validade e recursos); backup na nuvem chegando; histórico de logs (senhas erradas, estornos, reaberturas de caixa, anonimizações de clientes).</td></tr>
       <tr><td>A cada atualização</td><td>Backup antes; novidades lidas; teste rápido de venda e recibo.</td></tr>
       <tr><td>Renovação</td><td>Gerar licença 15 dias antes do vencimento com os recursos contratados.</td></tr></tbody></table>
     <p class="mn-dica">Nunca: apagar a pasta <code>dados</code>, deixar a senha do master na loja, deixar o zip/instalador no computador da loja, ou publicar as chaves privadas da pasta <code>ferramentas</code>.</p>` }
