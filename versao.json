@@ -1,15 +1,13 @@
 {
- "versao": "2026.11.06-02",
- "publicadoEm": "06/11/2026 11:45",
+ "versao": "2026.11.07-01",
+ "publicadoEm": "07/11/2026 11:18",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "be4495695b437821695ca39f11bb0c90d4cd21e1e1e7487d63a1a9203e28e342",
- "tamanho": 702034,
- "assinatura": "AtVhYENGxlX97gDdEd7zUvtYFT+NP6zprv151AUv/SEDkiHtBr8DUkMp/G/lIS2mzGKjpR55z/ucmDLf/WY04u+O+13FW2W9IgTI6azhLzluutmAKkNapr0KSNsFzieylFfCaxyl/7H7Y/VXOMvXa6C03Xfn4PS4XMLl2AS+GVVrxXI9HpG1nM8tmLOLs67sMTIKbUt4+d75Thrsnae4oCidVONZ1WBPqI2Ukf5FnqHkEfTXbnlyFhTPj0pewZSM+MeT9HGnuCA6btrcpKInsBiuOwYgXzhwZ4+7zqVRQxhl9p8XkVGSWzcL++HXbiG7DC14YTw058oslrmn+e7fCzFXcEysn1w/NqAqtmmX4r+ZQswpyhuOdfPTOFTRnWUqliIPwsKfEo1M40ATNem4Lfev4YQdwaWSWha/ILir5JOLKj5z6cp1V+rWM//lndfG1f0rDA/DU3eTUip/w5dqZbkMRUlgQgmS74pZ6iPzuZ5JYht93JSw5jRNhB3uEyiL",
+ "sha256": "ad144df0d9a44ac72c75247d4b93b1a080ef7859a9bf6f2b7142c9be5e3c1acd",
+ "tamanho": 706453,
+ "assinatura": "a76wEQ9n76PQCZdd9eNCRJrFzvWL3Gj1w2PM2X4vKRlDeFsWwS14WgmgZi/OBew6rFAGSSYQuoj3el85dI1p4eZyeIFAOSJeZHR+574ZYtPmwv4o7orQX/ofUOT7f9Rh5QeGgddlLeGnyDWLJSm9Px1RxIbBGXToMCe/Lehk0GKN+lO0zqxs65QrYl0p0gz2+4Yky+VCSWlhE2+c5euOzSSTZmNHBYcK5RS45nmW8Y7+c5q4V/fbTCNcOrS9hQc4X0CBgCQVr4gFC8myc/zov7oNdIKL4OImfdcQb/2YGi39naL0P2yWewgEW7XS+J+UzvrFlSoAFiKtsUot8W+rO1bVzT6tmu6eF18Ez6tht7TK3TOYRXEmBWM8qNz/Zvr7V775lYEihFfHkv1y+5N8DUBvIc6S/ERjMDrpv/NuTdmLNnReStMp32t8ZDbCNE7v3+KuUlMFS5ELaRu3PljtROVTnhuDl+PQx2NvsRR2ypgnMo1hpI9D4SYDcQ/+YIxd",
  "novidades": [
-  "Taxas de cartão por bandeira (Visa, Mastercard, Elo, American Express, Hipercard): em Maquininhas e taxas cada maquininha tem uma tabela com débito, crédito 1x e 2x a 12x por bandeira; o que ficar em branco usa a linha \"Todas as bandeiras\".",
-  "Na venda com cartão escolhe-se a bandeira; o recibo mostra, por exemplo, \"Cartão de crédito Visa 3x\". Cartões a receber mostra a bandeira no detalhe e um resumo \"Taxas por bandeira\".",
-  "Cashback e crédito: se uma venda paga com crédito for cancelada, o valor volta para o mesmo crédito, com a mesma validade (antes voltava sem validade).",
-  "Configurações e telas com campos alinhados: as caixas de uma mesma linha ficam na mesma altura, mesmo quando o título do campo ocupa duas linhas."
+  "Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.",
+  "A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e a vendedora sobe de faixa, aparece \"lançar diferença\" (só o que falta)."
  ],
  "servidor": {
   "versao": "2026.11.04-19",
