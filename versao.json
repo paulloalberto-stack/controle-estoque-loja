@@ -1,13 +1,12 @@
 {
- "versao": "2026.11.07-01",
- "publicadoEm": "07/11/2026 11:18",
+ "versao": "2026.11.07-02",
+ "publicadoEm": "07/11/2026 11:45",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "ad144df0d9a44ac72c75247d4b93b1a080ef7859a9bf6f2b7142c9be5e3c1acd",
- "tamanho": 706453,
- "assinatura": "a76wEQ9n76PQCZdd9eNCRJrFzvWL3Gj1w2PM2X4vKRlDeFsWwS14WgmgZi/OBew6rFAGSSYQuoj3el85dI1p4eZyeIFAOSJeZHR+574ZYtPmwv4o7orQX/ofUOT7f9Rh5QeGgddlLeGnyDWLJSm9Px1RxIbBGXToMCe/Lehk0GKN+lO0zqxs65QrYl0p0gz2+4Yky+VCSWlhE2+c5euOzSSTZmNHBYcK5RS45nmW8Y7+c5q4V/fbTCNcOrS9hQc4X0CBgCQVr4gFC8myc/zov7oNdIKL4OImfdcQb/2YGi39naL0P2yWewgEW7XS+J+UzvrFlSoAFiKtsUot8W+rO1bVzT6tmu6eF18Ez6tht7TK3TOYRXEmBWM8qNz/Zvr7V775lYEihFfHkv1y+5N8DUBvIc6S/ERjMDrpv/NuTdmLNnReStMp32t8ZDbCNE7v3+KuUlMFS5ELaRu3PljtROVTnhuDl+PQx2NvsRR2ypgnMo1hpI9D4SYDcQ/+YIxd",
+ "sha256": "853d4c7d7fede215d395a61e00b30cc4178033ad46b4f69a9d025dde8d4a2666",
+ "tamanho": 707354,
+ "assinatura": "iUx3Ctj8E+xAvBLtExFx+tt93JNUDGWXLpjgyifDIebAQDUMcYT7n/LppkOYILUpbWE7R3WidF6Tjy2s8L3+vwuBx78Izx1nAoCDw4Xo4aK6LOTnmBpN+BOu89dgYBjSiEbe6u+N+CCRVVdmceOgAwEpsFVBRxycBs8+3uIb3qn6JTvEY+rR4mFta9CZL74B0wbNVL+kzKfC/roFDtfqua8pLi14eE/Q/PWd5Hjetk9HU2vaZ/TIynucYZN3TyteTBmLxhs65Dgg2cFCxyHHtl64WyG8C+Is14k03V3wCsB7VolHRVj/GF9v0wdkf43coCy8AAr5g1683NG2Ytk6NHoTc6zpIE7w/GSM3XAFe/oMmz7vEWiufNbImxrSsWGLJHLASFEnENK1vAC64YELbgVVjDI9+xaG3I4xG4DRQGa0PvoQVrO6mWUWZWJIweMZD99ZETWTzF81gGo3W708fTUoR3MTndjeOoQQDbsnXGyqGk2xNnYBem1zsWkj6ImZ",
  "novidades": [
-  "Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.",
-  "A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e a vendedora sobe de faixa, aparece \"lançar diferença\" (só o que falta)."
+  "Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo \"Controle de estoque\"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar."
  ],
  "servidor": {
   "versao": "2026.11.04-19",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-01">
+<meta name="versao-sistema" content="2026.11.07-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -557,6 +557,8 @@ input[data-maiusc]::placeholder{text-transform:none}
 input[type=color]{height:38px;padding:3px 5px;cursor:pointer}
 .cfg-pane .acoes{align-items:center}
 /* recursos premium */
+.side .marca #loja-cnpj{text-transform:none;letter-spacing:.02em;font-size:11px;margin-top:3px}
+.side .marca #loja-frase{display:block}
 .meta-faixas{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}.meta-faixas span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:#5b6375;background:#fff}.meta-faixas span.ok{background:#ecfdf3;border-color:#abefc6;color:#05603a;font-weight:600}
 .mt-tab td.mt-fx{min-width:118px}.mt-tab td.mt-fx input{width:100%;margin:2px 0}
 .mq-tab th,.mq-tab td{padding:4px 5px;white-space:nowrap}.mq-tab input{width:50px;padding:5px 5px;text-align:right}.mq-tab tbody th{text-align:left;font-weight:600;font-size:12.5px;background:none;text-transform:none;letter-spacing:0;color:var(--ink)}
@@ -641,7 +643,7 @@ html.rede .topo-acoes,html.rede [data-act="minhaSenha"],html.rede .side [data-ac
 
 <div id="app" class="app" hidden>
   <aside class="side">
-    <div class="marca" data-act="ir" data-v="painel" title="Ir para o Painel" role="link" tabindex="0"><img id="side-logo" class="side-logo" alt="" hidden><div class="monograma" id="side-mono"></div><span id="loja-nome"></span><small>Controle de estoque</small></div>
+    <div class="marca" data-act="ir" data-v="painel" title="Ir para o Painel" role="link" tabindex="0"><img id="side-logo" class="side-logo" alt="" hidden><div class="monograma" id="side-mono"></div><span id="loja-nome"></span><small id="loja-cnpj" hidden></small><small id="loja-frase"></small></div>
     <nav id="nav"></nav>
     <div class="user"><div id="quem"></div><button class="icb" data-act="meuPin" title="Meu PIN de vendedora" aria-label="Meu PIN de vendedora"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="12" cy="16" r="1"/></svg></button><button class="icb" data-act="minhaSenha" title="Minha senha" aria-label="Minha senha"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button><button class="icb" data-act="sair" title="Sair" aria-label="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
@@ -882,7 +884,7 @@ function novoDb() {
       loja: '', razao: '', cnpj: '', ie: '', endereco: '', bairro: '', cidade: '', cep: '', telefone: '', whatsapp: '', email: '', instagram: '', site: '',
       rodape: 'Trocas em até 30 dias, com etiqueta e este recibo.', cor: '#1e3a5f', logo: '', papel: 'A4', vias: 2, pixChave: '', pixNome: '', pixCidade: '', qr: 'dados', qrLink: '',
       etiqueta: 'A4', etqCampos: { loja: true, desc: true, cor: true, colecao: false, parcelado: false }, etqParcelas: 3,
-      markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: ''
+      markup: 2.2, diasCobertura: 30, prazoCond: 3, ultimoBackup: '', fraseMenu: 'Controle de estoque'
     },
     usuarios: [], produtos: [], entradas: [], vendas: [], condicionais: [], movs: [],
     clientes: [], creditos: [], trocas: [], receber: [], pagar: [], vinculos: {}, comissoes: [], caixas: [], conciliacoes: [], inventarios: [], contagens: [], promocoes: [], metas: []
@@ -1266,6 +1268,8 @@ function render() {
   $('#topo-data').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase());
   $('#side-mono').hidden = !!logoTela(); $('#side-mono').textContent = iniciais(db.config.loja || 'Loja Masculina');
   $('#loja-nome').textContent = db.config.loja || 'Loja Masculina';
+  $('#loja-cnpj').textContent = db.config.cnpj ? (soDig(db.config.cnpj).length === 11 ? 'CPF ' : 'CNPJ ') + db.config.cnpj : ''; $('#loja-cnpj').hidden = !db.config.cnpj;
+  const fr = db.config.fraseMenu == null ? 'Controle de estoque' : db.config.fraseMenu; $('#loja-frase').textContent = fr; $('#loja-frase').hidden = !fr;
   $('#side-logo').hidden = !logoTela(); if (logoTela()) $('#side-logo').src = logoTela();
   document.title = (db.config.loja || 'Loja') + ' – Controle de Estoque';
   $('#alerta').innerHTML = nb ? `<div class="alerta">⚠ <b>${nb} produto(s) abaixo do estoque mínimo</b> — é preciso comprar mais mercadoria. <button class="lnk" data-act="verAbaixo">Ver lista de compra</button></div>` : '';
@@ -2296,7 +2300,7 @@ ACT.salvarUsuario = async el => {
 };
 
 /* configurações e backup */
-const CFG_CAMPOS = [['loja', 'Nome fantasia', 'Ex.: Estilo Masculino'], ['razao', 'Razão social'], ['cnpj', 'CNPJ (ou CPF)'], ['ie', 'Inscrição estadual'], ['endereco', 'Endereço (rua, número)'], ['bairro', 'Bairro'], ['cidade', 'Cidade / UF'], ['cep', 'CEP (preenche o endereço)'], ['telefone', 'Telefone'], ['whatsapp', 'WhatsApp', '(00) 00000-0000'], ['email', 'E-mail'], ['instagram', 'Instagram', '@sualoja'], ['site', 'Site']];
+const CFG_CAMPOS = [['loja', 'Nome fantasia', 'Ex.: Estilo Masculino'], ['razao', 'Razão social'], ['cnpj', 'CNPJ (ou CPF)'], ['ie', 'Inscrição estadual'], ['endereco', 'Endereço (rua, número)'], ['bairro', 'Bairro'], ['cidade', 'Cidade / UF'], ['cep', 'CEP (preenche o endereço)'], ['telefone', 'Telefone'], ['whatsapp', 'WhatsApp', '(00) 00000-0000'], ['email', 'E-mail'], ['instagram', 'Instagram', '@sualoja'], ['site', 'Site'], ['fraseMenu', 'Frase abaixo do nome no menu (em branco = não mostra)', 'Ex.: Controle de Estoque']];
 const MASCARA_CFG = { cnpj: 'data-mask="doc" inputmode="numeric" placeholder="00.000.000/0000-00"', cep: 'data-mask="cep" inputmode="numeric" placeholder="00000-000" data-rua="cf-endereco" data-bairro="cf-bairro" data-cidade="cf-cidade"', telefone: 'data-mask="tel" inputmode="tel"', whatsapp: 'data-mask="tel" inputmode="tel"' };
 let logoTemp = '', iconeTemp = '';
 function lerCfg() {
@@ -4299,6 +4303,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.07-02', itens: ['Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo "Controle de estoque"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar.'] },
   { v: '2026.11.07-01', itens: ['Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.',
     'A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e a vendedora sobe de faixa, aparece "lançar diferença" (só o que falta).'] },
   { v: '2026.11.06-02', itens: ['Taxas de cartão por bandeira (Visa, Mastercard, Elo, American Express, Hipercard): em Maquininhas e taxas cada maquininha tem uma tabela com débito, crédito 1x e 2x a 12x por bandeira; o que ficar em branco usa a linha "Todas as bandeiras".',
