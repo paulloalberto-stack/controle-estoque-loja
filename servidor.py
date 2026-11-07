@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.07-04'
+VERSAO_SERVIDOR = '2026.11.07-06'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -697,7 +697,21 @@ def enviar_email(b, assunto, html_corpo, texto):
         if seg == 'starttls':
             s.starttls(context=_ssl.create_default_context())
     try:
-        s.login(c['usuario'], _desembaralhar(c['senha']))
+        senha = _desembaralhar(c['senha'])
+        if 'gmail' in c['host'] or 'googlemail' in c['host']:
+            senha = senha.replace(' ', '')  # o Google mostra a senha de app em 4 blocos com espaço
+        s.ehlo_or_helo_if_needed()
+        try:
+            if 'PLAIN' in (s.esmtp_features.get('auth') or '').upper().split():
+                # só PLAIN: se a senha estiver errada o Gmail responde 535; o login() do Python tentaria outro método e o Gmail fecharia a conexão (escondendo o motivo)
+                s.user, s.password = c['usuario'], senha
+                s.auth('PLAIN', s.auth_plain)
+            else:
+                s.login(c['usuario'], senha)
+        except smtplib.SMTPAuthenticationError as e:
+            if 'gmail' in c['host']:
+                raise ValueError('o Gmail recusou o e-mail ou a senha (%s). Use a SENHA DE APP de 16 letras criada em Conta Google → Segurança → Senhas de app (a senha normal do Gmail não funciona) e confira se o e-mail que envia é a mesma conta onde ela foi criada' % e.smtp_code)
+            raise ValueError('o servidor de e-mail recusou o usuário ou a senha (%s %s)' % (e.smtp_code, (e.smtp_error or b'').decode('utf-8', 'replace')[:120]))
         s.send_message(msg)
     finally:
         try:

@@ -1,6 +1,6 @@
 {
  "versao": "2026.11.07-05",
- "publicadoEm": "07/11/2026 13:38",
+ "publicadoEm": "07/11/2026 14:08",
  "arquivo": "Controle_Estoque_Loja.html",
  "sha256": "0df40c3333be188711c0c91195e33ab8e5c2049d7b3b65d6a0a97fd73673a7e5",
  "tamanho": 744694,
@@ -10,10 +10,10 @@
   "Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular)."
  ],
  "servidor": {
-  "versao": "2026.11.07-04",
+  "versao": "2026.11.07-06",
   "arquivo": "servidor.py",
-  "sha256": "51e8aacab3ed20f5a296f2191405b999a1fa7510599ecbc062e9b65afaf22fd5",
-  "assinatura": "f/8uze7n9u5eCfegM439gHzxi8PStVSnfPFNP8TWNJ1Jjfb0hAXGxRWPGHOIvqjuqkySrxg0hKSK2hUi7V/KT86xnadD2xtdG4+En5lE0eu8cq5SUe9HN4TpMr2PNX9eg5JxLiSaalFaMI89zAcPL44s8ARuBONSiWXxri2grCRCTqnu67LAuUGQMhSmSy49jXF7VLpSzYUILWbIKlrSoLOlXdd5tq4DnAMOuMGRWsvTP8gUSDEPewOkvuSnsLxhLYINMoPuc5gObE275nBAJNAC6SQY7nWBZX/VgdhVzN7xVjGXNH9FnncvX34gwwlIatxINLbCAONsCR2zIyDYD33Ga6iqg2k2Z+ir649H2Z66rBMPhZITBGNjFiX5XuVIoaGVdZUi9oaFjPVBbilwD7k+Pl9XLaH4pLT/fU1bCP5z8FVm5rnabgrc3EVcGFK6zFQKHD8TTMLxPIsWlXzs7hov2WOLuF+Uk3429RimyUQsfKWo9DWErUmcTEnkSWMd",
-  "tamanho": 94568
+  "sha256": "39bb8c73196e972a83a6ed01279b685a984772ac3e90595cb150d4bb6d953843",
+  "assinatura": "afJ/lFmMtnqKwDEgR6s/D2ZX0AheYwjYI7EfduWl6HCEDEdnW/Lr27DD4jgIdacxJYvnOrn14/s3dozPOnEdxYo90lrdP/VJCw+4QPYE0O9lUe2BVTPwp5ZNkBqJaRXM6ll3h4MX14zAD8tRabi9pg3msccbYZRcK8jeN+T2VKUzclxgpba+MgTLGB3XxFAICxTEnh1huUmk6heihHmv1PCdxYAgJEnVnIdYh9ALq9qE3fKT7+n5OrVHH9oCGkIw5Qd3o22qoafS+zE5qKp4p/d043V259LbLDZ7/O6N+a/QeiP2HGPcZx19fuP90mzEbznglrTryHQCW8QjrhFClfjeMqJBGB2+tUNiZej0WSnvUJoy27wvKMWDArq4Jte1RKkDVssBQTLt6+s3cQYaJw+sx7DQ6Upu/HAd+lxIkpPnVd4lwQ7LoN9f9WcWjhJCEagnAd971Y9qgUizF66VEkOshxOV95atUaQ1SE0Onu44NWVUHm0AJO+2Sq5NwwVc",
+  "tamanho": 95724
  }
 }
