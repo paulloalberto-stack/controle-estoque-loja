@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-05">
+<meta name="versao-sistema" content="2026.11.07-06">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1758,7 +1758,10 @@ function ajustarMeias() {
   vias.forEach(el => { const z = lado ? escala(el, 136, 192) : escala(el, 194, 135); el.style.transform = z < 0.999 ? `scale(${z})` : ''; });
   pr.style.cssText = '';
 }
-ACT.ir = el => { view = el.dataset.v; fecharModal(); render(); window.scrollTo(0, 0); };
+ACT.ir = el => {
+  view = el.dataset.v; fecharModal(); render(); window.scrollTo(0, 0);
+  if (el.classList && el.classList.contains('marca')) { pilhaNav.length = 0; navAtual = chaveNav(); const b = $('#btn-voltar'); if (b) b.hidden = true; }  // ícone da loja = começar do zero
+};
 /* histórico de telas para o botão Voltar (inclui as abas do Financeiro e das Configurações) */
 const pilhaNav = []; let navAtual = null, voltando = false;
 const chaveNav = () => view + (view === 'config' ? ':' + (filtros.cfg.aba || 'empresa') : view === 'financeiro' ? ':' + (filtros.fin.aba || 'receber') : '');
@@ -2555,7 +2558,7 @@ const btnWhats = (href, txt) => href ? `<a class="lnk" href="${esc(href)}" targe
 
 function clientes() {
   return `<h2>Clientes</h2>
-  <section class="card"><div class="filtros"><label class="lg">Buscar<input data-filtro="cli.busca" value="${esc(filtros.cli.busca)}" placeholder="nome, telefone ou CPF" autofocus></label><span style="flex:1"></span><button class="btn pri" data-act="novoCliente">+ Novo cliente</button></div>
+  <section class="card"><div class="filtros"><label class="lg">Buscar<input data-filtro="cli.busca" value="${esc(filtros.cli.busca)}" placeholder="nome, telefone ou CPF" autofocus></label><span style="flex:1"></span>${adm() ? '<button class="btn" data-act="lgpdPainel">Privacidade (LGPD)</button>' : ''}<button class="btn pri" data-act="novoCliente">+ Novo cliente</button></div>
   <div id="tb-cli">${tabelaClientes()}</div></section>`;
 }
 function tabelaClientes() {
@@ -2564,7 +2567,7 @@ function tabelaClientes() {
   if (!l.length) return `<p class="vazio">${db.clientes.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado. Eles também são cadastrados automaticamente nas condicionais.'}</p>`;
   return `<div class="tabw"><table class="tb"><thead><tr><th>Nome</th><th>Telefone</th><th>CPF</th><th class="n">Crédito</th><th class="n">Compras</th><th>Última compra</th><th class="n">A receber</th><th></th></tr></thead><tbody>${l.map(c => {
     const vs = vendasValidas().filter(v => v.clienteId === c.id), ab = db.receber.filter(r => r.clienteId === c.id && !r.pagoEm), venc = ab.filter(r => r.vencimento < hoje());
-    return `<tr><td>${esc(c.nome)}</td><td>${esc(c.telefone)}</td><td>${esc(c.doc)}</td><td class="n">${saldoCredito(c.id) ? '<b class="ok">' + fmtR(saldoCredito(c.id)) + '</b>' : ''}</td><td class="n">${vs.length} · ${fmtR(vs.reduce((s, v) => s + v.total, 0))}</td><td>${vs.length ? fmtDia(vs[vs.length - 1].data) : '—'}</td><td class="n ${venc.length ? 'err' : ''}">${ab.length ? fmtR(ab.reduce((s, r) => s + r.valor, 0)) + (venc.length ? ' <small>vencido</small>' : '') : ''}</td><td class="n"><button class="lnk" data-act="verCliente" data-id="${c.id}">Ver</button><button class="lnk" data-act="editarCliente" data-id="${c.id}">Editar</button>${adm() ? `<button class="lnk perigo" data-act="excluirCliente" data-id="${c.id}">Excluir</button>` : ''}${btnWhats(linkWhats(c.telefone, `Olá ${c.nome.split(' ')[0]}! Aqui é da ${db.config.loja || 'loja'}.`))}</td></tr>`;
+    return `<tr><td>${esc(c.nome)}</td><td>${esc(c.telefone)}</td><td>${esc(c.doc)}</td><td class="n">${saldoCredito(c.id) ? '<b class="ok">' + fmtR(saldoCredito(c.id)) + '</b>' : ''}</td><td class="n">${vs.length} · ${fmtR(vs.reduce((s, v) => s + v.total, 0))}</td><td>${vs.length ? fmtDia(vs[vs.length - 1].data) : '—'}</td><td class="n ${venc.length ? 'err' : ''}">${ab.length ? fmtR(ab.reduce((s, r) => s + r.valor, 0)) + (venc.length ? ' <small>vencido</small>' : '') : ''}</td><td class="n"><button class="lnk" data-act="verCliente" data-id="${c.id}">Ver</button>${c.anonimizado ? '' : `<button class="lnk" data-act="editarCliente" data-id="${c.id}">Editar</button>`}${adm() ? `<button class="lnk perigo" data-act="excluirCliente" data-id="${c.id}">Excluir</button>` : ''}${c.anonimizado ? '' : btnWhats(linkWhats(c.telefone, `Olá ${c.nome.split(' ')[0]}! Aqui é da ${db.config.loja || 'loja'}.`))}</td></tr>`;
   }).join('')}</tbody><tfoot>${(() => { const ids = new Set(l.map(c => c.id)), vs = vendasValidas().filter(v => ids.has(v.clienteId)), ab = db.receber.filter(r => ids.has(r.clienteId) && !r.pagoEm); return `<tr><td colspan="3">Total · ${l.length} cliente(s)</td><td class="n">${fmtR(somar(l, c => saldoCredito(c.id)))}</td><td class="n">${vs.length} · ${fmtR(somar(vs, v => v.total))}</td><td></td><td class="n">${fmtR(somar(ab, r => r.valor))}</td><td></td></tr>`; })()}</tfoot></table></div>`;
 }
 function formCliente(c) {
@@ -2578,11 +2581,12 @@ function formCliente(c) {
     <label>Número / complemento<input id="fc-num" data-maiusc value="${esc(c ? c.num || '' : '')}"></label>
     <label>Bairro<input id="fc-bairro" data-maiusc value="${esc(c ? c.bairro || '' : '')}"></label>
     <label>Cidade / UF<input id="fc-cidade" data-maiusc value="${esc(c ? c.cidade || '' : '')}"></label>
-    <label class="full">Observações (tamanhos, preferências…)<input id="fc-obs" data-maiusc value="${esc(c ? c.obs || '' : '')}"></label></div>`,
+    <label class="full">Observações (tamanhos, preferências…)<input id="fc-obs" data-maiusc value="${esc(c ? c.obs || '' : '')}"></label>
+    ${campoMsgCli(c)}</div>`,
     `<button class="btn pri" data-act="salvarCliente" data-id="${c ? c.id : ''}">Salvar</button>`);
 }
 ACT.novoCliente = () => formCliente(null);
-ACT.editarCliente = el => formCliente(cli(+el.dataset.id));
+ACT.editarCliente = el => { const c = cli(+el.dataset.id); if (c && c.anonimizado) return aviso('Cliente anonimizado: os dados não podem mais ser editados.', 'erro'); formCliente(c); };
 ACT.salvarCliente = el => {
   const id = +el.dataset.id || 0, nome = MAIUSC($('#fc-nome').value), tel = $('#fc-tel').value.trim();
   if (!nome || !tel) return aviso('Informe o nome e o telefone.', 'erro');
@@ -2595,6 +2599,7 @@ ACT.salvarCliente = el => {
   let c = id ? cli(id) : null;
   if (!c) { c = { id: db.seq.cli++, criado: agora() }; db.clientes.push(c); }
   Object.assign(c, { nome, telefone: tel, doc: docC, nascimento: $('#fc-nasc').value, obs: MAIUSC($('#fc-obs').value) }, ender);
+  gravarMsgCli(c);
   db.vendas.forEach(v => { if (v.clienteId === c.id) v.cliente = c.nome; });
   salvar(); fecharModal();
   if (view === 'vendas') form.venda.cliente = rotuloCli(c);
@@ -2603,12 +2608,157 @@ ACT.salvarCliente = el => {
 ACT.verCliente = el => {
   const c = cli(+el.dataset.id), vs = db.vendas.filter(v => v.clienteId === c.id).slice().reverse();
   const cr = db.creditos.filter(x => x.clienteId === c.id).slice().reverse(), rec = db.receber.filter(r => r.clienteId === c.id), cds = db.condicionais.filter(x => x.clienteId === c.id).slice().reverse();
-  abrirModal(esc(c.nome), `<p>${esc(c.telefone)}${c.doc ? ' · CPF ' + esc(c.doc) : ''}${c.nascimento ? ' · nasc. ' + fmtDia(c.nascimento) : ''}${c.endereco ? '<br>' + esc(c.endereco) : ''}${c.obs ? '<br><i>' + esc(c.obs) + '</i>' : ''}</p>
+  abrirModal(esc(c.nome), `<p>${esc(c.telefone)}${c.doc ? ' · CPF ' + esc(c.doc) : ''}${c.nascimento ? ' · nasc. ' + fmtDia(c.nascimento) : ''}${c.endereco ? '<br>' + esc(c.endereco) : ''}${c.obs ? '<br><i>' + esc(c.obs) + '</i>' : ''}<br>${textoMsgCli(c)}</p>
     <h3>Crédito disponível: ${fmtR(saldoCredito(c.id))}</h3>${cr.length ? (() => { const rs = new Map(lotesCredito(c.id).map(l => [l.id, l.resto])); return tabSimples(['Data', 'Movimento', 'Valor', ''], cr.map(x => [fmtDH(x.data), esc(x.ref) + (x.validade ? ` <span class="mut">(vale até ${fmtDia(x.validade)})</span>` : ''), `<span class="${x.valor < 0 ? 'err' : 'ok'}">${fmtR(x.valor)}</span>`, adm() && x.valor > 0 && (rs.get(x.id) || 0) > 0 && !x.expira ? `<button class="lnk perigo" data-act="credEstornar" data-id="${x.id}">estornar</button>` : '']), ['Saldo de crédito', '', fmtR(somar(cr, x => x.valor)), '']); })() : ''}
     <h3>Compras</h3>${tabelaVendas(vs)}
     ${rec.length ? '<h3>Crediário</h3>' + tabelaReceber(rec) : ''}
     ${cds.length ? '<h3>Condicionais</h3>' + tabSimples(['Nº', 'Saída', 'Situação', 'Peças'], cds.map(x => [nDoc(x.id), fmtDH(x.data), x.status === 'aberta' ? 'Em aberto até ' + fmtDia(x.prazo) : 'Encerrada', x.itens.reduce((s, i) => s + i.qtd, 0)]), ['Total', '', cds.length + ' condicional(is)', somar(cds, pecasDe)]) : ''}`,
+    (adm() ? `<button class="btn" data-act="lgpdCopia" data-id="${c.id}">Cópia dos dados (LGPD)</button>${c.anonimizado ? '' : `<button class="btn perigo" data-act="lgpdAnonimizar" data-id="${c.id}">Anonimizar</button>`}` : '') +
     btnWhats(linkWhats(c.telefone, `Olá ${c.nome.split(' ')[0]}!`), 'Abrir WhatsApp').replace('class="lnk"', 'class="btn"'), true);
+};
+
+/* ===== LGPD: autorização de mensagens, aviso de privacidade, cópia dos dados e anonimização do cliente =====
+   aceitaMsg: true = autorizou promoções/aniversário pelo WhatsApp, false = não autorizou, ausente = não perguntado.
+   Mensagens de serviço (recibo, condicional, cobrança, troca) não dependem da autorização. */
+const MSG_OPCOES = [['', 'Não perguntado'], ['s', 'Autoriza'], ['n', 'Não autoriza']];
+const valMsg = c => c && c.aceitaMsg === true ? 's' : c && c.aceitaMsg === false ? 'n' : '';
+const naoAceitaMsg = c => !!c && (c.aceitaMsg === false || !!c.anonimizado);
+function textoMsgCli(c) {
+  if (c.anonimizado) return '<span class="tag in">dados anonimizados em ' + fmtDia(c.anonimizado.slice(0, 10)) + '</span>';
+  if (c.aceitaMsg === true) return '<span class="tag ok">autoriza promoções e aniversário</span>' + (c.aceitaMsgEm ? ' <span class="mut">desde ' + fmtDia(c.aceitaMsgEm.slice(0, 10)) + '</span>' : '');
+  if (c.aceitaMsg === false) return '<span class="tag in">não autoriza mensagens de promoção</span>' + (c.aceitaMsgEm ? ' <span class="mut">desde ' + fmtDia(c.aceitaMsgEm.slice(0, 10)) + '</span>' : '');
+  return '<span class="tag ab">autorização de mensagens não perguntada</span>';
+}
+function campoMsgCli(c) {
+  return `<label class="full">Mensagens de promoção e aniversário pelo WhatsApp (LGPD)<select id="fc-msg">${MSG_OPCOES.map(([v, t]) => `<option value="${v}" ${valMsg(c) === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <small class="mut" style="font-weight:400">Pergunte ao cliente. Com "Não autoriza", o botão de WhatsApp de aniversário e cashback fica bloqueado. Recibo, condicional e cobrança continuam liberados.</small></label>`;
+}
+function gravarMsgCli(c) {
+  const el = $('#fc-msg'); if (!el) return;
+  const novo = el.value === 's' ? true : el.value === 'n' ? false : undefined;
+  if (novo === c.aceitaMsg) return;
+  if (novo === undefined) { delete c.aceitaMsg; delete c.aceitaMsgEm; delete c.aceitaMsgPor; }
+  else { c.aceitaMsg = novo; c.aceitaMsgEm = agora(); c.aceitaMsgPor = eu.nome; }
+  registrar(novo === true ? 'Cliente autorizou mensagens (LGPD)' : novo === false ? 'Cliente não autorizou mensagens (LGPD)' : 'Autorização de mensagens apagada (LGPD)', 'cliente nº ' + c.id);
+}
+function avisoPrivPadrao() {
+  const c = db.config, contato = [c.whatsapp && 'WhatsApp ' + c.whatsapp, c.telefone && 'telefone ' + c.telefone, c.email && 'e-mail ' + c.email, c.endereco && 'na loja: ' + [c.endereco, c.bairro, c.cidade].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  return ['AVISO DE PRIVACIDADE AOS CLIENTES',
+    '',
+    (c.razao || c.loja || 'Esta loja') + (c.cnpj ? ' (CNPJ ' + c.cnpj + ')' : '') + ' trata os seus dados pessoais de acordo com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).',
+    '',
+    'Quais dados guardamos: nome e telefone/WhatsApp; e, se você quiser informar, CPF, endereço, data de nascimento e preferências (tamanhos). Também guardamos o histórico das suas compras, trocas, condicionais, créditos e crediário.',
+    '',
+    'Para que usamos: registrar e emitir o recibo das suas compras; controlar trocas, condicionais, créditos e parcelas; falar com você sobre esses assuntos; e, somente se você autorizar, enviar promoções e mensagem de aniversário.',
+    '',
+    'Base legal: execução do contrato de compra e procedimentos ligados a ele (art. 7º, V), cumprimento de obrigação legal (art. 7º, II), exercício regular de direitos e proteção do crédito (art. 7º, VI e X) e, para promoções e aniversário, o seu consentimento (art. 7º, I), que pode ser retirado a qualquer momento.',
+    '',
+    'Onde ficam: no sistema da loja, em computador com acesso por usuário e senha, e em cópias de segurança protegidas. Não vendemos nem cedemos os seus dados.',
+    '',
+    'Seus direitos: confirmar se temos dados seus e receber uma cópia; corrigir dados; retirar a autorização de mensagens; pedir a anonimização ou eliminação dos dados que não precisamos mais guardar (registros de vendas e pagamentos são mantidos pelo prazo exigido em lei, sem identificar você quando possível).',
+    '',
+    'Como pedir: fale com a loja' + (contato ? ' – ' + contato : '') + '.'].join(String.fromCharCode(10));
+}
+const avisoPriv = () => (db.config.avisoPrivacidade || '').trim() || avisoPrivPadrao();
+ACT.lgpdPainel = () => {
+  if (!adm()) return;
+  const cs = db.clientes, n = f => cs.filter(f).length;
+  abrirModal('Privacidade dos clientes (LGPD)', `<div class="resumo-tit"><div class="rbox ok"><small>Autorizam mensagens</small><b>${n(c => c.aceitaMsg === true && !c.anonimizado)}</b><span>promoções e aniversário</span></div>
+      <div class="rbox"><small>Não autorizam</small><b>${n(c => c.aceitaMsg === false && !c.anonimizado)}</b><span>WhatsApp de promoção bloqueado</span></div>
+      <div class="rbox ${n(c => c.aceitaMsg === undefined && !c.anonimizado) ? 'at' : ''}"><small>Não perguntados</small><b>${n(c => c.aceitaMsg === undefined && !c.anonimizado)}</b><span>pergunte na próxima compra</span></div>
+      <div class="rbox"><small>Anonimizados</small><b>${n(c => c.anonimizado)}</b><span>a pedido do cliente</span></div></div>
+    <ul class="sg-dicas"><li><b>No cadastro:</b> pergunte se o cliente autoriza promoções e mensagem de aniversário (Clientes → Editar → "Mensagens de promoção…").</li>
+      <li><b>Cliente pediu os dados dele:</b> Clientes → Ver → <b>Cópia dos dados (LGPD)</b> → imprimir/PDF ou arquivo.</li>
+      <li><b>Cliente pediu para apagar:</b> se não tiver compras, use Excluir. Se tiver, use Ver → <b>Anonimizar</b>: o nome vira "CLIENTE ANONIMIZADO" e telefone, CPF, endereço e nascimento são apagados; as vendas e valores continuam nos relatórios.</li>
+      <li>Deixe o aviso abaixo impresso no balcão ou envie pelo WhatsApp quando pedirem.</li></ul>
+    <label style="display:block;margin-top:10px"><b>Aviso de privacidade</b> <span class="mut">(pode editar; em branco volta ao texto padrão)</span><textarea id="lg-texto" rows="14" style="width:100%;font:inherit;font-size:13px">${esc(avisoPriv())}</textarea></label>`,
+    `<button class="btn" data-act="lgpdPadrao">Texto padrão</button><button class="btn" data-act="lgpdImprimir">Imprimir aviso</button><button class="btn pri" data-act="lgpdSalvar">Salvar texto</button>`, true);
+};
+ACT.lgpdPadrao = () => { const t = $('#lg-texto'); if (t) t.value = avisoPrivPadrao(); };
+ACT.lgpdSalvar = () => {
+  if (!adm()) return;
+  const t = ($('#lg-texto').value || '').trim();
+  db.config.avisoPrivacidade = t === avisoPrivPadrao() ? '' : t;
+  registrar('Aviso de privacidade alterado', db.config.avisoPrivacidade ? 'texto próprio' : 'texto padrão'); salvar(); aviso('Aviso de privacidade salvo.', 'ok');
+};
+ACT.lgpdImprimir = () => {
+  const t = ($('#lg-texto') && $('#lg-texto').value.trim()) || avisoPriv();
+  registrar('Impressão', 'Aviso de privacidade');
+  imprimir(`${cabDoc('AVISO DE PRIVACIDADE', '', agora(), '')}<div style="white-space:pre-wrap;font-size:13px;line-height:1.55;margin-top:10px">${esc(t)}</div>`, 'A4');
+};
+function dadosDoCliente(c) {
+  const vs = db.vendas.filter(v => v.clienteId === c.id), ids = new Set(vs.map(v => v.id));
+  return {
+    geradoEm: agora(), loja: db.config.loja || '', cnpjLoja: db.config.cnpj || '',
+    cadastro: { codigo: c.id, nome: c.nome, telefone: c.telefone || '', cpfCnpj: c.doc || '', nascimento: c.nascimento || '', endereco: c.endereco || '', observacoes: c.obs || '', cadastradoEm: c.criado || '',
+      mensagensPromocao: c.aceitaMsg === true ? 'autoriza' : c.aceitaMsg === false ? 'não autoriza' : 'não perguntado', autorizacaoRegistradaEm: c.aceitaMsgEm || '' },
+    compras: vs.map(v => ({ numero: nDoc(v.id), data: v.data, situacao: v.cancelada ? 'cancelada' : 'válida', total: v.total, pagamento: pagsVenda(v).map(p => p.forma + ' ' + fmtDec(+p.valor || 0)).join(' + '), itens: (v.itens || []).map(i => i.qtd + 'x ' + i.nome + (i.tamanho ? ' ' + i.tamanho : '')) })),
+    trocas: db.trocas.filter(t => t.clienteId === c.id || ids.has(t.venda)).map(t => ({ numero: nDoc(t.id), data: t.data, venda: nDoc(t.venda), destino: t.destino === 'credito' ? 'crédito' : 'devolução', itens: (t.itens || []).map(i => i.qtd + 'x ' + (i.nome || '')) })),
+    condicionais: db.condicionais.filter(x => x.clienteId === c.id).map(x => ({ numero: nDoc(x.id), saida: x.data, prazo: x.prazo, situacao: x.status === 'aberta' ? 'em aberto' : 'encerrada', pecas: x.itens.reduce((s, i) => s + i.qtd, 0) })),
+    creditos: db.creditos.filter(x => x.clienteId === c.id).map(x => ({ data: x.data, movimento: x.ref || '', valor: x.valor, validade: x.validade || '' })),
+    crediario: db.receber.filter(r => r.clienteId === c.id).map(r => ({ referente: origemRec(r), parcela: r.parcela + '/' + r.de, vencimento: r.vencimento, valor: r.valor, recebidoEm: r.pagoEm || '' }))
+  };
+}
+ACT.lgpdCopia = el => {
+  const c = cli(+el.dataset.id); if (!c || !adm()) return;
+  abrirModal('Cópia dos dados do cliente (LGPD)', `<p>Gera a cópia de tudo o que o sistema guarda sobre <b>${esc(c.nome)}</b>: cadastro, autorização de mensagens, compras, trocas, condicionais, créditos e crediário.</p>
+    <p class="mut">Entregue só ao próprio cliente (confira o documento dele). A emissão fica registrada no histórico de logs.</p>`,
+    `<button class="btn" data-act="lgpdCopiaArq" data-id="${c.id}">Baixar arquivo (JSON)</button><button class="btn pri" data-act="lgpdCopiaPdf" data-id="${c.id}">Imprimir / PDF</button>`);
+};
+ACT.lgpdCopiaArq = el => {
+  const c = cli(+el.dataset.id); if (!c || !adm()) return;
+  registrar('Cópia dos dados do cliente (LGPD)', 'cliente nº ' + c.id + ' · arquivo');
+  baixar('dados_cliente_' + c.id + '_' + hoje() + '.json', JSON.stringify(dadosDoCliente(c), null, 2), 'application/json;charset=utf-8'); fecharModal();
+};
+ACT.lgpdCopiaPdf = el => {
+  const c = cli(+el.dataset.id); if (!c || !adm()) return;
+  const d = dadosDoCliente(c), k = d.cadastro, T = (cab, ls) => ls.length ? `<table style="width:100%;border-collapse:collapse;font-size:11.5px;margin:4px 0 12px"><thead><tr>${cab.map(x => `<th style="text-align:left;border-bottom:1px solid #999;padding:3px">${x}</th>`).join('')}</tr></thead><tbody>${ls.map(l => `<tr>${l.map(x => `<td style="border-bottom:1px solid #ddd;padding:3px;vertical-align:top">${x}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p style="font-size:12px;color:#666">Nenhum registro.</p>';
+  registrar('Cópia dos dados do cliente (LGPD)', 'cliente nº ' + c.id + ' · impressão'); fecharModal();
+  imprimir(`${cabDoc('DADOS PESSOAIS DO CLIENTE (LGPD)', '', agora(), '')}
+    <h3 style="font-size:14px;margin:10px 0 4px">Cadastro</h3>${T(['Campo', 'Valor'], [['Código', k.codigo], ['Nome', esc(k.nome)], ['Telefone / WhatsApp', esc(k.telefone)], ['CPF / CNPJ', esc(k.cpfCnpj)], ['Nascimento', fmtDia(k.nascimento)], ['Endereço', esc(k.endereco)], ['Observações', esc(k.observacoes)], ['Cadastrado em', fmtDH(k.cadastradoEm)], ['Promoções e aniversário', k.mensagensPromocao + (k.autorizacaoRegistradaEm ? ' (registrado em ' + fmtDH(k.autorizacaoRegistradaEm) + ')' : '')]])}
+    <h3 style="font-size:14px;margin:10px 0 4px">Compras</h3>${T(['Nº', 'Data', 'Situação', 'Itens', 'Pagamento', 'Total'], d.compras.map(v => [v.numero, fmtDH(v.data), v.situacao, esc(v.itens.join(', ')), esc(v.pagamento), fmtR(v.total)]))}
+    <h3 style="font-size:14px;margin:10px 0 4px">Trocas e devoluções</h3>${T(['Nº', 'Data', 'Venda', 'Destino', 'Itens'], d.trocas.map(t => [t.numero, fmtDH(t.data), t.venda, t.destino, esc(t.itens.join(', '))]))}
+    <h3 style="font-size:14px;margin:10px 0 4px">Condicionais</h3>${T(['Nº', 'Saída', 'Prazo', 'Situação', 'Peças'], d.condicionais.map(x => [x.numero, fmtDH(x.saida), fmtDia(x.prazo), x.situacao, x.pecas]))}
+    <h3 style="font-size:14px;margin:10px 0 4px">Créditos (vale-troca, cashback, presente)</h3>${T(['Data', 'Movimento', 'Validade', 'Valor'], d.creditos.map(x => [fmtDH(x.data), esc(x.movimento), fmtDia(x.validade), fmtR(x.valor)]))}
+    <h3 style="font-size:14px;margin:10px 0 4px">Crediário</h3>${T(['Referente a', 'Parcela', 'Vencimento', 'Valor', 'Recebido em'], d.crediario.map(r => [esc(r.referente), r.parcela, fmtDia(r.vencimento), fmtR(r.valor), fmtDia(r.recebidoEm)]))}
+    <p style="font-size:11px;color:#555;margin-top:14px">Documento gerado em ${fmtDH(d.geradoEm)} por ${esc(eu.nome)}, a pedido do titular, conforme o art. 18 da Lei nº 13.709/2018 (LGPD).</p>`, 'A4');
+};
+function impedeAnonimizar(c) {
+  const p = [];
+  if (db.receber.some(r => r.clienteId === c.id && !r.pagoEm)) p.push('tem parcelas de crediário em aberto');
+  if (saldoCredito(c.id) > 0.004) p.push('tem ' + fmtR(saldoCredito(c.id)) + ' de crédito para usar (use ou estorne antes)');
+  if (db.condicionais.some(x => x.clienteId === c.id && x.status === 'aberta')) p.push('tem condicional em aberto');
+  return p;
+}
+ACT.lgpdAnonimizar = el => {
+  const c = cli(+el.dataset.id); if (!c || !adm() || c.anonimizado) return;
+  const imp = impedeAnonimizar(c);
+  if (imp.length) return abrirModal('Ainda não é possível anonimizar', `<p><b>${esc(c.nome)}</b> ${imp.join('; ')}.</p><p class="mut">Resolva primeiro: a loja precisa saber de quem cobrar ou para quem devolver.</p>`);
+  abrirModal('Anonimizar cliente (LGPD)', `<p>Use quando o cliente <b>pedir para apagar os dados</b> e já tiver compras registradas.</p>
+    <ul><li>O nome vira <b>CLIENTE ANONIMIZADO ${String(c.id).padStart(5, '0')}</b> no cadastro, nas vendas, trocas, condicionais e crediário.</li>
+      <li>Telefone, CPF, endereço, data de nascimento e observações são <b>apagados</b>.</li>
+      <li>Vendas, valores, estoque e comissões continuam iguais nos relatórios.</li>
+      <li>O histórico de logs (registro de segurança) e as cópias de backup antigas não são alterados; os backups antigos saem com o tempo.</li></ul>
+    <p class="err"><b>Não dá para desfazer.</b> Antes, se o cliente quiser, entregue a cópia dos dados.</p>
+    <label>Digite ANONIMIZAR para confirmar<input id="an-conf" autocomplete="off"></label>`,
+    `<button class="btn perigo" data-act="lgpdAnonConf" data-id="${c.id}">Anonimizar</button>`);
+};
+ACT.lgpdAnonConf = el => {
+  const c = cli(+el.dataset.id); if (!c || !adm() || c.anonimizado) return;
+  if (($('#an-conf').value || '').trim().toUpperCase() !== 'ANONIMIZAR') return aviso('Digite ANONIMIZAR para confirmar.', 'erro');
+  if (impedeAnonimizar(c).length) return aviso('Este cliente ainda tem pendências.', 'erro');
+  const velho = c.nome, novo = 'CLIENTE ANONIMIZADO ' + String(c.id).padStart(5, '0');
+  ['telefone', 'doc', 'nascimento', 'obs', 'endereco', 'rua', 'num', 'bairro', 'cidade', 'cep'].forEach(k => { if (k in c) c[k] = ''; });
+  ['aceitaMsgEm', 'aceitaMsgPor', 'anivMsg'].forEach(k => delete c[k]);
+  Object.assign(c, { nome: novo, aceitaMsg: false, anonimizado: agora(), anonimizadoPor: eu.nome });
+  const vs = db.vendas.filter(v => v.clienteId === c.id), ids = new Set(vs.map(v => v.id));
+  vs.forEach(v => { v.cliente = novo; v.doc = ''; });
+  db.condicionais.filter(x => x.clienteId === c.id).forEach(x => Object.assign(x, { cliente: novo, telefone: '', doc: '', endereco: '' }));
+  db.receber.filter(r => r.clienteId === c.id).forEach(r => { r.cliente = novo; });
+  db.trocas.filter(t => t.clienteId === c.id || ids.has(t.venda)).forEach(t => { t.cliente = novo; });
+  if (velho && velho.length >= 3) db.movs.forEach(m => { if (typeof m.ref === 'string' && m.ref.endsWith(' – ' + velho)) m.ref = m.ref.slice(0, -velho.length) + novo; });
+  registrar('Cliente anonimizado (LGPD)', 'cliente nº ' + c.id);
+  salvar(); fecharModal(); render(); aviso('Dados do cliente anonimizados.', 'ok');
 };
 
 /* ===== Trocas e devoluções ===== */
@@ -4319,6 +4469,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.07-06', itens: ['LGPD (privacidade dos clientes): no cadastro do cliente, campo "Mensagens de promoção e aniversário" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.', 'Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.', 'Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.', 'Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero).'] },
   { v: '2026.11.07-05', itens: ['E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.', 'Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular).'] },
   { v: '2026.11.07-04', itens: ['Backup na nuvem: Configurações → Backup e dados → Backup na nuvem. Com o aplicativo do Google Drive (ou o OneDrive) instalado e conectado com o e-mail da loja, o sistema cria a pasta "Controle de Estoque - <loja>/Backups" no Drive e o backup diário criptografado vai para lá. Aviso no topo se o envio parar.'] },
   { v: '2026.11.07-03', itens: ['Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF.'] },
@@ -6109,7 +6260,7 @@ function fidelidade() {
     const w = linkWhats(c.telefone, msg);
     return `<tr><td>${c.nascimento.slice(8, 10)}/${c.nascimento.slice(5, 7)}</td><td><b>${esc(c.nome)}</b>${idade > 0 && idade < 120 ? ` <span class="mut">faz ${idade} anos</span>` : ''}</td><td>${esc(c.telefone || '—')}</td><td>${ultima(c.id)}</td><td class="n">${fmtR(saldoCredito(c.id))}</td>
       <td>${(c.anivMsg || '') === ano ? '<span class="tag ok">mensagem enviada</span>' : ''}${pres ? ' <span class="tag ab">presente dado</span>' : pr0 && pr0.estornado ? ' <span class="tag in">presente estornado</span>' : ''}</td>
-      <td class="n">${w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener" data-act="fidMsg" data-id="${c.id}">WhatsApp</a>` : '<span class="mut">sem celular</span>'}${adm() && num(f.presente) > 0 && !pres ? ` <button class="btn" data-act="fidPresente" data-id="${c.id}">Dar presente ${fmtR(num(f.presente))}</button>` : ''}${adm() && pres && credPresente(c, ano) ? ` <button class="btn perigo" data-act="credEstornar" data-id="${credPresente(c, ano)}">Estornar presente</button>` : ''}</td></tr>`;
+      <td class="n">${naoAceitaMsg(c) ? '<span class="mut" title="O cliente não autorizou mensagens de promoção e aniversário (LGPD)">não autoriza mensagens</span>' : w ? `<a class="btn" href="${esc(w)}" target="_blank" rel="noopener" data-act="fidMsg" data-id="${c.id}">WhatsApp</a>` : '<span class="mut">sem celular</span>'}${adm() && num(f.presente) > 0 && !pres ? ` <button class="btn" data-act="fidPresente" data-id="${c.id}">Dar presente ${fmtR(num(f.presente))}</button>` : ''}${adm() && pres && credPresente(c, ano) ? ` <button class="btn perigo" data-act="credEstornar" data-id="${credPresente(c, ano)}">Estornar presente</button>` : ''}</td></tr>`;
   };
   // cashback
   const mesIni = hoje().slice(0, 8) + '01', estornados = new Set(db.creditos.filter(c => c.estornoDe).map(c => c.estornoDe)), cb = db.creditos.filter(c => c.cashback && c.valor > 0 && !estornados.has(c.id));
@@ -6126,11 +6277,11 @@ function fidelidade() {
       <div class="rbox ok" data-act="fidCard" data-v="aberto" title="Clique para ver o detalhe"><small>Em aberto (clientes podem usar)</small><b>${fmtR(emAberto)}</b><span>${new Set(abertos.map(l => l.cli && l.cli.id)).size} cliente(s)</span></div>
       <div class="rbox ${vencendo.length ? 'at' : ''}" data-act="fidCard" data-v="vence" title="Clique para ver o detalhe"><small>Vence nos próximos 7 dias</small><b>${fmtR(r2(vencendo.reduce((s, l) => s + l.resto, 0)))}</b><span>${vencendo.length} crédito(s)</span></div>
       <div class="rbox" data-act="fidCard" data-v="vencido" title="Clique para ver o detalhe"><small>Vencido neste mês</small><b>${fmtR(vencidoMes)}</b><span>não usado a tempo</span></div></div>
-    ${vencendo.length ? `<h4 class="rel-sec">Lembre o cliente antes de vencer</h4>${tabSimples(['Cliente', 'Valor', 'Vence em', ''], vencendo.map(l => { const c = l.cli || {}, w = linkWhats(c.telefone, textoMsg(f.msgVence, { nome: (c.nome || '').split(' ')[0], loja: db.config.loja || 'loja', valor: fmtR(l.resto), data: fmtDia(l.validade) })); return [esc(c.nome || '?'), fmtR(l.resto), fmtDia(l.validade), w ? `<a class="lnk" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : '']; }))}` : ''}
+    ${vencendo.length ? `<h4 class="rel-sec">Lembre o cliente antes de vencer</h4>${tabSimples(['Cliente', 'Valor', 'Vence em', ''], vencendo.map(l => { const c = l.cli || {}, w = linkWhats(c.telefone, textoMsg(f.msgVence, { nome: (c.nome || '').split(' ')[0], loja: db.config.loja || 'loja', valor: fmtR(l.resto), data: fmtDia(l.validade) })); return [esc(c.nome || '?'), fmtR(l.resto), fmtDia(l.validade), naoAceitaMsg(c) ? '<span class="mut">não autoriza mensagens</span>' : w ? `<a class="lnk" href="${esc(w)}" target="_blank" rel="noopener">WhatsApp</a>` : '']; }))}` : ''}
     <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="fidExtrato">Extrato do cashback (PDF / Excel)</button></div></section>`;
 }
 ACT.fidAba = el => { fidAba = el.dataset.v; render(); };
-ACT.fidMsg = el => { try { window.open(el.href, '_blank', 'noopener'); } catch (e) { } const c = cli(+el.dataset.id); if (!c) return; c.anivMsg = hoje().slice(0, 4); registrar('Mensagem de aniversário enviada', c.nome); salvar(); setTimeout(render, 300); return true; };
+ACT.fidMsg = el => { if (naoAceitaMsg(cli(+el.dataset.id))) return aviso('Este cliente não autorizou mensagens de promoção e aniversário.', 'erro'); try { window.open(el.href, '_blank', 'noopener'); } catch (e) { } const c = cli(+el.dataset.id); if (!c) return; c.anivMsg = hoje().slice(0, 4); registrar('Mensagem de aniversário enviada', c.nome); salvar(); setTimeout(render, 300); return true; };
 ACT.fidPresente = el => {
   const c = cli(+el.dataset.id), f = cfgFid(), ano = hoje().slice(0, 4), ja = (c && c.presentes || {})[ano]; if (!c || !adm() || (ja && !ja.estornado)) return;
   const val = r2(num(f.presente)), validade = somaDias(int(f.diasPresente) || 30);

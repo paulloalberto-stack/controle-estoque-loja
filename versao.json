@@ -1,13 +1,15 @@
 {
- "versao": "2026.11.07-05",
- "publicadoEm": "07/11/2026 14:08",
+ "versao": "2026.11.07-06",
+ "publicadoEm": "07/11/2026 15:02",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "0df40c3333be188711c0c91195e33ab8e5c2049d7b3b65d6a0a97fd73673a7e5",
- "tamanho": 744694,
- "assinatura": "Ru16WIkfLPMHHMqWj4j3pgRVuzJUq6KxK+KwR0CUA1aMbdLcOdjCkf20VJQwtBhe9H4cgKP1GJrNdXToowBeFYq/81TYaOXYCVOgFiWcJCjLjPL5w7tY3BT2ldyDrRc3BBKTotdabiyBwpNj2nPD9xxp4+QvAAcIdLpjJ3+7XbswIXGWU6wA4klIR+cra0lAgNoUjgiN4JFqiSDsIQWis+zl1q81yKrfv4BdwmYGm9+6bQhAI7pf2rMOFXP4tlfK2hIrBh3UXO0cIuywQQF1eqio6GcTCHvzW2BK2VbYgzecq+ICH6JWILO93oIm5E5V9xwXgKPG+Q9mqxGb6IRySt8+DyVmCQ5Szwp/w/lRWnlOR988NH99jyxfmCcECw0u3zt/qmDW2XNuynletUpxNbePHx/FG1T4vu14z4Pfceqnu1Sfbnsy5+wMtFNWPhouMXHGHK127Ac2e6u/JaIY2w3DHgrlfDILr6d6wwdGHqYojU2jVM/9QosD1PwZWjwH",
+ "sha256": "daddfb5929033228f316d0570c3d3fca8a16c4a1238b22962d680145e963a248",
+ "tamanho": 762234,
+ "assinatura": "KGhP3kNnt5NprO8bK1IcM+WTNWGiri0uwzLT6yzEySYHfMhiTbgdYAMOK5YIxFBGTrtPNrn2nLoS8aGQ+6xg5GjL3swmljdi2T4lZbU/8cCGL8/9egJHf6+hsPD1+hzRpFTD/NYKEpa9fr3kOjsw27jqSBNEBHQHUKNlY8FullAFP4/dmtjmqGWMWIzaEZMI8sENDx98hIn7Clj/5NSHYsld8JZcOf75bzQlLtXpJ6QattLAjsx33YR1ueDcugR3uB89pCmaxNbCn8tWWX1bsL+XihXeFCIWCuN9akN8ncarxbOVn6aj3TfT6TkNKaDJZ99yEldUIPaeOYccBFytWgm/Q1XlO7luDzQni9iu7WjfufPDffL3JHqlVm94xOIriDkOpLu7xNgVVMdKtwhnosgVQjvaxIDiWXuZ3iZUk3yZAYqoCAtkA3vrKwmVRVYN3/qsSkrW6Fm428MEPCrpzQYc1r3KWHhoQ3EC+n5d/o/BdnUgD33bB+rrpEop6cH5",
  "novidades": [
-  "E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.",
-  "Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular)."
+  "LGPD (privacidade dos clientes): no cadastro do cliente, campo \"Mensagens de promoção e aniversário\" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.",
+  "Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.",
+  "Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.",
+  "Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero)."
  ],
  "servidor": {
   "versao": "2026.11.07-06",
