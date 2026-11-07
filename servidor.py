@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.04-19'
+VERSAO_SERVIDOR = '2026.11.07-04'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -566,6 +566,288 @@ def laco_copias(banco):
         time.sleep(1800)
 
 
+# ---------------- backup na nuvem (pasta sincronizada do Google Drive ou OneDrive) ----------------
+def pastas_nuvem(prov, email):
+    """pastas do Drive/OneDrive sincronizadas neste computador (o aplicativo do Google/Microsoft é quem envia para a nuvem)"""
+    achadas = []
+    if os.environ.get('LOJA_NUVEM_RAIZES'):   # testes
+        return [{'pasta': p, 'conta': email or '', 'confere': True} for p in os.environ['LOJA_NUVEM_RAIZES'].split(';') if os.path.isdir(p)]
+    email = (email or '').strip().lower()
+    if prov == 'onedrive':
+        try:
+            import winreg
+            k = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\OneDrive\Accounts')
+            i = 0
+            while True:
+                try:
+                    s = winreg.OpenKey(k, winreg.EnumKey(k, i))
+                except OSError:
+                    break
+                i += 1
+                def val(v):
+                    try:
+                        return winreg.QueryValueEx(s, v)[0]
+                    except OSError:
+                        return ''
+                pasta, conta = val('UserFolder'), str(val('UserEmail') or '')
+                if pasta and os.path.isdir(pasta):
+                    achadas.append({'pasta': pasta, 'conta': conta, 'confere': bool(email) and conta.lower() == email})
+        except Exception:
+            pass
+        for v in ('OneDriveConsumer', 'OneDriveCommercial', 'OneDrive'):
+            p = os.environ.get(v)
+            if p and os.path.isdir(p) and not any(os.path.normcase(a['pasta']) == os.path.normcase(p) for a in achadas):
+                achadas.append({'pasta': p, 'conta': '', 'confere': False})
+    else:
+        for letra in 'DEFGHIJKLMNOPQRSTUVWXYZ':
+            for nome in ('Meu Drive', 'My Drive'):
+                p = letra + ':\\' + nome
+                try:
+                    if os.path.isdir(p):
+                        achadas.append({'pasta': p, 'conta': '', 'confere': False})
+                except OSError:
+                    pass
+        for p in (os.path.join(os.path.expanduser('~'), 'Google Drive'), os.path.join(os.path.expanduser('~'), 'Meu Drive')):
+            if os.path.isdir(p):
+                achadas.append({'pasta': p, 'conta': '', 'confere': False})
+    return achadas
+
+
+def nome_pasta_loja(loja):
+    s = re.sub(r'[^0-9A-Za-zÀ-ÿ ._-]+', '', loja or 'Loja').strip() or 'Loja'
+    return 'Controle de Estoque - ' + s[:60]
+
+
+def preparar_nuvem(prov, email, raiz, loja):
+    if not raiz or not os.path.isdir(raiz):
+        raise ValueError('a pasta "%s" não existe neste computador (o aplicativo do Drive está instalado e conectado?)' % raiz)
+    destino = os.path.join(raiz, nome_pasta_loja(loja), 'Backups')
+    os.makedirs(destino, exist_ok=True)
+    teste = os.path.join(destino, '.teste_gravacao')
+    with open(teste, 'w') as f:
+        f.write('ok')
+    os.remove(teste)
+    leia = os.path.join(os.path.dirname(destino), 'LEIA-ME.txt')
+    with open(leia, 'w', encoding='utf-8') as f:
+        f.write('Backups diários do Controle de Estoque (%s).\r\nOs arquivos backup_loja_*.json são criptografados: para restaurar, use Configurações > Backup e dados > Restaurar backup e a senha do backup.\r\nNão apague esta pasta.\r\n' % (loja or ''))
+    return {'prov': prov, 'email': email, 'raiz': raiz, 'pasta': destino, 'quando': datetime.datetime.now().isoformat(timespec='seconds')}
+
+
+def info_nuvem(b):
+    n = b.meta_interna('nuvem') or {}
+    if not n.get('pasta'):
+        return {'ativo': False}
+    ok = os.path.isdir(n['pasta'])
+    arqs = sorted(x for x in os.listdir(n['pasta']) if x.startswith('backup_loja_') and x.endswith('.json')) if ok else []
+    ult = datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(n['pasta'], arqs[-1]))).isoformat(timespec='seconds') if arqs else ''
+    return dict(n, ativo=True, acessivel=ok, arquivos=len(arqs), ultimo=ult)
+
+
+# ---------------- e-mail de monitoramento (resumo da loja nos horários marcados) e aviso de entrada do master ----------------
+import smtplib, ssl as _ssl, shutil as _shutil, html as _html
+from email.message import EmailMessage
+from email.utils import formataddr
+
+PRESETS_SMTP = {'gmail': ('smtp.gmail.com', 465, 'ssl'), 'outlook': ('smtp-mail.outlook.com', 587, 'starttls'),
+                'office365': ('smtp.office365.com', 587, 'starttls'), 'yahoo': ('smtp.mail.yahoo.com', 465, 'ssl')}
+EVENTOS_ATENCAO = ('Senha errada', 'Usuário bloqueado', 'PIN/senha errada', 'Confirmação de vendedora bloqueada', 'Caixa reaberto', 'Venda cancelada',
+                   'Crédito estornado', 'Vendedora da venda alterada', 'Entrou como master', 'Licença ativada', 'Produto excluído', 'Backup restaurado',
+                   'Dados apagados', 'Estoque ajustado', 'Inventário finalizado', 'Sistema atualizado')
+
+
+def _chave_maquina():
+    return hashlib.sha256(('lojaRoupas|' + BASE + '|' + (os.environ.get('COMPUTERNAME') or '')).encode('utf-8')).digest()
+
+
+def _embaralhar(texto):
+    """a senha do e-mail fica no banco embaralhada com uma chave deste computador (não é lida por quem só copiar o banco)"""
+    k, b = _chave_maquina(), texto.encode('utf-8')
+    return base64.b64encode(bytes(c ^ k[i % len(k)] for i, c in enumerate(b))).decode('ascii')
+
+
+def _desembaralhar(t):
+    k, b = _chave_maquina(), base64.b64decode(t or '')
+    return bytes(c ^ k[i % len(k)] for i, c in enumerate(b)).decode('utf-8')
+
+
+def cfg_email(b):
+    return b.meta_interna('email') or {}
+
+
+def info_email(b):
+    c = cfg_email(b)
+    return {k: c.get(k) for k in ('ativo', 'preset', 'host', 'porta', 'seguranca', 'usuario', 'destinos', 'horarios', 'avisoMaster', 'ultimoEnvio', 'ultimoErro')} | {'temSenha': bool(c.get('senha'))}
+
+
+def enviar_email(b, assunto, html_corpo, texto):
+    c = cfg_email(b)
+    if not (c.get('host') and c.get('usuario') and c.get('senha') and c.get('destinos')):
+        raise ValueError('e-mail não configurado (servidor, usuário, senha e destinatários)')
+    msg = EmailMessage()
+    msg['Subject'] = assunto
+    msg['From'] = formataddr(('Controle de Estoque - ' + (b.config().get('loja') or 'Loja'), c['usuario']))
+    msg['To'] = ', '.join(c['destinos'])
+    msg.set_content(texto)
+    msg.add_alternative(html_corpo, subtype='html')
+    porta, seg = int(c.get('porta') or 465), c.get('seguranca') or 'ssl'
+    if seg == 'ssl':
+        s = smtplib.SMTP_SSL(c['host'], porta, timeout=30, context=_ssl.create_default_context())
+    else:
+        s = smtplib.SMTP(c['host'], porta, timeout=30)
+        if seg == 'starttls':
+            s.starttls(context=_ssl.create_default_context())
+    try:
+        s.login(c['usuario'], _desembaralhar(c['senha']))
+        s.send_message(msg)
+    finally:
+        try:
+            s.quit()
+        except Exception:
+            pass
+
+
+def _r(v):
+    try:
+        return round(float(v or 0), 2)
+    except Exception:
+        return 0.0
+
+
+def _dh(s):
+    s = str(s or '')
+    return ('%s/%s/%s %s' % (s[8:10], s[5:7], s[:4], s[11:16])).strip() if len(s) >= 10 else (s or '—')
+
+
+def _moeda(v):
+    s = '{:,.2f}'.format(_r(v)).replace(',', 'X').replace('.', ',').replace('X', '.')
+    return 'R$ ' + s
+
+
+def resumo_loja(b, quando=None):
+    agora_ = quando or datetime.datetime.now()
+    hoje = agora_.date().isoformat()
+    d = json.loads(b.ler_dados() or '{}') if not b.vazio() else {}
+    cfg = d.get('config') or {}
+    vendas = [v for v in d.get('vendas') or [] if isinstance(v, dict)]
+    validas = [v for v in vendas if not v.get('cancelada')]
+    vh = [v for v in validas if str(v.get('data', ''))[:10] == hoje]
+    mes = [v for v in validas if str(v.get('data', ''))[:7] == hoje[:7]]
+    canc = [v for v in vendas if v.get('cancelada') and str(v.get('canceladaEm', ''))[:10] == hoje]
+    formas, vend = {}, {}
+    for v in vh:
+        for p in v.get('pagamentos') or [{'forma': v.get('pagamento') or '?', 'valor': v.get('total')}]:
+            formas[p.get('forma') or '?'] = _r(formas.get(p.get('forma') or '?', 0) + _r(p.get('valor')))
+        u = v.get('usuario') or '?'
+        a = vend.setdefault(u, [0, 0.0]); a[0] += 1; a[1] = _r(a[1] + _r(v.get('total')))
+    caixas = d.get('caixas') or []
+    aberto = next((c for c in caixas if isinstance(c, dict) and not c.get('fechamento')), None)
+    fechados = [c for c in caixas if isinstance(c, dict) and c.get('fechamento') and str(c['fechamento'].get('em', ''))[:10] == hoje]
+    conds = [c for c in d.get('condicionais') or [] if isinstance(c, dict) and c.get('status') == 'aberta']
+    atras = [c for c in conds if str(c.get('prazo', '9999')) < hoje]
+    prods = [p for p in d.get('produtos') or [] if isinstance(p, dict) and p.get('ativo') is not False]
+    baixo = [p for p in prods if _r(p.get('minimo')) > 0 and _r(p.get('estoque')) < _r(p.get('minimo'))]
+    zerado = [p for p in prods if _r(p.get('estoque')) <= 0]
+    rec_venc = [r for r in d.get('receber') or [] if isinstance(r, dict) and not r.get('pagoEm') and str(r.get('vencimento', '9999')) < hoje]
+    sete = (agora_.date() + datetime.timedelta(days=7)).isoformat()
+    pag_7 = [p for p in d.get('pagar') or [] if isinstance(p, dict) and not p.get('pagoEm') and str(p.get('vencimento', '9999')) <= sete]
+    aud = [a for a in d.get('auditoria') or [] if isinstance(a, dict) and str(a.get('q', ''))[:10] == hoje]
+    atencao = [a for a in aud if any(str(a.get('ev', '')).startswith(e) for e in EVENTOS_ATENCAO)]
+    lic = situacao_licenca(b, cfg)
+    bk = cfg.get('backupAuto') or {}
+    copias = sorted(n for n in os.listdir(PASTA_BACKUP) if n.startswith('loja_') and n.endswith('.sqlite')) if os.path.isdir(PASTA_BACKUP) else []
+    nuv = info_nuvem(b)
+    erros = []
+    try:
+        with open(ARQ_LOG, encoding='utf-8', errors='replace') as f:
+            erros = [l.strip() for l in f if l.startswith(hoje) and re.search('erro|falha|RECUSADO|conflito', l, re.I)]
+    except Exception:
+        pass
+    disco = _shutil.disk_usage(BASE)
+    rede = info_rede()
+    secoes = [
+        ('Vendas de hoje', [('Vendas', '%d (%s)' % (len(vh), _moeda(sum(_r(v.get('total')) for v in vh)))), ('No mês', '%d (%s)' % (len(mes), _moeda(sum(_r(v.get('total')) for v in mes))))]
+         + [('  ' + k, _moeda(v)) for k, v in sorted(formas.items())] + [('  ' + k, '%d venda(s) · %s' % (a[0], _moeda(a[1]))) for k, a in sorted(vend.items())]
+         + ([('Canceladas hoje', str(len(canc)))] if canc else [])),
+        ('Caixa', [('Situação', ('aberto desde %s por %s (troco %s)' % (str(aberto['abertura'].get('em', ''))[11:16], aberto['abertura'].get('por', ''), _moeda(aberto['abertura'].get('valor')))) if aberto else 'fechado')]
+         + [('Fechado às ' + str(c['fechamento'].get('em', ''))[11:16], 'diferença ' + _moeda(sum(_r(x) for x in (c['fechamento'].get('diferenca') or {}).values()) if isinstance(c['fechamento'].get('diferenca'), dict) else c['fechamento'].get('diferenca'))) for c in fechados]),
+        ('Estoque e condicionais', [('Abaixo do mínimo', str(len(baixo))), ('Sem estoque', str(len(zerado))), ('Condicionais abertas', '%d (%d atrasada(s))' % (len(conds), len(atras)))]),
+        ('Financeiro', [('A receber vencido', '%d título(s) · %s' % (len(rec_venc), _moeda(sum(_r(r.get('valor')) for r in rec_venc)))), ('A pagar em 7 dias (ou vencido)', '%d conta(s) · %s' % (len(pag_7), _moeda(sum(_r(p.get('valor')) for p in pag_7))))]),
+        ('Backup', [('Último backup', (_dh(bk.get('ultimo')) if bk.get('ultimo') else 'nunca') + (' · ERRO: ' + bk.get('erro') if bk.get('erro') else '')), ('Cópia diária do banco', _dh(copias[-1][5:15]) if copias else 'nenhuma'),
+                    ('Nuvem', ('%s · último envio %s%s' % (nuv.get('email') or '', _dh(nuv.get('ultimo')), '' if nuv.get('acessivel') else ' · PASTA INACESSÍVEL')) if nuv.get('ativo') else 'desligada')]),
+        ('Sistema', [('Versão', '%s (servidor %s)' % (versao_de(open(ARQ_SISTEMA, encoding='utf-8').read()) if os.path.exists(ARQ_SISTEMA) else '?', VERSAO_SERVIDOR)),
+                     ('Licença', '%s%s · recursos: %s' % ({'ok': 'ativa', 'avaliacao': 'em avaliação', 'bloqueada': 'VENCIDA (modo consulta)'}.get(lic.get('sit'), lic.get('sit')), (' até ' + _dh(lic['fim'])[:10]) if lic.get('fim') else '', ', '.join(lic.get('recursos') or []) or 'nenhum')),
+                     ('Venda pelo celular', ('ligada · %d aparelho(s) conectado(s)' % rede.get('sessoes', 0)) if rede.get('ativo') else 'desligada'),
+                     ('Disco livre', '%.1f GB' % (disco.free / 1e9)), ('Erros do servidor hoje', str(len(erros)))]),
+        ('Atenção (segurança e operações do dia)', [(str(a.get('q', ''))[11:16] + ' ' + str(a.get('u', '')), str(a.get('ev', '')) + (': ' + str(a.get('det', ''))[:120] if a.get('det') else '')) for a in atencao[-25:]] or [('Nada fora do normal', '')]),
+    ]
+    if erros:
+        secoes.append(('Últimos erros do servidor', [(e[11:19], e[20:180]) for e in erros[-5:]]))
+    loja = cfg.get('loja') or 'Loja'
+    alertas = []
+    if len(atras): alertas.append('%d condicional(is) atrasada(s)' % len(atras))
+    if nuv.get('ativo') and not nuv.get('acessivel'): alertas.append('backup na nuvem inacessível')
+    if lic.get('sit') not in ('ok', 'avaliacao'): alertas.append('licença: ' + str(lic.get('sit')))
+    if erros: alertas.append('%d erro(s) no servidor' % len(erros))
+    if disco.free < 5e9: alertas.append('pouco espaço em disco')
+    assunto = '[%s] Resumo %s %s – %d venda(s) %s%s' % (loja, agora_.strftime('%d/%m'), agora_.strftime('%H:%M'), len(vh), _moeda(sum(_r(v.get('total')) for v in vh)), (' · ATENÇÃO: ' + '; '.join(alertas)) if alertas else '')
+    esc = _html.escape
+    linhas_html = ''.join('<h3 style="margin:18px 0 6px;font-size:15px;color:#16213a">%s</h3><table style="border-collapse:collapse;width:100%%;font-size:13px">%s</table>' % (esc(t), ''.join(
+        '<tr><td style="padding:4px 8px;border-bottom:1px solid #eee;color:#555;white-space:pre;width:42%%">%s</td><td style="padding:4px 8px;border-bottom:1px solid #eee"><b>%s</b></td></tr>' % (esc(a), esc(b2)) for a, b2 in itens)) for t, itens in secoes)
+    corpo = ('<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;color:#141a26"><h2 style="margin:0">%s</h2><p style="color:#666;margin:4px 0 0">%s · %s</p>%s%s'
+             '<p style="color:#999;font-size:11px;margin-top:20px">Enviado automaticamente pelo Controle de Estoque (P.A.S Soluções Tecnológicas).</p></div>') % (
+        esc(loja), esc(cfg.get('cnpj') or ''), agora_.strftime('%d/%m/%Y %H:%M'),
+        ('<p style="background:#fff4e5;border:1px solid #f5c47a;border-radius:8px;padding:8px 12px;color:#7a4b00"><b>Atenção:</b> %s</p>' % esc('; '.join(alertas))) if alertas else '', linhas_html)
+    texto = assunto + '\n\n' + '\n\n'.join(t + '\n' + '\n'.join('  %s: %s' % (a, b2) for a, b2 in itens) for t, itens in secoes)
+    return assunto, corpo, texto
+
+
+def laco_email(b):
+    while True:
+        time.sleep(30)
+        try:
+            c = cfg_email(b)
+            if not c.get('ativo'):
+                continue
+            ag = datetime.datetime.now()
+            hoje = ag.date().isoformat()
+            feitos = b.meta_interna('emailFeitos') or {}
+            for h in c.get('horarios') or []:
+                chave = hoje + ' ' + h
+                if feitos.get(chave) or ag.strftime('%H:%M') < h:
+                    continue
+                feitos = {k: v for k, v in feitos.items() if k[:10] == hoje}
+                feitos[chave] = True
+                b.meta_interna('emailFeitos', feitos)
+                try:
+                    a, corpo, txt = resumo_loja(b, ag)
+                    enviar_email(b, a, corpo, txt)
+                    c = cfg_email(b); c['ultimoEnvio'] = ag.isoformat(timespec='seconds'); c['ultimoErro'] = ''; b.meta_interna('email', c)
+                    log('e-mail de monitoramento enviado (%s)' % h)
+                except Exception as e:
+                    c = cfg_email(b); c['ultimoErro'] = '%s: %s' % (ag.strftime('%d/%m %H:%M'), e); b.meta_interna('email', c)
+                    log('falha ao enviar o e-mail de monitoramento: %r' % e)
+        except Exception as e:
+            log('laço do e-mail: %r' % e)
+
+
+def aviso_master(b, nome):
+    c = cfg_email(b)
+    if not (c.get('ativo') and c.get('avisoMaster')):
+        return
+    ag = datetime.datetime.now()
+    loja = b.config().get('loja') or 'Loja'
+    a = '[%s] Usuário master entrou: %s (%s)' % (loja, nome, ag.strftime('%d/%m %H:%M'))
+    corpo = '<div style="font-family:Segoe UI,Arial,sans-serif"><h2>%s</h2><p>O usuário <b>%s</b>, com perfil <b>master</b>, entrou no sistema da loja em %s.</p><p>Se não foi o suporte, troque a senha do master.</p></div>' % (_html.escape(loja), _html.escape(nome), ag.strftime('%d/%m/%Y %H:%M'))
+    threading.Thread(target=lambda: _tentar(lambda: enviar_email(b, a, corpo, a), 'aviso de entrada do master'), daemon=True).start()
+
+
+def _tentar(fn, oque):
+    try:
+        fn(); log(oque + ' enviado por e-mail')
+    except Exception as e:
+        log('falha no %s: %r' % (oque, e))
+
+
 def gravar_arquivo_backup(nome, conteudo, manter, pasta_extra):
     if not re.match('^backup_loja_[0-9A-Za-z_.-]+[.]json$', nome or ''):
         raise ValueError('nome de arquivo inválido')
@@ -575,6 +857,14 @@ def gravar_arquivo_backup(nome, conteudo, manter, pasta_extra):
         if not os.path.isdir(pasta_extra):
             raise ValueError('a pasta extra "%s" não existe ou não está acessível (pen drive desconectado?)' % pasta_extra)
         destinos.append(pasta_extra)
+    nuvem = (BANCO_ATIVO.meta_interna('nuvem') or {}) if BANCO_ATIVO else {}
+    if nuvem.get('pasta'):
+        if '"lojaRoupas-cripto"' not in conteudo[:200]:
+            log('backup NÃO enviado para a nuvem: o arquivo não está criptografado')
+        elif os.path.isdir(nuvem['pasta']):
+            destinos.append(nuvem['pasta'])
+        else:
+            log('backup na nuvem: pasta %s não encontrada (aplicativo do Drive desconectado?)' % nuvem['pasta'])
     for d in destinos:
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, nome), 'w', encoding='utf-8', newline='') as f:
@@ -748,7 +1038,7 @@ class Atendente(BaseHTTPRequestHandler):
             if caminho == '/api/status':
                 return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'sistema': versao_de(open(ARQ_SISTEMA, encoding='utf-8').read()) if os.path.exists(ARQ_SISTEMA) else '',
                                         'vazio': b.vazio(), 'migradoEm': b.meta_interna('migradoEm'), 'banco': b.caminho, 'tamanho': b.tamanho(),
-                                        'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config()), 'rede': info_rede()})
+                                        'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config()), 'rede': info_rede(), 'nuvem': info_nuvem(b), 'email': info_email(b)})
             if caminho == '/api/dados':
                 corpo = b.ler_dados() if not b.vazio() else '{}'
                 if 'versao=1' in self.path:   # sistema novo: dados + versão (gravação por registro)
@@ -847,6 +1137,42 @@ class Atendente(BaseHTTPRequestHandler):
             if caminho == '/api/backup':
                 onde = gravar_arquivo_backup(dados.get('nome'), dados.get('conteudo') or '', dados.get('manter'), dados.get('pasta') or '')
                 return self._json(200, {'ok': True, 'onde': onde})
+            if caminho == '/api/email':
+                c = cfg_email(b)
+                pre = dados.get('preset') or c.get('preset') or 'gmail'
+                h, p, s = PRESETS_SMTP.get(pre, (dados.get('host') or '', int(dados.get('porta') or 587), dados.get('seguranca') or 'starttls'))
+                if pre == 'outro':
+                    h, p, s = (dados.get('host') or '').strip(), int(dados.get('porta') or 587), dados.get('seguranca') or 'starttls'
+                hs = [x for x in (dados.get('horarios') or []) if re.match('^([01][0-9]|2[0-3]):[0-5][0-9]$', x or '')]
+                ds = [x.strip() for x in re.split('[,; ]+', dados.get('destinos') or '') if re.match('^[^@ ]+@[^@ ]+[.][^@ ]+$', x.strip())]
+                c.update(ativo=bool(dados.get('ativo')), preset=pre, host=h, porta=p, seguranca=s, usuario=(dados.get('usuario') or '').strip(), destinos=ds, horarios=sorted(set(hs)), avisoMaster=bool(dados.get('avisoMaster')))
+                if dados.get('senha'):
+                    c['senha'] = _embaralhar(dados['senha'])
+                b.meta_interna('email', c)
+                log('configuração do e-mail de monitoramento alterada (%s, %d destinatário(s), horários %s)' % (h, len(ds), ', '.join(hs)))
+                return self._json(200, info_email(b))
+            if caminho == '/api/email/teste':
+                a, corpo, txt = resumo_loja(b)
+                enviar_email(b, '[TESTE] ' + a, corpo, txt)
+                c = cfg_email(b); c['ultimoEnvio'] = datetime.datetime.now().isoformat(timespec='seconds'); c['ultimoErro'] = ''; b.meta_interna('email', c)
+                return self._json(200, {'ok': True})
+            if caminho == '/api/email/previa':
+                a, corpo, txt = resumo_loja(b)
+                return self._json(200, {'assunto': a, 'html': corpo})
+            if caminho == '/api/email/master':
+                aviso_master(b, str(dados.get('nome') or '')[:80])
+                return self._json(200, {'ok': True})
+            if caminho == '/api/nuvem/detectar':
+                return self._json(200, {'pastas': pastas_nuvem(dados.get('prov') or 'google', dados.get('email') or '')})
+            if caminho == '/api/nuvem':
+                if dados.get('desligar'):
+                    b.meta_interna('nuvem', {})
+                    log('backup na nuvem desligado')
+                    return self._json(200, {'ativo': False})
+                n = preparar_nuvem(dados.get('prov') or 'google', (dados.get('email') or '').strip(), (dados.get('raiz') or '').strip(), b.config().get('loja') or '')
+                b.meta_interna('nuvem', n)
+                log('backup na nuvem ligado: %s (%s)' % (n['pasta'], n['email']))
+                return self._json(200, info_nuvem(b))
             if caminho == '/api/pastaExtra':
                 p = (dados.get('pasta') or '').strip()
                 if p and not os.path.isdir(p):
@@ -1150,6 +1476,8 @@ def entrar_rede(b, login, senha):
             tok = secrets.token_urlsafe(32)
             SESSOES[tok] = {'uid': u['id'], 'nome': u.get('nome', ''), 'perfil': u.get('perfil', ''), 'exp': time.time() + TEMPO_SESSAO}
             log('celular: %s entrou' % u.get('nome', login))
+            if u.get('perfil') == 'master':
+                aviso_master(b, u.get('nome', login) + ' (pelo celular)')
             return tok, None
     if u and u.get('alg') != 'pbkdf2':
         return None, 'entre uma vez pelo computador do caixa para atualizar a sua senha'
@@ -1399,6 +1727,7 @@ def servir():
         return False
     BANCO_ATIVO = Banco(BANCO)
     threading.Thread(target=laco_copias, args=(BANCO_ATIVO,), daemon=True).start()
+    threading.Thread(target=laco_email, args=(BANCO_ATIVO,), daemon=True).start()
     if BANCO_ATIVO.meta_interna('rede') and recurso_liberado('celular'):
         for _ in range(20):   # depois de uma atualização, a porta da rede pode levar alguns segundos para ficar livre
             if iniciar_rede():

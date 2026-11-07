@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-03">
+<meta name="versao-sistema" content="2026.11.07-05">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1285,7 +1285,7 @@ function render() {
   $('#side-logo').hidden = !logoTela(); if (logoTela()) $('#side-logo').src = logoTela();
   document.title = (db.config.loja || 'Loja') + ' – Controle de Estoque';
   $('#alerta').innerHTML = nb ? `<div class="alerta">⚠ <b>${nb} produto(s) abaixo do estoque mínimo</b> — é preciso comprar mais mercadoria. <button class="lnk" data-act="verAbaixo">Ver lista de compra</button></div>` : '';
-  alertaBackup(); avisoNuvem(); avisoLicenca();
+  alertaBackup(); avisoNuvem(); avisoLicenca(); if (adm() && nuvemAtrasada()) $('#alerta-bk').insertAdjacentHTML('beforeend', `<div class="alerta"><b>Backup na nuvem:</b> ${esc(nuvemAtrasada())}. <button class="lnk" data-act="irBackupCfg">Ver backup</button></div>`);
   $('#view').innerHTML = VIEWS[view]();
   ['venda', 'cond', 'entrada'].forEach(totais);
   $('#dl-prod').innerHTML = ordenar(ativos()).map(p => `<option value="${esc(rotulo(p))}"></option>`).join('');
@@ -1589,6 +1589,7 @@ const CFG_ABAS = [
   ['seguranca', 'Segurança', 'Senhas, bloqueio e registro', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>'],
   ['sobre', 'Sobre e atualização', 'Versão, novidades e como atualizar', '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'],
   ['licenca', 'Licença', 'Plano, validade e ativação', '<circle cx="7.5" cy="15.5" r="5.5"/><path d="M11.4 11.6L21 2"/><path d="M16 7l3 3"/><path d="M19 4l2 2"/>'],
+  ['monitor', 'E-mail de monitoramento', 'Resumo da loja para o suporte', '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
   ['backup', 'Backup e dados', 'Cópia de segurança e restauração', '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>']
 ];
 const OPCOES_VIAS = [['1', '1 via (só a do cliente)'], ['2', '2 vias (cliente e loja)'], ['3', '3 vias'], ['4', '4 vias']];
@@ -1603,7 +1604,7 @@ function config() {
   const nb = db.config.ultimoBackup, diasBk = nb ? Math.floor((Date.parse(hoje()) - Date.parse(nb.slice(0, 10))) / 864e5) : null;
   return `<h2>Configurações</h2>
   <div class="cfg-layout">
-  <nav class="cfg-nav">${CFG_ABAS.map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
+  <nav class="cfg-nav">${CFG_ABAS.filter(a => a[0] !== 'monitor' || master()).map(([k, t, s, ic]) => `<button class="${k === aba ? 'on' : ''}" data-act="cfgAba" data-v="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span><b>${t}</b><small>${s}</small></span></button>`).join('')}</nav>
   <div class="cfg-corpo">
   <div id="cfg">
   ${pane('empresa', `<section class="card">${cab('Dados da empresa', 'Saem no cabeçalho dos recibos, termos, relatórios e etiquetas.')}
@@ -1645,6 +1646,7 @@ function config() {
   ${pane('seguranca', secaoSeguranca())}
   ${pane('sobre', secaoSobre())}
   ${pane('licenca', secaoLicenca())}
+  ${master() ? pane('monitor', secaoMonitor()) : ''}
   ${pane('backup', `<section class="card">${cab('Backup', 'Os dados ficam guardados <b>neste computador, neste navegador</b>. Guarde cópias fora dele (pen drive, e-mail, nuvem).')}
     <div class="resumo-tit"><div class="rbox ${nb ? (diasBk > 7 ? 'err' : 'ok') : 'err'}"><small>Último backup</small><b>${nb ? fmtDia(nb) : 'Nunca'}</b><span>${nb ? (diasBk === 0 ? 'hoje' : 'há ' + diasBk + ' dia(s)') : 'faça o primeiro agora'}</span></div><div class="rbox"><small>Produtos</small><b>${fmtN(db.produtos.length)}</b><span>${fmtN(ativos().reduce((s, p) => s + p.estoque, 0))} peça(s)</span></div><div class="rbox"><small>Vendas</small><b>${fmtN(db.vendas.length)}</b><span>${db.clientes.length} cliente(s)</span></div><div class="rbox"><small>Movimentações</small><b>${fmtN(db.movs.length)}</b><span>${db.condicionais.length} condicional(is) · ${db.entradas.length} entrada(s)</span></div></div>
     <div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="exportar">Exportar backup</button><button class="btn" data-act="importar">Restaurar backup…</button></div></section>
@@ -1810,6 +1812,7 @@ ACT.login = async () => {
     }
     if (!u.ativo) { registrar('Entrada recusada: usuário desativado', u.login, u.nome); salvar(); return msg('Usuário desativado. Fale com o administrador.'); }
     u.falhas = 0; u.bloqueadoAte = 0; registrar('Entrou no sistema', '', u.nome);
+    if (u.perfil === 'master') { registrar('Entrou como master', '', u.nome); if (MODO_SERVIDOR && !MODO_REDE) apiJson('email/master', 'POST', { nome: u.nome }).catch(() => { }); }
     entrar(u);
   } finally { loginOcupado = false; }
 };
@@ -3106,6 +3109,7 @@ function secaoBackupAuto() {
     <div class="bk-status"><div><small>Último backup automático</small><b>${b.ultimo ? fmtDH(b.ultimo) : 'ainda não feito'}</b><span>${res}</span></div><div><small>Próximo</small><b>${b.ativo ? fmtDataHora(prox) : 'desativado'}</b><span>${b.ativo ? ({ diario: 'todo dia às ' + esc(b.hora), horas: 'a cada ' + b.horas + ' hora(s)', semanal: DIAS_SEMANA[+b.dia] + ' às ' + esc(b.hora) })[b.freq] : ''}</span></div></div>
     <div class="acoes" style="justify-content:flex-start;margin-top:12px"><button class="btn pri" data-act="salvarBackupAuto">Salvar agendamento</button><button class="btn" data-act="backupAgora">Fazer backup agora</button></div>
   </section>
+  ${secaoNuvem()}
   <section class="card"><div class="cfg-cab"><h3>Cópias internas</h3><p class="mut">A cada backup (e antes de restaurar ou apagar dados) o sistema guarda uma cópia aqui dentro, as últimas ${MAX_SNAPS}. Servem para voltar atrás se algo der errado. Não substituem o arquivo fora do computador.</p></div><div id="lista-snap" class="mut">Carregando…</div></section>`;
 }
 function mostrarCamposBk() {
@@ -4315,6 +4319,8 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.07-05', itens: ['E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.', 'Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular).'] },
+  { v: '2026.11.07-04', itens: ['Backup na nuvem: Configurações → Backup e dados → Backup na nuvem. Com o aplicativo do Google Drive (ou o OneDrive) instalado e conectado com o e-mail da loja, o sistema cria a pasta "Controle de Estoque - <loja>/Backups" no Drive e o backup diário criptografado vai para lá. Aviso no topo se o envio parar.'] },
   { v: '2026.11.07-03', itens: ['Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF.'] },
   { v: '2026.11.07-02', itens: ['Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo "Controle de estoque"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar.'] },
   { v: '2026.11.07-01', itens: ['Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.',
@@ -6569,6 +6575,110 @@ ACT.manualZoom = el => abrirModal('Print', `<img src="${el.src}" alt="" style="w
 ACT.manualPdf = async () => {
   $$('.mn-sec').forEach(d => { d.open = true; }); for (const d of $$('.mn-sec')) await carregarPrints(d);
   imprimir(`${cabDoc('MANUAL DO SUPORTE', 0, agora(), '')}<div class="mn-print">${MANUAL.map((s, i) => `<h3>${i + 1}. ${esc(s.t)}</h3>${$('#mn-' + s.id + ' .mn-corpo').innerHTML}`).join('')}</div>`, 'A4');
+};
+
+/* ===== Backup na nuvem (Google Drive ou OneDrive) =====
+   O aplicativo do Drive/OneDrive instalado no computador sincroniza uma pasta com a nuvem. O sistema cria nessa pasta
+   "Controle de Estoque - <loja>/Backups" e o backup diário (criptografado) é gravado lá; o aplicativo envia sozinho.
+   Nenhuma senha do Google/Microsoft é guardada no sistema. Só arquivos criptografados vão para a nuvem. */
+let nuvemAchadas = null;
+const nuvemInfo = () => (srvInfo && srvInfo.nuvem) || { ativo: false };
+function nuvemAtrasada() {
+  const n = nuvemInfo(); if (!n.ativo) return '';
+  if (!n.acessivel) return 'a pasta do ' + (n.prov === 'onedrive' ? 'OneDrive' : 'Google Drive') + ' não está acessível neste computador (aplicativo fechado ou desconectado)';
+  if (!n.ultimo) return 'nenhum backup foi enviado ainda';
+  const dias = Math.floor((Date.now() - Date.parse(n.ultimo)) / 864e5);
+  return dias >= 2 ? `o último backup enviado foi há ${dias} dias` : '';
+}
+function secaoNuvem() {
+  if (!MODO_SERVIDOR || MODO_REDE) return '';
+  const n = nuvemInfo(), cr = criptoBk(), prob = nuvemAtrasada(), nomeP = p => p === 'onedrive' ? 'OneDrive' : 'Google Drive';
+  return `<section class="card"><div class="cfg-cab"><h3>Backup na nuvem ${n.ativo ? `<span class="tag ${prob ? 'bx' : 'ok'}">${prob ? 'atenção' : 'ligado'}</span>` : '<span class="tag in">desligado</span>'}</h3>
+    <p class="mut">Uma cópia criptografada do backup vai todo dia para o Google Drive ou o OneDrive da loja. Se o computador quebrar ou for roubado, os dados continuam salvos.</p></div>
+    ${n.ativo ? `<div class="resumo-tit"><div class="rbox ${prob ? 'at' : 'ok'}"><small>${nomeP(n.prov)}</small><b style="font-size:14px">${esc(n.email || '—')}</b><span>${esc(n.pasta)}</span></div>
+      <div class="rbox"><small>Último envio</small><b>${n.ultimo ? fmtDH(n.ultimo) : '—'}</b><span>${n.arquivos || 0} arquivo(s) na nuvem</span></div></div>
+      ${prob ? `<p class="err">Atenção: ${esc(prob)}. Abra o aplicativo do ${nomeP(n.prov)} e confira se está conectado com ${esc(n.email || 'o e-mail da loja')}.</p>` : ''}
+      <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="backupAgora">Enviar backup agora</button><button class="btn perigo" data-act="nuvemDesligar">Desligar backup na nuvem</button></div>`
+    : `${cr.ativo ? '' : '<p class="err">Antes, ligue a <b>criptografia do backup</b> em Configurações → Segurança: só arquivos criptografados vão para a nuvem.</p>'}
+      <ol class="mn-passos"><li>Neste computador, instale o <b>Google Drive para computador</b> (ou use o OneDrive do Windows) e entre com o e-mail da loja.</li>
+      <li>Escolha abaixo o serviço, digite o e-mail e clique em <b>Procurar a pasta</b>.</li><li>Escolha a pasta encontrada e clique em <b>Ligar backup na nuvem</b>: o sistema cria a pasta <b>Controle de Estoque - ${esc(db.config.loja || 'Loja')}/Backups</b>.</li></ol>
+      <div class="form3"><label>Serviço<select id="nv-prov"><option value="google">Google Drive</option><option value="onedrive">OneDrive</option></select></label>
+        <label>E-mail da conta<input id="nv-email" type="email" placeholder="loja@gmail.com" value="${esc(n.email || '')}"></label>
+        <button class="btn" data-act="nuvemProcurar">Procurar a pasta</button></div>
+      <div id="nv-achadas">${nuvemAchadas ? (nuvemAchadas.length ? nuvemAchadas.map((a, i) => `<label class="chk"><input type="radio" name="nv-pasta" value="${i}" ${i === 0 ? 'checked' : ''}> <b>${esc(a.pasta)}</b>${a.conta ? ` <span class="mut">(${esc(a.conta)})</span>` : ''}${a.confere ? ' <span class="tag ok">e-mail confere</span>' : ''}</label>`).join('') + `<div class="acoes" style="justify-content:flex-start"><button class="btn pri" data-act="nuvemLigar" ${cr.ativo ? '' : 'disabled'}>Ligar backup na nuvem</button></div>` : '<p class="err">Nenhuma pasta do serviço encontrada neste computador. Instale o aplicativo, entre com o e-mail e tente de novo.</p>') : ''}</div>`}
+    <p class="mut">Para o backup ir todo dia, deixe o <b>Backup automático</b> ligado (acima). A senha do backup é necessária para restaurar: guarde-a fora do computador.</p></section>`;
+}
+ACT.nuvemProcurar = async () => {
+  const prov = $('#nv-prov').value, email = $('#nv-email').value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return aviso('Digite o e-mail da conta do ' + (prov === 'onedrive' ? 'OneDrive' : 'Google Drive') + '.', 'erro');
+  try { const r = await apiJson('nuvem/detectar', 'POST', { prov, email }); nuvemAchadas = (r.pastas || []).map(a => Object.assign(a, { prov, email })); }
+  catch (e) { return aviso('Não foi possível procurar: ' + e.message, 'erro'); }
+  render(); setTimeout(() => { if ($('#nv-prov')) { $('#nv-prov').value = prov; $('#nv-email').value = email; } });
+};
+ACT.nuvemLigar = async () => {
+  if (!adm()) return; if (!criptoBk().ativo) return aviso('Ligue a criptografia do backup antes (Configurações → Segurança).', 'erro');
+  const i = +(($$('input[name=nv-pasta]').find(r => r.checked) || {}).value || 0), a = (nuvemAchadas || [])[i]; if (!a) return;
+  try {
+    await apiJson('nuvem', 'POST', { prov: a.prov, email: a.email, raiz: a.pasta }); await atualizarSrvInfo();
+    const b = cfgBk(); if (!b.ativo) { b.ativo = true; b.freq = b.freq || 'diario'; db.config.backupAuto = b; }
+    registrar('Backup na nuvem ligado', `${a.prov === 'onedrive' ? 'OneDrive' : 'Google Drive'} ${a.email}: ${a.pasta}`); salvar(); nuvemAchadas = null;
+    await rodarBackup('nuvem'); await atualizarSrvInfo(); render();
+    aviso('Backup na nuvem ligado. O primeiro backup já foi enviado para a pasta do Drive.', 'ok');
+  } catch (e) { aviso('Não foi possível ligar: ' + e.message, 'erro'); }
+};
+ACT.nuvemDesligar = async () => {
+  if (!adm()) return;
+  try { await apiJson('nuvem', 'POST', { desligar: true }); await atualizarSrvInfo(); registrar('Backup na nuvem desligado'); salvar(); render(); aviso('Backup na nuvem desligado. Os arquivos que já estão no Drive continuam lá.', 'ok'); }
+  catch (e) { aviso(e.message, 'erro'); }
+};
+
+ACT.irBackupCfg = () => { view = 'config'; filtros.cfg.aba = 'backup'; render(); };
+/* ===== E-mail de monitoramento (só o master configura) =====
+   O servidor da loja manda um resumo (vendas, caixa, estoque, financeiro, backup, licença, segurança, erros) nos horários
+   marcados, e um aviso quando o usuário master entra. A senha do e-mail fica só no servidor deste computador. */
+const PRESETS_EMAIL = [['gmail', 'Gmail (senha de app)'], ['outlook', 'Outlook / Hotmail'], ['office365', 'Microsoft 365 (empresa)'], ['yahoo', 'Yahoo'], ['outro', 'Outro servidor SMTP']];
+function secaoMonitor() {
+  if (!MODO_SERVIDOR || MODO_REDE) return '<section class="card"><p class="mut">Disponível no computador do caixa.</p></section>';
+  if (!srvInfo || !srvInfo.email) return '<section class="card"><p class="err">O servidor deste computador precisa ser atualizado para enviar e-mails.</p></section>';
+  const c = srvInfo.email, hs = c.horarios && c.horarios.length ? c.horarios : ['10:00', '17:00'];
+  return `<section class="card"><div class="cfg-cab"><h3>E-mail de monitoramento ${c.ativo ? '<span class="tag ok">ligado</span>' : '<span class="tag in">desligado</span>'}</h3>
+    <p class="mut">A loja manda um resumo para você nos horários marcados: vendas do dia e do mês, caixa, estoque baixo, condicionais atrasadas, financeiro, backup (local e nuvem), licença, celular, ações de atenção do dia (senhas erradas, cancelamentos, estornos, reabertura de caixa…) e erros do servidor. Também avisa quando alguém entra como master.</p></div>
+    <label class="chk" style="margin-bottom:10px"><input type="checkbox" id="em-ativo" ${c.ativo ? 'checked' : ''}> Enviar o e-mail de monitoramento</label>
+    <div class="form3"><label>Conta que envia<select id="em-preset">${PRESETS_EMAIL.map(([k, t]) => `<option value="${k}" ${k === (c.preset || 'gmail') ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+      <label>E-mail que envia (usuário)<input id="em-usuario" type="email" value="${esc(c.usuario || '')}" placeholder="monitor.loja@gmail.com"></label>
+      <label>Senha de app ${c.temSenha ? '(guardada; em branco = manter)' : ''}<input id="em-senha" type="password" autocomplete="new-password" placeholder="${c.temSenha ? '••••••••' : 'senha de app do e-mail'}"></label></div>
+    <div class="form3 em-outro" ${c.preset === 'outro' ? '' : 'hidden'}><label>Servidor SMTP<input id="em-host" value="${esc(c.host || '')}"></label><label>Porta<input id="em-porta" type="number" value="${c.porta || 587}"></label>
+      <label>Segurança<select id="em-seg"><option value="starttls" ${c.seguranca === 'starttls' ? 'selected' : ''}>STARTTLS</option><option value="ssl" ${c.seguranca === 'ssl' ? 'selected' : ''}>SSL</option></select></label></div>
+    <div class="form3"><label>Enviar para (separe por vírgula)<input id="em-destinos" value="${esc((c.destinos || []).join(', '))}" placeholder="suporte@empresa.com.br, dono@loja.com"></label>
+      <label>1º horário<input id="em-h1" type="time" value="${hs[0] || '10:00'}"></label><label>2º horário<input id="em-h2" type="time" value="${hs[1] || ''}"></label></div>
+    <label class="chk"><input type="checkbox" id="em-master" ${c.avisoMaster !== false ? 'checked' : ''}> Avisar na hora quando alguém entrar como master</label>
+    <div class="bk-status"><div><small>Último envio</small><b>${c.ultimoEnvio ? fmtDH(c.ultimoEnvio) : '—'}</b><span>${c.ultimoErro ? '<span class="err">Último erro: ' + esc(c.ultimoErro) + '</span>' : 'sem erros'}</span></div></div>
+    <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn pri" data-act="emSalvar">Salvar</button><button class="btn" data-act="emTeste">Enviar e-mail de teste agora</button><button class="btn" data-act="emPrevia">Ver prévia do resumo</button></div>
+    <ul class="sg-dicas"><li><b>Gmail:</b> use uma conta só para isso. Na conta Google: Segurança → Verificação em duas etapas (ligar) → <b>Senhas de app</b> → criar → copie a senha de 16 letras e cole acima.</li>
+      <li>Se o computador estiver desligado no horário, o resumo vai assim que ele for ligado (no mesmo dia).</li>
+      <li>A senha do e-mail fica só no servidor deste computador, embaralhada; ela nunca aparece na tela nem vai para o celular.</li></ul></section>`;
+}
+document.addEventListener('change', e => { if (e.target && e.target.id === 'em-preset') { const o = $('.em-outro'); if (o) o.hidden = e.target.value !== 'outro'; } });
+const dadosEmail = () => ({ ativo: $('#em-ativo').checked, preset: $('#em-preset').value, usuario: $('#em-usuario').value.trim(), senha: $('#em-senha').value, host: $('#em-host').value.trim(), porta: int($('#em-porta').value) || 587, seguranca: $('#em-seg').value,
+  destinos: $('#em-destinos').value, horarios: [$('#em-h1').value, $('#em-h2').value].filter(Boolean), avisoMaster: $('#em-master').checked });
+ACT.emSalvar = async () => {
+  if (!master()) return aviso('Somente o usuário master configura o e-mail de monitoramento.', 'erro');
+  const d = dadosEmail();
+  if (d.ativo && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.usuario)) return aviso('Informe o e-mail que envia.', 'erro');
+  if (d.ativo && !d.destinos.trim()) return aviso('Informe para quem enviar.', 'erro');
+  if (d.ativo && !d.senha && !(srvInfo.email || {}).temSenha) return aviso('Informe a senha de app do e-mail.', 'erro');
+  try { await apiJson('email', 'POST', d); await atualizarSrvInfo(); registrar('E-mail de monitoramento configurado', `${d.ativo ? 'ligado' : 'desligado'} · ${d.usuario} → ${d.destinos} · ${d.horarios.join(' e ')}`); salvar(); render(); aviso('Configuração do e-mail salva.', 'ok'); }
+  catch (e) { aviso('Não salvou: ' + e.message, 'erro'); }
+};
+ACT.emTeste = async () => {
+  if (!master()) return;
+  aviso('Enviando o e-mail de teste…', 'ok');
+  try { await apiJson('email/teste', 'POST', {}); await atualizarSrvInfo(); render(); aviso('E-mail de teste enviado. Confira a caixa de entrada (e o spam).', 'ok'); }
+  catch (e) { await atualizarSrvInfo(); render(); aviso('Não enviou: ' + e.message + '. Confira o e-mail, a senha de app e a internet.', 'erro'); }
+};
+ACT.emPrevia = async () => {
+  try { const r = await apiJson('email/previa', 'POST', {}); abrirModal('Prévia: ' + esc(r.assunto), `<div style="border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff">${r.html}</div>`, '', true); }
+  catch (e) { aviso(e.message, 'erro'); }
 };
 
 /* ===== Venda pelo celular (recurso Premium) =====

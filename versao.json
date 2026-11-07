@@ -1,18 +1,19 @@
 {
- "versao": "2026.11.07-03",
- "publicadoEm": "07/11/2026 12:48",
+ "versao": "2026.11.07-05",
+ "publicadoEm": "07/11/2026 13:38",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "79f77fc716528fa01b6a2b8c536fd7dee2f00ac6822e0470f0832d5f02a92fb5",
- "tamanho": 730622,
- "assinatura": "B9lyhDcKX4n0kIDVT398BwHVsTiBd1S7M+bK5aHjgN8pyNX/DppDcf1lnwQqrFsNrVBR9Wpba3plTmmMcpLlhswX3QfrJzE+3lqQxIzdk0oRmFOK+UbPrK+bymNNJ996XtCkkGnlxIPPGruCVUvxyrXnJneJ3bD6mCDArf36YxiFbgNaO3TZs0GnHRYFwd5/elOBEx0BdCHaVijrEfx+Yg8AbdRo5p1hb39Qd5ozhksJG0oM9CCyj/kajn2bN1+PZqfNh24BYbjDlRvxD7xbZ0zIVa4J32oq3KZIiAkAnPcAyObwOoHc/A0JRpVrL6PUiNCrkotsOS+uVny9FwoymExIo455MUohuBv4fKggZG9eGarrG0w2w5f8z7sdxTHnm90zDDjdDwxOSTBIMxBDErQ8D3BUzhJhuFR2JAVVfPcqEuKFg+HGfE+DYe7guzNojO5DgaYevEBHVMF9fF5aZ49J5SiNw2N/VCJ7+hq0V7Mnix/rC5orX6R/4dFnOt3d",
+ "sha256": "0df40c3333be188711c0c91195e33ab8e5c2049d7b3b65d6a0a97fd73673a7e5",
+ "tamanho": 744694,
+ "assinatura": "Ru16WIkfLPMHHMqWj4j3pgRVuzJUq6KxK+KwR0CUA1aMbdLcOdjCkf20VJQwtBhe9H4cgKP1GJrNdXToowBeFYq/81TYaOXYCVOgFiWcJCjLjPL5w7tY3BT2ldyDrRc3BBKTotdabiyBwpNj2nPD9xxp4+QvAAcIdLpjJ3+7XbswIXGWU6wA4klIR+cra0lAgNoUjgiN4JFqiSDsIQWis+zl1q81yKrfv4BdwmYGm9+6bQhAI7pf2rMOFXP4tlfK2hIrBh3UXO0cIuywQQF1eqio6GcTCHvzW2BK2VbYgzecq+ICH6JWILO93oIm5E5V9xwXgKPG+Q9mqxGb6IRySt8+DyVmCQ5Szwp/w/lRWnlOR988NH99jyxfmCcECw0u3zt/qmDW2XNuynletUpxNbePHx/FG1T4vu14z4Pfceqnu1Sfbnsy5+wMtFNWPhouMXHGHK127Ac2e6u/JaIY2w3DHgrlfDILr6d6wwdGHqYojU2jVM/9QosD1PwZWjwH",
  "novidades": [
-  "Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF."
+  "E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.",
+  "Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular)."
  ],
  "servidor": {
-  "versao": "2026.11.04-19",
+  "versao": "2026.11.07-04",
   "arquivo": "servidor.py",
-  "sha256": "12d17fca733f6a2ed8fef3421026a04245c8a4b2d1752036687a251fd6e2c83f",
-  "assinatura": "jLFkOB/hVmwWLitQpslcHgA+9p1Ii9N8Fb0PwyqNPWV0RLe3Zizs5Wd+BYsqsZ/ZfR4o4K0k/HhVaTzS8w6aKTXMcfugAE6od4ezWXbtW/68NjVVfTtu33zqaGsWLKbQ+UY89xNseVdxW/611iVQEYDxK2KXU603RVg8Ylg1YyMnsqxQwNu74212XGLWVUXFpPbpjVw3uVrG8MI+T2T7DWhzpa12anxRRRTdI4VGKmFpxNgGmgkeGJ79ZT4FvAgq7Jb9X1b5N1I6np2Y/Kz/ZPkz1bopqQACAlXQiIPEiuSdW1x0ogFw4jUsj8PioEMXaLwMpF+pq6THipyx5e3EDj854mKti+yN4kMzPcjPubKlASk6XNn4JMTQHpUg5XsK7eWuQrMR6HlxAAeukDFk0LmveoOnFo8jTqjB3FNmFGHaThdFWhBA7AdVDFUrvS1MP9yvtTrmbEQTqELXBkoz/Q6/KRhkPSXKBVSAtaOn30SC9VwjWWKzNumyYhqAJlj3",
-  "tamanho": 74090
+  "sha256": "51e8aacab3ed20f5a296f2191405b999a1fa7510599ecbc062e9b65afaf22fd5",
+  "assinatura": "f/8uze7n9u5eCfegM439gHzxi8PStVSnfPFNP8TWNJ1Jjfb0hAXGxRWPGHOIvqjuqkySrxg0hKSK2hUi7V/KT86xnadD2xtdG4+En5lE0eu8cq5SUe9HN4TpMr2PNX9eg5JxLiSaalFaMI89zAcPL44s8ARuBONSiWXxri2grCRCTqnu67LAuUGQMhSmSy49jXF7VLpSzYUILWbIKlrSoLOlXdd5tq4DnAMOuMGRWsvTP8gUSDEPewOkvuSnsLxhLYINMoPuc5gObE275nBAJNAC6SQY7nWBZX/VgdhVzN7xVjGXNH9FnncvX34gwwlIatxINLbCAONsCR2zIyDYD33Ga6iqg2k2Z+ir649H2Z66rBMPhZITBGNjFiX5XuVIoaGVdZUi9oaFjPVBbilwD7k+Pl9XLaH4pLT/fU1bCP5z8FVm5rnabgrc3EVcGFK6zFQKHD8TTMLxPIsWlXzs7hov2WOLuF+Uk3429RimyUQsfKWo9DWErUmcTEnkSWMd",
+  "tamanho": 94568
  }
 }
