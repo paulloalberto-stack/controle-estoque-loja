@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-02">
+<meta name="versao-sistema" content="2026.11.07-03">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -556,6 +556,17 @@ input[data-maiusc]::placeholder{text-transform:none}
 .cfg-pane [data-act=pixTeste]{white-space:nowrap;padding:9px 8px;font-size:12.5px;align-self:end;min-height:38px;justify-content:center}
 input[type=color]{height:38px;padding:3px 5px;cursor:pointer}
 .cfg-pane .acoes{align-items:center}
+/* manual do suporte */
+.mn-indice{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:10px}.mn-indice .lnk{font-size:13px}
+.mn-corpo{padding:4px 2px 8px;line-height:1.55}.mn-corpo h4{margin:16px 0 6px}.mn-corpo p{margin:6px 0}
+.mn-passos{padding-left:22px}.mn-passos>li{margin:6px 0}.mn-check{list-style:'☐  '}
+.mn-tb{margin:8px 0}.mn-tb td{vertical-align:top}
+.mn-dica{background:#fff8eb;border:1px solid #fde4b0;border-radius:10px;padding:8px 12px;color:#7a4b00}
+.mn-fig{margin:10px 0 14px;max-width:900px}.mn-fig.cel{max-width:300px;display:inline-block;margin-right:12px;vertical-align:top}
+.mn-img{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f7f8fa;min-height:60px;display:flex;align-items:center;justify-content:center}
+.mn-img img{width:100%;display:block;cursor:zoom-in}.mn-img span{color:#8a92a3;font-size:12px;padding:20px}
+.mn-fig figcaption{font-size:12px;color:#6b7385;margin-top:4px}
+.mn-print h3{page-break-after:avoid;margin-top:18px}.mn-print .mn-fig{page-break-inside:avoid;max-width:100%}.mn-print .mn-fig.cel{max-width:45%}
 /* recursos premium */
 .side .marca #loja-cnpj{text-transform:none;letter-spacing:.02em;font-size:11px;margin-top:3px}
 .side .marca #loja-frase{display:block}
@@ -1238,6 +1249,7 @@ const ICONES = {
   promocoes: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
   fidelidade: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
   metas: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  suporte: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
   cartoes: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
   financeiro: '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
   premium: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -1248,12 +1260,12 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['metas', 'Metas'], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['metas', 'Metas'], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['suporte', 'Manual do suporte', 1, 'masterNav'], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
   $('#login').hidden = true; $('#app').hidden = false;
-  const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || (m[3] === 'master' && !master())) view = 'painel';
+  const m = MENU.find(x => x[0] === view); if (!m || (m[2] && !adm()) || ((m[3] === 'master' || m[3] === 'masterNav') && !master())) view = 'painel';
   if (MODO_REDE && VIEWS_REDE.indexOf(view) < 0) view = 'vendas';
   if (view === 'cartoes' && !temRecurso('taxas')) view = 'premium';
   if (view === 'inventario' && !temRecurso('inventario')) view = MODO_REDE ? 'vendas' : 'premium';
@@ -1261,7 +1273,7 @@ function render() {
   if (view === 'fidelidade' && (!temRecurso('cashback') || MODO_REDE)) view = MODO_REDE ? 'vendas' : 'premium';
   if (view === 'metas' && !temRecurso('metas')) view = MODO_REDE ? 'vendas' : adm() ? 'premium' : 'painel';
   const nb = abaixoMin().length, na = condAtrasadas().length, nv = parcelasVencidas().length + (adm() ? db.pagar.filter(p => !p.pagoEm && p.vencimento < hoje()).length : 0);
-  $('#nav').innerHTML = MENU.filter(x => !x[3] && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes')) && (x[0] !== 'fidelidade' || temRecurso('cashback')) && (x[0] !== 'metas' || temRecurso('metas'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = MENU.filter(x => (!x[3] || (x[3] === 'masterNav' && master())) && (!x[2] || adm()) && (!MODO_REDE || VIEWS_REDE.indexOf(x[0]) >= 0) && (x[0] !== 'cartoes' || temRecurso('taxas')) && (x[0] !== 'inventario' || temRecurso('inventario')) && (x[0] !== 'promocoes' || temRecurso('promocoes')) && (x[0] !== 'fidelidade' || temRecurso('cashback')) && (x[0] !== 'metas' || temRecurso('metas'))).map(([k, t]) => `<button class="${k === view ? 'on' : ''}" data-act="ir" data-v="${k}">${icone(k)}<span>${t}</span>${k === 'produtos' && nb ? ` <span class="bdg" title="abaixo do mínimo">${nb}</span>` : ''}${k === 'condicionais' && na ? ` <span class="bdg" title="prazo vencido">${na}</span>` : ''}${k === 'financeiro' && nv ? ` <span class="bdg" title="títulos vencidos (receber e pagar)">${nv}</span>` : ''}</button>`).join('');
   $('#quem').innerHTML = `<span class="avatar">${esc(iniciais(eu.nome))}</span><div style="min-width:0">${esc(eu.nome)}<small>${nomePerfil(eu.perfil)}</small></div>`;
   const h = new Date().getHours();
   $('#topo-saud').innerHTML = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, <b>${esc(eu.nome.split(' ')[0])}</b>`;
@@ -1644,7 +1656,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { premium, cartoes, inventario, promocoes, fidelidade, metas, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { suporte, premium, cartoes, inventario, promocoes, fidelidade, metas, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -4303,6 +4315,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.07-03', itens: ['Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF.'] },
   { v: '2026.11.07-02', itens: ['Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo "Controle de estoque"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar.'] },
   { v: '2026.11.07-01', itens: ['Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.',
     'A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e a vendedora sobe de faixa, aparece "lançar diferença" (só o que falta).'] },
@@ -6406,6 +6419,158 @@ ACT.trocarVendedoraOk = el => {
   db.trocas.filter(t => t.venda === v.id).forEach(t => { t.vendaUsuarioId = u.id; });
   registrar('Vendedora da venda alterada', `venda nº ${nDoc(v.id)}: ${de} → ${u.nome} – ${mot}`); salvar(); fecharModal(); render(); aviso(`Venda nº ${nDoc(v.id)} passou para ${u.nome}.`, 'ok');
 };
+/* ===== Manual do suporte (só o usuário master) =====
+   Orientações de implantação, configuração, licença, atualização, backup, celular, diagnóstico e treinamento.
+   O texto fica no sistema (funciona sem internet); os prints (loja de demonstração) são baixados da nuvem ao abrir. */
+const MANUAL_PRINTS = URL_ATUALIZACAO + '/manual/';
+const mnP = (k, leg, cel) => `<figure class="mn-fig${cel ? ' cel' : ''}"><div class="mn-img" data-print="${k}"><span>Carregando print…</span></div><figcaption>${leg}</figcaption></figure>`;
+const MANUAL = [
+  { id: 'visao', t: 'Visão geral e perfis de acesso', h: `
+    <p>O sistema roda no computador do caixa: um servidor local grava tudo no banco <code>dados\\loja.sqlite</code> e o Edge abre a tela pelo atalho <b>Controle de Estoque</b>. Celulares acessam pelo Wi-Fi da loja quando o recurso Premium está liberado.</p>
+    <table class="tb mn-tb"><thead><tr><th>Perfil</th><th>O que faz</th><th>Quem deve ter</th></tr></thead><tbody>
+      <tr><td><b>Vendedora</b></td><td>Vende, faz condicional, troca, cadastra cliente, abre/fecha caixa (fechamento cego se configurado), consulta produtos, vê a própria meta.</td><td>Equipe de vendas</td></tr>
+      <tr><td><b>Administrador</b></td><td>Tudo da vendedora + produtos, entradas, financeiro, comissões, metas, promoções, relatórios, usuários, configurações, licença.</td><td>Dono e gerente (o mínimo de pessoas)</td></tr>
+      <tr><td><b>Master (suporte)</b></td><td>Tudo do administrador + instalar atualizações, este manual, cadastrar outros masters. Não aparece como vendedora nas metas.</td><td>Só o suporte (P.A.S)</td></tr></tbody></table>
+    <p class="mn-dica">Regra: nunca entregue a senha do master à loja. Enquanto não existe master, um administrador consegue criar o primeiro; depois disso, só um master cria outro.</p>
+    ${mnP('login', 'Tela de entrada (usuário e senha de cada pessoa).')}` },
+  { id: 'implantacao', t: 'Implantação numa loja nova (passo a passo)', h: `
+    <ol class="mn-passos">
+      <li><b>Antes de ir:</b> gere a licença da loja (item Licença) com o CNPJ e os recursos contratados; leve o pacote <code>Instalar_Controle_Estoque.zip</code> e um pen drive.</li>
+      <li><b>Instalar:</b> extraia o zip, rode <code>INSTALAR.bat</code> no usuário do Windows que a loja usa. Confira na janela: "Servidor do banco de dados ligado" e "Sistema INSTALADO".</li>
+      <li><b>Primeiro acesso:</b> crie o administrador do dono (nome, usuário, senha forte). Depois entre e crie o seu usuário <b>Master</b> em Usuárias / usuários.${mnP('primeiro_acesso', 'Primeiro acesso: criação do administrador.')}</li>
+      <li><b>Empresa:</b> Configurações → Empresa: nome fantasia, razão social, <b>CNPJ (obrigatório para a licença)</b>, endereço, WhatsApp, Instagram e a frase do menu. Logo em PNG/JPG.</li>
+      <li><b>Licença:</b> Configurações → Licença → cole o código <code>PAS1-…</code> → Ativar.</li>
+      <li><b>Tipos e grades:</b> Configurações → Vendas e estoque → Tipos de peça e grades (prefixo do código e tamanhos de cada tipo).</li>
+      <li><b>Produtos:</b> importe a planilha (Produtos → Importar planilha / Modelo da planilha) ou o XML da nota em Entrada de mercadoria. Imprima as etiquetas.</li>
+      <li><b>Usuários:</b> cadastre vendedoras com senha provisória; cada uma entra uma vez, troca a senha e cadastra o PIN.</li>
+      <li><b>Recibo e Pix:</b> Configurações → Recibos e impressão: papel, vias, chave Pix (gere o Pix de teste de R$ 1,00).</li>
+      <li><b>Regras:</b> Configurações → Vendas e estoque: caixa obrigatório, PIN em toda venda (opcional), fechamento cego. Segurança: bloqueio por falta de uso e tentativas de senha.</li>
+      <li><b>Backup:</b> Configurações → Backup e dados: pasta extra (pen drive/OneDrive), horário, e ligue a criptografia do backup anotando a senha <b>fora do computador</b>.</li>
+      <li><b>Premium:</b> configure cada recurso liberado (maquininhas e taxas, cashback, metas, celular).</li>
+      <li><b>Teste final:</b> abra o caixa, faça uma venda em dinheiro e uma no cartão, emita o recibo, cancele uma venda de teste, feche o caixa e confira o relatório.</li>
+      <li><b>Entrega:</b> apague a pasta e o zip de instalação do computador da loja e faça o treinamento (item Treinamento).</li></ol>` },
+  { id: 'config', t: 'Configurações, aba por aba', h: `
+    <h4>Empresa</h4><p>Dados que saem nos recibos, termos, relatórios e etiquetas; CNPJ usado pela licença; logo dos documentos e ícone do atalho (PNG 512×512 fica mais nítido); frase abaixo do nome no menu.</p>${mnP('cfg_empresa', 'Configurações → Empresa.')}
+    <h4>Recibos e impressão</h4><p>Papel (A4 ou bobina), número de vias, cor, QR Code do recibo (dados do recibo ou link próprio), chave Pix e mensagem do rodapé (política de troca). A prévia ao lado atualiza na hora.</p>${mnP('cfg_recibo', 'Configurações → Recibos e impressão.')}
+    <h4>Aparência</h4><p>Paletas prontas, cores do menu e destaque, logo das telas, textos da tela de entrada e mensagem do painel para a equipe. Tem botão de salvar próprio.</p>${mnP('cfg_aparencia', 'Configurações → Aparência.')}
+    <h4>Vendas e estoque</h4><p>Prazo da condicional, markup da importação de XML, dias de cobertura da reposição, <b>caixa obrigatório</b>, <b>PIN em toda venda</b>, fechamento cego; tipos de peça e grades de tamanho.</p>${mnP('cfg_operacao', 'Configurações → Vendas e estoque.')}
+    <h4>Segurança</h4><p>Quadro de verificação (senhas fortes, administradores, master, bloqueio, backup), minutos para bloquear a tela, tentativas antes de bloquear o usuário (5 erradas = 5 min, depois 10, 20…), criptografia do backup e registro de atividades.</p>${mnP('cfg_seguranca', 'Configurações → Segurança.')}
+    <h4>Sobre e atualização</h4><p>Versão instalada, banco em uso, botão da tela de atualização (master) e histórico de versões.</p>${mnP('cfg_sobre', 'Configurações → Sobre e atualização.')}
+    <h4>Licença</h4><p>Situação, cliente, plano, validade e recursos Premium; campo para colar o código.</p>${mnP('cfg_licenca', 'Configurações → Licença.')}
+    <h4>Backup e dados</h4><p>Exportar/restaurar backup, backup automático (frequência, horário, pasta), cópias internas, versões e a zona de cuidado (apagar todos os dados).</p>${mnP('cfg_backup', 'Configurações → Backup e dados.')}` },
+  { id: 'licenca', t: 'Licença e Recursos Premium', h: `
+    <ol class="mn-passos">
+      <li>No computador do suporte, rode <code>ferramentas\\GERAR_LICENCA.bat</code>: cliente, CNPJ, plano (Essencial/Profissional), meses, computadores e os números dos recursos Premium (1 celular, 2 taxas, 3 inventário, 4 promoções, 5 cashback, 6 metas).</li>
+      <li>O código fica copiado e salvo em <code>ferramentas\\licencas</code> (registro em <code>registro_licencas.csv</code>). Envie pelo WhatsApp.</li>
+      <li>Na loja: Configurações → Licença → colar → <b>Ativar</b>. O CNPJ em Empresa tem de ser o mesmo da licença.</li></ol>
+    <table class="tb mn-tb"><thead><tr><th>Situação</th><th>O que acontece</th></tr></thead><tbody>
+      <tr><td>Sem licença</td><td>30 dias de avaliação, sem recursos Premium.</td></tr>
+      <tr><td>Faltando 15 dias</td><td>Administradores veem aviso para renovar.</td></tr>
+      <tr><td>Vencida</td><td>10 dias de tolerância funcionando normal.</td></tr>
+      <tr><td>Depois da tolerância</td><td>Modo consulta: consulta e backup funcionam; vendas e movimentações não. Nenhum dado é apagado.</td></tr></tbody></table>
+    <p class="mn-dica">Licença de teste (com recursos a mais) é só para o seu ambiente: guarde em <code>licencas\\testes</code> e nunca deixe na loja. Para tirar um recurso, a próxima licença sai sem ele (os dados ficam guardados).</p>
+    ${mnP('premium', 'Menu Recursos Premium: o que está liberado e o que está bloqueado.')}` },
+  { id: 'atualizacao', t: 'Atualizações do sistema', h: `
+    <ol class="mn-passos">
+      <li>Entre como <b>master</b> → Configurações → Sobre e atualização → <b>Tela de atualização</b> (ou o aviso azul).</li>
+      <li>Verificar → Baixar → Instalar (pede a sua senha e confirmação). A assinatura digital é conferida; versão alterada é recusada.</li>
+      <li>O servidor do banco se atualiza junto e reinicia sozinho; a versão anterior fica guardada.</li>
+      <li>Na primeira entrada, os administradores veem as novidades e marcam "Ciente".</li></ol>
+    <p><b>Pacote (sem internet ou servidor muito antigo):</b> leve o zip, feche o sistema e rode <code>ATUALIZAR.bat</code>. Se algo der errado: <code>VOLTAR_VERSAO_ANTERIOR.bat</code>. O banco nunca é substituído.</p>
+    <p class="mn-dica">Se a tela mostrar "Correção de segurança pendente no servidor", aquele computador precisa rodar uma vez o ATUALIZAR.bat do pacote mais novo.</p>` },
+  { id: 'backup', t: 'Backup e restauração', h: `
+    <table class="tb mn-tb"><thead><tr><th>Cópia</th><th>Onde</th><th>Para que serve</th></tr></thead><tbody>
+      <tr><td>Cópia diária do banco</td><td><code>backups\\loja_AAAA-MM-DD.sqlite</code> (30 últimas)</td><td>Voltar o banco inteiro de um dia (suporte).</td></tr>
+      <tr><td>Backup agendado/exportado</td><td><code>backups\\arquivos</code> e a pasta extra</td><td>Restaurar em outro computador (Restaurar backup).</td></tr>
+      <tr><td>Cópias internas</td><td>Dentro do sistema (20 últimas)</td><td>Voltar atrás antes de uma restauração ou atualização.</td></tr></tbody></table>
+    <ol class="mn-passos"><li>Configure a <b>pasta extra</b> (pen drive, OneDrive ou rede) e o horário.</li><li>Ligue a <b>criptografia</b> e anote a senha fora do computador: sem ela o backup não abre.</li><li>Teste uma restauração num computador de teste a cada implantação.</li></ol>
+    <p class="mn-dica">Perdeu a senha da criptografia: os backups antigos não abrem. Faça um backup novo com a senha nova.</p>` },
+  { id: 'celular', t: 'Venda pelo celular (Premium)', h: `
+    <ol class="mn-passos">
+      <li>Recursos Premium → <b>Ligar venda pelo celular</b>. Aparecem o QR Code e os endereços (HTTPS 8443 e instalação 8788).${mnP('cel_premium', 'Recursos Premium com a venda pelo celular ligada.')}</li>
+      <li>Windows perguntou sobre rede: <b>Redes privadas → Permitir</b>. Não abriu: rode <code>LIBERAR_CELULAR_NO_FIREWALL.bat</code> como administrador.</li>
+      <li>No celular: ler o QR → baixar o certificado → instalar e marcar como confiável (iPhone: Ajustes → Geral → Sobre → Ajustes de Confiança).</li>
+      <li>Abrir o sistema e entrar com o usuário da vendedora.${mnP('cel_login', 'Entrada no celular com logo e nome da loja.', 1)}${mnP('cel_vendas', 'Vendas no celular: botão Ler pela câmera.', 1)}${mnP('cel_camera', 'Leitura do código de barras pela câmera.', 1)}</li>
+      <li>Peça ao técnico da internet para fixar o IP do computador do caixa (reserva de DHCP).</li></ol>` },
+  { id: 'telas', t: 'Telas principais (referência)', h: `
+    <h4>Painel</h4>${mnP('painel', 'Painel: avisos, indicadores do dia e listas de atenção.')}
+    <h4>Vendas</h4><p>Leitor ou busca → carrinho → vendedora (PIN se não for a logada) → cliente → pagamento (bandeira, maquininha e parcelas no cartão) → finalizar e recibo.</p>${mnP('vendas', 'Venda com promoção, crédito do cliente e cartão Visa 2x.')}
+    <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo).</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
+    <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
+    <h4>Clientes</h4>${mnP('clientes', 'Clientes, crédito e histórico.')}
+    <h4>Produtos e estoque</h4><p>Filtros, grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
+    <h4>Entrada de mercadoria</h4>${mnP('entradas', 'Entrada manual ou pelo XML da NF-e.')}
+    <h4>Financeiro</h4>${mnP('financeiro', 'Contas a receber e a pagar.')}
+    <h4>Relatórios</h4>${mnP('relatorios', 'Relatórios com totais, PDF e Excel.')}
+    <h4>Usuárias / usuários</h4>${mnP('usuarios', 'Cadastro de usuários e perfis.')}
+    <h4>Histórico de logs</h4>${mnP('logs', 'Quem fez o quê e quando.')}
+    <h4>Ajuda</h4>${mnP('ajuda', 'Ajuda da equipe: mapa, passo a passo e perguntas.')}` },
+  { id: 'premiumtelas', t: 'Recursos Premium (como configurar cada um)', h: `
+    <h4>Taxas de cartão e conciliação</h4><p>Cartões a receber → <b>Maquininhas e taxas</b>: uma maquininha por operadora (Stone, Cielo, Rede…), tabela por bandeira (Visa, Mastercard, Elo, Amex, Hipercard): débito, crédito 1x, 2x a 12x; em branco usa a linha "Todas". Prazos em dias e antecipação. Depois: conferir os depósitos.</p>${mnP('maquininhas', 'Taxas por bandeira.')}${mnP('cartoes', 'Cartões a receber e conferência dos depósitos.')}
+    <h4>Inventário</h4><p>Inventário → escopo (loja toda ou tipo/marca/coleção) → contar pelo leitor ou celular → diferenças → finalizar (opção de zerar não contados).</p>${mnP('inventario', 'Inventário em andamento.')}
+    <h4>Promoções</h4><p>Desconto em % com data de início e fim; vale a maior promoção da peça.</p>${mnP('promocoes', 'Promoções ativas e agendadas.')}
+    <h4>Aniversários e cashback</h4><p>Configurar % do cashback, validade, compra mínima, presente de aniversário e mensagens; estornar crédito com motivo.</p>${mnP('fidelidade', 'Aniversariantes e cashback.')}
+    <h4>Metas</h4><p>Definir metas do mês com até 4 faixas de bônus (vale a maior atingida); dias de loja aberta; lançar bônus ou a diferença em Contas a pagar.</p>${mnP('metas', 'Metas e ranking.')}` },
+  { id: 'diagnostico', t: 'Diagnóstico de problemas', h: `
+    <table class="tb mn-tb"><thead><tr><th>Sintoma</th><th>Verificar</th><th>Solução</th></tr></thead><tbody>
+      <tr><td>"O banco de dados não respondeu"</td><td>Servidor parado; <code>dados\\servidor.log</code></td><td>Abrir pelo atalho (religa); reiniciar o PC; mandar o log.</td></tr>
+      <tr><td>"Outra janela/computador alterou os mesmos dados"</td><td>Sistema aberto em duas janelas ou dois aparelhos</td><td>O sistema recarrega sozinho; refazer a última ação.</td></tr>
+      <tr><td>Recurso Premium sumiu</td><td>Configurações → Licença (situação e recursos)</td><td>Gerar licença com o recurso; conferir o CNPJ.</td></tr>
+      <tr><td>Sistema em modo consulta</td><td>Licença vencida há mais de 10 dias</td><td>Licença nova.</td></tr>
+      <tr><td>Celular não abre</td><td>Mesmo Wi-Fi? IP mudou? Firewall?</td><td>LIBERAR_CELULAR_NO_FIREWALL.bat; conferir o endereço na tela.</td></tr>
+      <tr><td>"Não seguro" / câmera não abre no celular</td><td>Certificado instalado e confiável?</td><td>Refazer a instalação do certificado.</td></tr>
+      <tr><td>PIN recusado</td><td>Vendedora com senha provisória? 5 erros?</td><td>Ela entra e troca a senha/cadastra o PIN; esperar 5 min.</td></tr>
+      <tr><td>Usuário bloqueado</td><td>Senhas erradas seguidas</td><td>Usuárias / usuários → Editar → Salvar libera.</td></tr>
+      <tr><td>Venda no nome errado</td><td>Vendas realizadas</td><td>Link "vendedora", com motivo.</td></tr>
+      <tr><td>Etiqueta saiu errada</td><td>Formato em Etiquetas (A4/bobina)</td><td>Ajustar formato e quantidade antes de imprimir.</td></tr>
+      <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
+    <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
+  { id: 'treinamento', t: 'Roteiro de treinamento', h: `
+    <h4>Módulo 1 – Vendedoras (cerca de 1 hora)</h4>
+    <ol class="mn-passos"><li>Entrar, trocar a senha provisória e cadastrar o PIN.</li><li>Abrir o caixa com o troco.</li><li>Venda com leitor, cliente, desconto e duas formas de pagamento; recibo e WhatsApp.</li><li>Venda no cartão escolhendo bandeira e parcelas.</li><li>Venda para outra vendedora (PIN).</li><li>Condicional: saída, acerto e devolução.</li><li>Troca e devolução (crédito ou dinheiro).</li><li>Cadastro de cliente com data de nascimento.</li><li>Fechar o caixa (fechamento cego se configurado).</li><li>No celular: entrar, vender e ler código pela câmera.</li></ol>
+    <h4>Módulo 2 – Administradores (cerca de 2 horas)</h4>
+    <ol class="mn-passos"><li>Entrada de mercadoria (XML) e etiquetas.</li><li>Produtos: preço, mínimo, foto, inativar.</li><li>Financeiro: receber crediário, pagar contas.</li><li>Comissões e metas (faixas e bônus).</li><li>Promoções e cashback.</li><li>Inventário.</li><li>Relatórios (PDF/Excel).</li><li>Usuários, reabertura de caixa, correção de vendedora.</li><li>Backup: exportar e conferir a pasta extra.</li></ol>
+    <h4>Checklist de conclusão</h4>
+    <ul class="mn-check"><li>Todas as vendedoras com senha própria e PIN.</li><li>Uma venda real de cada forma de pagamento feita pela equipe.</li><li>Caixa aberto e fechado uma vez com o administrador.</li><li>Backup automático gravando na pasta extra.</li><li>Administrador sabe onde ver a licença e quem chamar.</li></ul>` },
+  { id: 'rotina', t: 'Rotina do suporte', h: `
+    <table class="tb mn-tb"><thead><tr><th>Quando</th><th>O que conferir</th></tr></thead><tbody>
+      <tr><td>Semanal</td><td>Último backup e pasta extra; avisos no painel; Configurações → Segurança sem alertas.</td></tr>
+      <tr><td>Mensal</td><td>Versão instalada × nuvem; licença (validade e recursos); histórico de logs (senhas erradas, estornos, reaberturas de caixa).</td></tr>
+      <tr><td>A cada atualização</td><td>Backup antes; novidades lidas; teste rápido de venda e recibo.</td></tr>
+      <tr><td>Renovação</td><td>Gerar licença 15 dias antes do vencimento com os recursos contratados.</td></tr></tbody></table>
+    <p class="mn-dica">Nunca: apagar a pasta <code>dados</code>, deixar a senha do master na loja, deixar o zip/instalador no computador da loja, ou publicar as chaves privadas da pasta <code>ferramentas</code>.</p>` }
+];
+let manualBusca = '';
+function suporte() {
+  if (!master()) return '<p class="vazio">Somente o usuário master acessa o manual do suporte.</p>';
+  const q = semAcento(manualBusca.trim()).split(' ').filter(Boolean);
+  const vis = MANUAL.filter(s => !q.length || q.every(w => semAcento(s.t + ' ' + s.h.replace(/<[^>]+>/g, ' ')).indexOf(w) >= 0));
+  return `<h2>Manual do suporte <span class="tag in">só master</span></h2>
+  <section class="card"><div class="filtros"><label class="lg">Buscar no manual<input id="mn-busca" value="${esc(manualBusca)}" placeholder="Ex.: licença, backup, PIN, celular, caixa…" autocomplete="off"></label><span style="flex:1"></span><button class="btn" data-act="manualAbrirTudo">Abrir tudo</button><button class="btn" data-act="manualPdf">Imprimir / PDF</button></div>
+    <div class="mn-indice">${MANUAL.map((s, i) => `<button class="lnk" data-act="manualIr" data-v="${s.id}">${i + 1}. ${esc(s.t)}</button>`).join('')}</div>
+    <p class="mut" style="margin:6px 0 0">Prints de uma loja de demonstração (dados fictícios). Eles são baixados da nuvem ao abrir cada seção; sem internet aparece só o texto.</p></section>
+  ${vis.length ? vis.map(s => `<details class="aj-item mn-sec" id="mn-${s.id}"${q.length ? ' open' : ''}><summary><span class="aj-n">${MANUAL.indexOf(s) + 1}</span>${esc(s.t)}</summary><div class="mn-corpo">${s.h}</div></details>`).join('') : '<p class="vazio">Nada encontrado no manual.</p>'}`;
+}
+const printsCache = {};
+async function carregarPrints(raiz) {
+  for (const d of raiz.querySelectorAll('.mn-img[data-print]:not(.ok)')) {
+    const k = d.dataset.print; d.classList.add('ok');
+    try {
+      if (!printsCache[k]) { const r = await fetch(MANUAL_PRINTS + k + '.jpg', { cache: 'force-cache' }); if (!r.ok) throw new Error(r.status); printsCache[k] = URL.createObjectURL(await r.blob()); }
+      d.innerHTML = `<img src="${printsCache[k]}" alt="" data-act="manualZoom">`;
+    } catch (e) { d.innerHTML = '<span>Print disponível com internet.</span>'; }
+  }
+}
+document.addEventListener('toggle', e => { if (e.target && e.target.classList && e.target.classList.contains('mn-sec') && e.target.open) carregarPrints(e.target); }, true);
+document.addEventListener('input', e => { if (e.target && e.target.id === 'mn-busca') { manualBusca = e.target.value; const pos = e.target.selectionStart; render(); const i = $('#mn-busca'); if (i) { i.focus(); i.setSelectionRange(pos, pos); } } });
+ACT.manualIr = el => { const d = $('#mn-' + el.dataset.v); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
+ACT.manualAbrirTudo = () => $$('.mn-sec').forEach(d => { d.open = true; });
+ACT.manualZoom = el => abrirModal('Print', `<img src="${el.src}" alt="" style="width:100%;border-radius:8px">`, '', true);
+ACT.manualPdf = async () => {
+  $$('.mn-sec').forEach(d => { d.open = true; }); for (const d of $$('.mn-sec')) await carregarPrints(d);
+  imprimir(`${cabDoc('MANUAL DO SUPORTE', 0, agora(), '')}<div class="mn-print">${MANUAL.map((s, i) => `<h3>${i + 1}. ${esc(s.t)}</h3>${$('#mn-' + s.id + ' .mn-corpo').innerHTML}`).join('')}</div>`, 'A4');
+};
+
 /* ===== Venda pelo celular (recurso Premium) =====
    O computador do caixa liga o servidor na rede da loja (HTTPS). O celular abre o endereço, entra com usuário e senha
    (conferidos no servidor) e vê só vender, consultar produtos e clientes e as próprias vendas. */

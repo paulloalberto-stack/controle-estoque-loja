@@ -1,12 +1,12 @@
 {
- "versao": "2026.11.07-02",
- "publicadoEm": "07/11/2026 11:45",
+ "versao": "2026.11.07-03",
+ "publicadoEm": "07/11/2026 12:48",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "853d4c7d7fede215d395a61e00b30cc4178033ad46b4f69a9d025dde8d4a2666",
- "tamanho": 707354,
- "assinatura": "iUx3Ctj8E+xAvBLtExFx+tt93JNUDGWXLpjgyifDIebAQDUMcYT7n/LppkOYILUpbWE7R3WidF6Tjy2s8L3+vwuBx78Izx1nAoCDw4Xo4aK6LOTnmBpN+BOu89dgYBjSiEbe6u+N+CCRVVdmceOgAwEpsFVBRxycBs8+3uIb3qn6JTvEY+rR4mFta9CZL74B0wbNVL+kzKfC/roFDtfqua8pLi14eE/Q/PWd5Hjetk9HU2vaZ/TIynucYZN3TyteTBmLxhs65Dgg2cFCxyHHtl64WyG8C+Is14k03V3wCsB7VolHRVj/GF9v0wdkf43coCy8AAr5g1683NG2Ytk6NHoTc6zpIE7w/GSM3XAFe/oMmz7vEWiufNbImxrSsWGLJHLASFEnENK1vAC64YELbgVVjDI9+xaG3I4xG4DRQGa0PvoQVrO6mWUWZWJIweMZD99ZETWTzF81gGo3W708fTUoR3MTndjeOoQQDbsnXGyqGk2xNnYBem1zsWkj6ImZ",
+ "sha256": "79f77fc716528fa01b6a2b8c536fd7dee2f00ac6822e0470f0832d5f02a92fb5",
+ "tamanho": 730622,
+ "assinatura": "B9lyhDcKX4n0kIDVT398BwHVsTiBd1S7M+bK5aHjgN8pyNX/DppDcf1lnwQqrFsNrVBR9Wpba3plTmmMcpLlhswX3QfrJzE+3lqQxIzdk0oRmFOK+UbPrK+bymNNJ996XtCkkGnlxIPPGruCVUvxyrXnJneJ3bD6mCDArf36YxiFbgNaO3TZs0GnHRYFwd5/elOBEx0BdCHaVijrEfx+Yg8AbdRo5p1hb39Qd5ozhksJG0oM9CCyj/kajn2bN1+PZqfNh24BYbjDlRvxD7xbZ0zIVa4J32oq3KZIiAkAnPcAyObwOoHc/A0JRpVrL6PUiNCrkotsOS+uVny9FwoymExIo455MUohuBv4fKggZG9eGarrG0w2w5f8z7sdxTHnm90zDDjdDwxOSTBIMxBDErQ8D3BUzhJhuFR2JAVVfPcqEuKFg+HGfE+DYe7guzNojO5DgaYevEBHVMF9fF5aZ49J5SiNw2N/VCJ7+hq0V7Mnix/rC5orX6R/4dFnOt3d",
  "novidades": [
-  "Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo \"Controle de estoque\"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar."
+  "Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF."
  ],
  "servidor": {
   "versao": "2026.11.04-19",
