@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.07-06'
+VERSAO_SERVIDOR = '2026.11.08-01'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -650,8 +650,8 @@ from email.utils import formataddr
 
 PRESETS_SMTP = {'gmail': ('smtp.gmail.com', 465, 'ssl'), 'outlook': ('smtp-mail.outlook.com', 587, 'starttls'),
                 'office365': ('smtp.office365.com', 587, 'starttls'), 'yahoo': ('smtp.mail.yahoo.com', 465, 'ssl')}
-EVENTOS_ATENCAO = ('Senha errada', 'Usuário bloqueado', 'PIN/senha errada', 'Confirmação de vendedora bloqueada', 'Caixa reaberto', 'Venda cancelada',
-                   'Crédito estornado', 'Vendedora da venda alterada', 'Entrou como master', 'Licença ativada', 'Produto excluído', 'Backup restaurado',
+EVENTOS_ATENCAO = ('Senha errada', 'Usuário bloqueado', 'PIN/senha errada', 'Confirmação de vendedora bloqueada', 'Confirmação de vendedor bloqueada', 'Caixa reaberto', 'Venda cancelada',
+                   'Crédito estornado', 'Vendedora da venda alterada', 'Vendedor da venda alterado', 'Entrou como master', 'Licença ativada', 'Produto excluído', 'Backup restaurado',
                    'Dados apagados', 'Estoque ajustado', 'Inventário finalizado', 'Sistema atualizado')
 
 

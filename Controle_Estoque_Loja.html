@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.07-07">
+<meta name="versao-sistema" content="2026.11.08-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -656,7 +656,7 @@ html.rede .topo-acoes,html.rede [data-act="minhaSenha"],html.rede .side [data-ac
   <aside class="side">
     <div class="marca" data-act="ir" data-v="painel" title="Ir para o Painel" role="link" tabindex="0"><img id="side-logo" class="side-logo" alt="" hidden><div class="monograma" id="side-mono"></div><span id="loja-nome"></span><small id="loja-cnpj" hidden></small><small id="loja-frase"></small></div>
     <nav id="nav"></nav>
-    <div class="user"><div id="quem"></div><button class="icb" data-act="meuPin" title="Meu PIN de vendedora" aria-label="Meu PIN de vendedora"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="12" cy="16" r="1"/></svg></button><button class="icb" data-act="minhaSenha" title="Minha senha" aria-label="Minha senha"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button><button class="icb" data-act="sair" title="Sair" aria-label="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+    <div class="user"><div id="quem"></div><button class="icb" data-act="meuPin" title="Meu PIN de vendedor" aria-label="Meu PIN de vendedor"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="12" cy="16" r="1"/></svg></button><button class="icb" data-act="minhaSenha" title="Minha senha" aria-label="Minha senha"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button><button class="icb" data-act="sair" title="Sair" aria-label="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
   </aside>
   <main>
     <header class="topo"><button class="btn voltar" id="btn-voltar" data-act="voltar" hidden title="Voltar para a tela anterior (Alt + ←)"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg><span id="voltar-txt">Voltar</span></button><div class="topo-txt"><div class="topo-saud" id="topo-saud"></div><div class="topo-data" id="topo-data"></div></div>
@@ -751,7 +751,7 @@ const nDoc = n => String(n).padStart(6, '0');
 const ehAdm = u => !!u && (u.perfil === 'admin' || u.perfil === 'master');
 const adm = () => ehAdm(eu);
 const master = () => !!eu && eu.perfil === 'master';   // suporte: tudo do administrador + atualizar o sistema
-const nomePerfil = p => p === 'master' ? 'Master (suporte)' : p === 'admin' ? 'Administrador' : 'Vendedora';
+const nomePerfil = p => p === 'master' ? 'Master (suporte)' : p === 'admin' ? 'Administrador' : 'Vendedor';
 const temMaster = () => db.usuarios.some(u => u.perfil === 'master' && u.ativo !== false);
 const podeDarMaster = () => master() || (adm() && !temMaster());   // o 1º master pode ser criado por um administrador; depois, só o master
 
@@ -1307,7 +1307,7 @@ function tabelaCompra(lista) {
 function tabelaVendas(lista) {
   if (!lista.length) return '<p class="vazio">Nenhuma venda.</p>';
   const tot = lista.filter(v => !v.cancelada);
-  return `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Data</th><th>Vendedora</th><th>Cliente</th><th class="n">Peças</th><th>Pagamento</th><th class="n">Total</th><th></th></tr></thead><tbody>${lista.map(v => `<tr class="${v.cancelada ? 'canc' : ''}"><td>${nDoc(v.id)}</td><td>${fmtDH(v.data)}</td><td>${esc(v.usuario)}</td><td>${esc(v.cliente || '—')}${v.condicional ? ` <span class="tag ab">condicional ${nDoc(v.condicional)}</span>` : ''}</td><td class="n">${pecasV(v)}</td><td>${esc(v.pagamento)}</td><td class="n">${fmtR(v.total)}</td><td class="n"><button class="lnk" data-act="verVenda" data-id="${v.id}">Recibo</button>${adm() && !v.cancelada ? `<button class="lnk perigo" data-act="cancelarVenda" data-id="${v.id}">Cancelar</button>${adm() && !v.cancelada ? ` <button class="lnk" data-act="trocarVendedora" data-id="${v.id}">vendedora</button>` : ''}` : ''}${v.cancelada ? ' <span class="tag in">cancelada</span>' : ''}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">${tot.length} venda(s) válidas</td><td class="n">${fmtN(tot.reduce((s, v) => s + pecasV(v), 0))}</td><td></td><td class="n">${fmtR(tot.reduce((s, v) => s + v.total, 0))}</td><td></td></tr></tfoot></table></div>`;
+  return `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Data</th><th>Vendedor</th><th>Cliente</th><th class="n">Peças</th><th>Pagamento</th><th class="n">Total</th><th></th></tr></thead><tbody>${lista.map(v => `<tr class="${v.cancelada ? 'canc' : ''}"><td>${nDoc(v.id)}</td><td>${fmtDH(v.data)}</td><td>${esc(v.usuario)}</td><td>${esc(v.cliente || '—')}${v.condicional ? ` <span class="tag ab">condicional ${nDoc(v.condicional)}</span>` : ''}</td><td class="n">${pecasV(v)}</td><td>${esc(v.pagamento)}</td><td class="n">${fmtR(v.total)}</td><td class="n"><button class="lnk" data-act="verVenda" data-id="${v.id}">Recibo</button>${adm() && !v.cancelada ? `<button class="lnk perigo" data-act="cancelarVenda" data-id="${v.id}">Cancelar</button>${adm() && !v.cancelada ? ` <button class="lnk" data-act="trocarVendedora" data-id="${v.id}">vendedor</button>` : ''}` : ''}${v.cancelada ? ' <span class="tag in">cancelada</span>' : ''}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">${tot.length} venda(s) válidas</td><td class="n">${fmtN(tot.reduce((s, v) => s + pecasV(v), 0))}</td><td></td><td class="n">${fmtR(tot.reduce((s, v) => s + v.total, 0))}</td><td></td></tr></tfoot></table></div>`;
 }
 
 /* ===== Carrinho (venda, condicional, entrada) ===== */
@@ -1350,7 +1350,7 @@ function painel() {
   const b = abaixoMin();
   const ub = db.config.ultimoBackup;
   const lembrete = adm() && db.produtos.length && (!ub || ub < somaDias(-7)) ? `<div class="alerta">Faça um backup dos dados (Configurações → Exportar backup). ${ub ? 'Último backup: ' + fmtDia(ub) + '.' : 'Nenhum backup feito ainda.'}</div>` : '';
-  return `<h2>Painel</h2>${lembrete}${!MODO_REDE && !eu.pinHash && vendedorasLista().length > 1 ? '<div class="alerta alerta-nuvem">Você ainda não cadastrou o seu <b>PIN de vendedora</b> (para confirmar vendas no seu nome quando outra pessoa está logada). <button class="lnk" data-act="meuPin">Cadastrar agora</button></div>' : ''}${bannerPainel()}${bannerMeta()}
+  return `<h2>Painel</h2>${lembrete}${!MODO_REDE && !eu.pinHash && vendedorasLista().length > 1 ? '<div class="alerta alerta-nuvem">Você ainda não cadastrou o seu <b>PIN de vendedor</b> (para confirmar vendas no seu nome quando outra pessoa está logada). <button class="lnk" data-act="meuPin">Cadastrar agora</button></div>' : ''}${bannerPainel()}${bannerMeta()}
   <div class="kpis">
     ${kpi('Peças na loja', fmtN(pecas), `${at.length} produto(s) · ${fmtN(pecasCond)} peça(s) fora em condicional`, 'kpiIr', 'data-v="produtos:estoque"')}
     ${kpi('Estoque a preço de venda', fmtR(vVenda), adm() ? 'a preço de custo: ' + fmtR(vCusto) : '', 'kpiEstoque')}
@@ -1411,7 +1411,7 @@ function condicionais() {
     <div class="totais"><span>Peças <b id="t-pc-cond"></b></span><span class="big">Valor das peças <b id="t-tot-cond"></b></span></div>
     <div class="acoes"><button class="btn" data-act="limparCarrinho" data-tipo="cond">Limpar</button><button class="btn pri" data-act="saidaCond">Registrar saída e imprimir termo</button></div>
   </section>
-  <section class="card"><h3>Em aberto (${abertas.length})</h3>${abertas.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Saída</th><th>Cliente</th><th>Telefone</th><th>Devolver até</th><th class="n">Peças</th><th class="n">Valor</th><th>Vendedora</th><th></th></tr></thead><tbody>${abertas.map(c => { const atr = c.prazo < hoje(); return `<tr class="${atr ? 'baixo' : ''}"><td>${nDoc(c.id)}</td><td>${fmtDH(c.data)}</td><td>${esc(c.cliente)}</td><td>${esc(c.telefone)}</td><td>${fmtDia(c.prazo)} ${atr ? '<span class="tag at">vencido</span>' : ''}</td><td class="n">${c.itens.reduce((s, i) => s + i.qtd, 0)}</td><td class="n">${fmtR(c.itens.reduce((s, i) => s + i.qtd * i.preco, 0))}</td><td>${esc(c.usuario)}</td><td class="n"><button class="lnk" data-act="verCond" data-id="${c.id}">Termo</button><button class="btn pri" data-act="acertar" data-id="${c.id}">Acertar / devolução</button></td></tr>`; }).join('')}</tbody><tfoot><tr><td colspan="5">Total · ${abertas.length} condicional(is)</td><td class="n">${somar(abertas, pecasDe)}</td><td class="n">${fmtR(somar(abertas, c => c.itens.reduce((s, i) => s + i.qtd * i.preco, 0)))}</td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhuma condicional em aberto.</p>'}</section>
+  <section class="card"><h3>Em aberto (${abertas.length})</h3>${abertas.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Saída</th><th>Cliente</th><th>Telefone</th><th>Devolver até</th><th class="n">Peças</th><th class="n">Valor</th><th>Vendedor</th><th></th></tr></thead><tbody>${abertas.map(c => { const atr = c.prazo < hoje(); return `<tr class="${atr ? 'baixo' : ''}"><td>${nDoc(c.id)}</td><td>${fmtDH(c.data)}</td><td>${esc(c.cliente)}</td><td>${esc(c.telefone)}</td><td>${fmtDia(c.prazo)} ${atr ? '<span class="tag at">vencido</span>' : ''}</td><td class="n">${c.itens.reduce((s, i) => s + i.qtd, 0)}</td><td class="n">${fmtR(c.itens.reduce((s, i) => s + i.qtd * i.preco, 0))}</td><td>${esc(c.usuario)}</td><td class="n"><button class="lnk" data-act="verCond" data-id="${c.id}">Termo</button><button class="btn pri" data-act="acertar" data-id="${c.id}">Acertar / devolução</button></td></tr>`; }).join('')}</tbody><tfoot><tr><td colspan="5">Total · ${abertas.length} condicional(is)</td><td class="n">${somar(abertas, pecasDe)}</td><td class="n">${fmtR(somar(abertas, c => c.itens.reduce((s, i) => s + i.qtd * i.preco, 0)))}</td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhuma condicional em aberto.</p>'}</section>
   <section class="card"><h3>Encerradas (últimas 30)</h3>${fechadas.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Nº</th><th>Cliente</th><th>Saída</th><th>Acerto</th><th class="n">Levou</th><th class="n">Devolveu</th><th class="n">Comprou</th><th>Venda</th><th></th></tr></thead><tbody>${fechadas.map(c => `<tr><td>${nDoc(c.id)}</td><td>${esc(c.cliente)}</td><td>${fmtDia(c.data)}</td><td>${fmtDH(c.fechamento)}</td><td class="n">${c.itens.reduce((s, i) => s + i.qtd, 0)}</td><td class="n">${c.itens.reduce((s, i) => s + i.devolvido, 0)}</td><td class="n">${c.itens.reduce((s, i) => s + i.comprado, 0)}</td><td>${c.venda ? nDoc(c.venda) : '—'}</td><td class="n"><button class="lnk" data-act="verAcerto" data-id="${c.id}">Comprovante</button></td></tr>`).join('')}</tbody><tfoot><tr><td colspan="4">Total · ${fechadas.length} condicional(is)</td><td class="n">${somar(fechadas, pecasDe)}</td><td class="n">${somar(fechadas, c => c.itens.reduce((s, i) => s + i.devolvido, 0))}</td><td class="n">${somar(fechadas, c => c.itens.reduce((s, i) => s + i.comprado, 0))}</td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhuma.</p>'}</section>`;
 }
 
@@ -1562,9 +1562,9 @@ function conteudoRel() {
     return `<tr><td><b>${t}</b></td>${tams.map((tm, i) => `<td class="n"><small>${esc(tm)}</small>${linha[i]}</td>`).join('')}<td class="n"><small>Total</small><b>${fmtN(l.reduce((s, p) => s + p.estoque, 0))}</b></td></tr>`;
   }).join('');
   const b = abaixoMin();
-  return `<div class="kpis">${kpi('Vendas no período', fmtR(tot), `${vs.length} venda(s) · ${fmtN(pcs)} peça(s)`, 'kpiVendas')}${kpi('Ticket médio', fmtR(vs.length ? tot / vs.length : 0), 'por vendedora', 'kpiTicket')}${kpi('Estoque (custo)', fmtR(at.reduce((s, p) => s + p.estoque * p.custo, 0)), 'venda: ' + fmtR(at.reduce((s, p) => s + p.estoque * p.preco, 0)), 'kpiEstoque')}${kpi('Abaixo do mínimo', b.length, 'produto(s)', 'kpiAbaixo')}</div>
+  return `<div class="kpis">${kpi('Vendas no período', fmtR(tot), `${vs.length} venda(s) · ${fmtN(pcs)} peça(s)`, 'kpiVendas')}${kpi('Ticket médio', fmtR(vs.length ? tot / vs.length : 0), 'por vendedor', 'kpiTicket')}${kpi('Estoque (custo)', fmtR(at.reduce((s, p) => s + p.estoque * p.custo, 0)), 'venda: ' + fmtR(at.reduce((s, p) => s + p.estoque * p.preco, 0)), 'kpiEstoque')}${kpi('Abaixo do mínimo', b.length, 'produto(s)', 'kpiAbaixo')}</div>
   <div class="grid2">
-    <section class="card"><h3>Vendas e comissão por vendedora</h3>${tabelaComissao(vs, de, ate)}</section>
+    <section class="card"><h3>Vendas e comissão por vendedor</h3>${tabelaComissao(vs, de, ate)}</section>
     <section class="card"><h3>Vendas por forma de pagamento</h3>${tabSimples(['Pagamento', 'Lançamentos', 'Total'], porPag.map(a => [esc(a.k), a.n, fmtR(a.v)]), ['Total', somar(porPag, a => a.n), fmtR(somar(porPag, a => a.v))])}</section>
     <section class="card"><h3>Vendas por tipo de mercadoria</h3>${tabSimples(['Tipo', 'Peças', 'Total (com desconto)'], porTipo.map(a => [esc(a.k), fmtN(a.q), fmtR(a.v)]), ['Total', fmtN(somar(porTipo, a => a.q)), fmtR(somar(porTipo, a => a.v))])}</section>
     <section class="card"><h3>Vendas por marca</h3>${tabSimples(['Marca', 'Peças', 'Total (com desconto)'], porMarcaV.map(a => [esc(a.k), fmtN(a.q), fmtR(a.v)]), ['Total', fmtN(somar(porMarcaV, a => a.q)), fmtR(somar(porMarcaV, a => a.v))])}</section>
@@ -1576,9 +1576,9 @@ function conteudoRel() {
 
 function usuarios() {
   return `<h2>Usuárias / usuários</h2>
-  <section class="card"><div class="acoes" style="margin-bottom:8px"><button class="btn pri" data-act="novoUsuario">+ Nova vendedora / usuário</button></div>
+  <section class="card"><div class="acoes" style="margin-bottom:8px"><button class="btn pri" data-act="novoUsuario">+ Novo vendedor / usuário</button></div>
   <div class="tabw"><table class="tb"><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th class="n">Vendas (mês)</th><th class="n">Comissão (mês)</th><th></th></tr></thead><tbody>${db.usuarios.map(u => { const vm = vendasValidas().filter(v => v.usuarioId === u.id && v.data.slice(0, 7) === hoje().slice(0, 7)); return `<tr><td>${esc(u.nome)}</td><td>${esc(u.login)}</td><td>${nomePerfil(u.perfil)}</td><td>${u.ativo ? '<span class="tag ok">Ativo</span>' : '<span class="tag in">Bloqueado</span>'}</td><td>${fmtDH(u.ultimoAcesso)}</td><td class="n">${vm.length} · ${fmtR(vm.reduce((s, v) => s + v.total, 0))}</td><td class="n">${temComissao(u) ? fmtR(comissaoDe(u.id, hoje().slice(0, 8) + '01', hoje()).com) + ' <small>' + esc(textoRegra(u)) + '</small>' : '—'}</td><td class="n">${u.perfil === 'master' && !master() ? '<small>só o master altera</small>' : `<button class="lnk" data-act="editarUsuario" data-id="${u.id}">Editar / senha</button>`}</td></tr>`; }).join('')}</tbody></table></div>
-  <p class="mut">Vendedoras podem: vender, fazer condicionais, lançar entradas e consultar estoque. Só o administrador cadastra/edita produtos, ajusta estoque, cancela vendas, vê custos e relatórios e cadastra usuários.</p></section>`;
+  <p class="mut">Vendedores podem: vender, fazer condicionais, lançar entradas e consultar estoque. Só o administrador cadastra/edita produtos, ajusta estoque, cancela vendas, vê custos e relatórios e cadastra usuários.</p></section>`;
 }
 
 const CFG_ABAS = [
@@ -1637,8 +1637,8 @@ function config() {
       <label>Markup padrão na importação de XML (preço = custo × )<input id="cf-markup" value="${fmtDec(c.markup)}"></label>
       <label>Reposição: comprar para quantos dias de venda<input id="cf-diasCobertura" type="number" min="7" value="${c.diasCobertura}"></label>
       <label class="chk full"><input type="checkbox" id="cf-caixaObrig" ${c.caixaObrig ? 'checked' : ''}> Exigir caixa aberto para vender (menu Caixa)</label>
-      <label class="chk full"><input type="checkbox" id="cf-pinSempre" ${c.pinSempre ? 'checked' : ''}> Exigir o PIN da vendedora em toda venda e condicional no computador (mesmo quando é a pessoa logada)</label>
-      <label class="chk full"><input type="checkbox" id="cf-caixaCego" ${c.caixaCego ? 'checked' : ''}> Fechamento cego: a vendedora não vê o valor esperado no caixa (só o administrador)</label>
+      <label class="chk full"><input type="checkbox" id="cf-pinSempre" ${c.pinSempre ? 'checked' : ''}> Exigir o PIN do vendedor em toda venda e condicional no computador (mesmo quando é a pessoa logada)</label>
+      <label class="chk full"><input type="checkbox" id="cf-caixaCego" ${c.caixaCego ? 'checked' : ''}> Fechamento cego: o vendedor não vê o valor esperado no caixa (só o administrador)</label>
     </div></section>${secaoTipos()}`)}
   <div class="cfg-salvar" id="cfg-salvar" ${ABAS_SALVAR.indexOf(aba) < 0 ? 'hidden' : ''}><span class="mut" id="cfg-sujo"></span><button class="btn" data-act="descartarConfig">Descartar</button><button class="btn pri" data-act="salvarConfig">Salvar alterações</button></div>
   </div>
@@ -1698,21 +1698,21 @@ const TH_ITEM = '<th class="c-cod">Código</th><th>Produto</th><th class="c-marc
 function reciboHTML(v) {
   return via => `${cabDoc('RECIBO DE VENDA E ENTREGA', v.id, v.data, via)}
   ${v.cancelada ? `<p class="err"><b>VENDA CANCELADA em ${fmtDH(v.canceladaEm)} — ${esc(v.motivo || '')}</b></p>` : ''}
-  <div class="dados"><div><b>Cliente:</b> ${esc(v.cliente || 'Consumidor')}</div><div><b>CPF / telefone:</b> ${esc(v.doc || '—')}</div><div><b>Vendedora:</b> ${esc(v.usuario)}</div><div><b>Pagamento:</b> ${esc(v.pagamento)}${v.condicional ? ` · <b>Origem:</b> condicional nº ${nDoc(v.condicional)}` : ''}</div></div>
+  <div class="dados"><div><b>Cliente:</b> ${esc(v.cliente || 'Consumidor')}</div><div><b>CPF / telefone:</b> ${esc(v.doc || '—')}</div><div><b>Vendedor:</b> ${esc(v.usuario)}</div><div><b>Pagamento:</b> ${esc(v.pagamento)}${v.condicional ? ` · <b>Origem:</b> condicional nº ${nDoc(v.condicional)}` : ''}</div></div>
   <table><thead><tr>${TH_ITEM}<th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${v.itens.map(i => `<tr>${linhaItem(i)}<td style="text-align:right">${i.qtd}</td><td style="text-align:right">${fmtR(i.preco)}</td><td style="text-align:right">${fmtR(i.qtd * i.preco)}</td></tr>`).join('')}</tbody></table>
   <div class="tot">Peças: ${pecasV(v)} · Subtotal: ${fmtR(v.subtotal)}${v.desconto ? ' · Desconto: ' + fmtR(v.desconto) : ''}<br><b>TOTAL: ${fmtR(v.total)}</b></div>
   <div class="tot">${pagsVenda(v).map(p => `${esc(p.forma)}: ${fmtR(p.valor)}`).join(' · ')}${v.troco ? `<br>Dinheiro recebido: ${fmtR(v.dinheiroRecebido)} · <b>Troco: ${fmtR(v.troco)}</b>` : ''}</div>
   ${v.cashback && !v.cancelada ? `<div class="tot"><b>Você ganhou ${fmtR(v.cashback.valor)} de cashback</b> para usar na próxima compra até ${fmtDia(v.cashback.validade)}.</div>` : ''}
   ${parcelasVenda(v.id).length ? `<div class="parc"><b>Crediário:</b>${parcelasVenda(v.id).map(r => `<span>${r.parcela}/${r.de} · ${fmtDia(r.vencimento)} · ${fmtR(r.valor)}</span>`).join('')}</div>` : ''}
-  ${fimDoc(`Declaro que recebi as mercadorias acima relacionadas, em perfeito estado, e que o pagamento foi efetuado na forma indicada.`, [`${esc(v.cliente || 'Cliente')}`, `${esc(v.usuario)} (vendedora)`], qrTexto('Recibo de venda', v.id, v.data, v.total, v.cliente))}`;
+  ${fimDoc(`Declaro que recebi as mercadorias acima relacionadas, em perfeito estado, e que o pagamento foi efetuado na forma indicada.`, [`${esc(v.cliente || 'Cliente')}`, `${esc(v.usuario)} (vendedor)`], qrTexto('Recibo de venda', v.id, v.data, v.total, v.cliente))}`;
 }
 function termoCondHTML(c) {
   const val = c.itens.reduce((s, i) => s + i.qtd * i.preco, 0);
   return via => `${cabDoc('TERMO DE SAÍDA EM CONDICIONAL', c.id, c.data, via)}
-  <div class="dados"><div><b>Cliente:</b> ${esc(c.cliente)}</div><div><b>Telefone:</b> ${esc(c.telefone)}</div><div><b>CPF:</b> ${esc(c.doc || '—')}</div><div><b>Endereço:</b> ${esc(c.endereco || '—')}</div><div><b>Vendedora:</b> ${esc(c.usuario)}</div><div><b>Devolver até:</b> ${fmtDia(c.prazo)}</div></div>
+  <div class="dados"><div><b>Cliente:</b> ${esc(c.cliente)}</div><div><b>Telefone:</b> ${esc(c.telefone)}</div><div><b>CPF:</b> ${esc(c.doc || '—')}</div><div><b>Endereço:</b> ${esc(c.endereco || '—')}</div><div><b>Vendedor:</b> ${esc(c.usuario)}</div><div><b>Devolver até:</b> ${fmtDia(c.prazo)}</div></div>
   <table><thead><tr>${TH_ITEM}<th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${c.itens.map(i => `<tr>${linhaItem(i)}<td style="text-align:right">${i.qtd}</td><td style="text-align:right">${fmtR(i.preco)}</td><td style="text-align:right">${fmtR(i.qtd * i.preco)}</td></tr>`).join('')}</tbody></table>
   <div class="tot">Peças: ${c.itens.reduce((s, i) => s + i.qtd, 0)}<br><b>VALOR DAS PEÇAS: ${fmtR(val)}</b></div>
-  ${fimDoc(`Declaro que recebi em condicional as peças acima, no valor total de <b>${fmtR(val)}</b>, e me comprometo a devolvê-las até <b>${fmtDia(c.prazo)}</b> em perfeito estado, sem uso e com as etiquetas, ou a pagar pelas peças que ficar.`, [`${esc(c.cliente)}`, `${esc(c.usuario)} (vendedora)`], qrTexto('Condicional', c.id, c.data, val, c.cliente, 'Devolver até ' + fmtDia(c.prazo)))}`;
+  ${fimDoc(`Declaro que recebi em condicional as peças acima, no valor total de <b>${fmtR(val)}</b>, e me comprometo a devolvê-las até <b>${fmtDia(c.prazo)}</b> em perfeito estado, sem uso e com as etiquetas, ou a pagar pelas peças que ficar.`, [`${esc(c.cliente)}`, `${esc(c.usuario)} (vendedor)`], qrTexto('Condicional', c.id, c.data, val, c.cliente, 'Devolver até ' + fmtDia(c.prazo)))}`;
 }
 function acertoHTML(c) {
   const v = c.venda ? db.vendas.find(x => x.id === c.venda) : null;
@@ -1822,7 +1822,7 @@ ACT.login = async () => {
 ACT.sair = () => { if (eu) { registrar('Saiu do sistema'); salvar(); } eu = null; try { sessionStorage.removeItem(CHAVE + '.sessao'); } catch (e) { } fecharModal(); for (const k in carrinho) carrinho[k] = []; telaLogin(); };
 function formSenha(obrigatoria) {
   abrirModal(obrigatoria ? 'Defina uma nova senha' : 'Minha senha', `${obrigatoria ? '<p>O administrador redefiniu sua senha. Escolha uma senha nova.</p>' : ''}<div class="form2">${obrigatoria ? '' : '<label class="full">Senha atual<input id="ms-atual" type="password"></label>'}<label>Nova senha<input id="ms-nova" type="password"></label><label>Repita<input id="ms-nova2" type="password" data-enter="salvarMinhaSenha"></label></div>`,
-    `${obrigatoria ? '' : '<button class="btn" data-act="meuPin">Meu PIN de vendedora</button>'}<button class="btn pri" data-act="salvarMinhaSenha">Salvar senha</button>`);
+    `${obrigatoria ? '' : '<button class="btn" data-act="meuPin">Meu PIN de vendedor</button>'}<button class="btn pri" data-act="salvarMinhaSenha">Salvar senha</button>`);
 }
 ACT.minhaSenha = () => formSenha(false);
 ACT.salvarMinhaSenha = async () => {
@@ -2286,10 +2286,10 @@ function baixar(nome, conteudo, tipo) {
 
 /* usuários */
 function formUsuario(u) {
-  abrirModal(u ? 'Editar ' + esc(u.nome) : 'Nova vendedora / usuário', `<div class="form2">
+  abrirModal(u ? 'Editar ' + esc(u.nome) : 'Novo vendedor / usuário', `<div class="form2">
     <label>Nome<input id="fu-nome" value="${esc(u ? u.nome : '')}"></label>
     <label>Usuário (login)<input id="fu-login" value="${esc(u ? u.login : '')}" ${u ? 'readonly' : ''}></label>
-    <label>Perfil<select id="fu-perfil"><option value="vendedora">Vendedora</option><option value="admin" ${u && u.perfil === 'admin' ? 'selected' : ''}>Administrador</option>${podeDarMaster() || (u && u.perfil === 'master') ? `<option value="master" ${u && u.perfil === 'master' ? 'selected' : ''}>Master (suporte) – administrador + atualizar o sistema</option>` : ''}</select></label>
+    <label>Perfil<select id="fu-perfil"><option value="vendedora">Vendedor</option><option value="admin" ${u && u.perfil === 'admin' ? 'selected' : ''}>Administrador</option>${podeDarMaster() || (u && u.perfil === 'master') ? `<option value="master" ${u && u.perfil === 'master' ? 'selected' : ''}>Master (suporte) – administrador + atualizar o sistema</option>` : ''}</select></label>
     ${u ? `<label class="chk"><input type="checkbox" id="fu-ativo" ${u.ativo ? 'checked' : ''}> Pode entrar no sistema</label>` : '<span></span>'}
     <label>${u ? 'Nova senha (deixe em branco para manter)' : 'Senha inicial'}<input id="fu-senha" type="password" autocomplete="new-password"></label>
     <label class="chk"><input type="checkbox" id="fu-trocar" ${u ? '' : 'checked'}> Pedir para trocar a senha no próximo acesso</label>
@@ -2777,7 +2777,7 @@ function formTroca(v) {
   if (v.cancelada) return '<p class="err">Esta venda foi cancelada.</p>';
   const fator = v.subtotal ? v.total / v.subtotal : 1, c = v.clienteId ? cli(v.clienteId) : null;
   return `<div id="troca" data-venda="${v.id}" style="margin-top:12px">
-    <p><b>Venda nº ${nDoc(v.id)}</b> de ${fmtDH(v.data)} · vendedora ${esc(v.usuario)} · cliente ${esc(v.cliente || 'não informado')} · total ${fmtR(v.total)}${v.desconto ? ' (com desconto de ' + fmtR(v.desconto) + ')' : ''}</p>
+    <p><b>Venda nº ${nDoc(v.id)}</b> de ${fmtDH(v.data)} · vendedor ${esc(v.usuario)} · cliente ${esc(v.cliente || 'não informado')} · total ${fmtR(v.total)}${v.desconto ? ' (com desconto de ' + fmtR(v.desconto) + ')' : ''}</p>
     <div class="tabw"><table class="tb"><thead><tr><th>Produto</th><th>Tam.</th><th class="n">Vendido</th><th class="n">Já devolvido</th><th class="n">Devolver agora</th><th class="n">Valor unit. pago</th><th class="n">Total</th></tr></thead><tbody>${v.itens.map((i, k) => { const ja = devolvido(v.id, i.prod), max = i.qtd - ja; return `<tr><td>${esc(i.codigo)} – ${esc(i.nome)} <span class="mut">${esc(i.marca)}${i.cor ? ' · ' + esc(i.cor) : ''}</span></td><td>${esc(i.tamanho)}</td><td class="n">${i.qtd}</td><td class="n">${ja || ''}</td><td class="n">${max > 0 ? `<input class="qtd tr-q" type="number" min="0" max="${max}" value="0" data-k="${k}" data-un="${r2(i.preco * fator)}">` : '—'}</td><td class="n">${fmtR(r2(i.preco * fator))}</td><td class="n" id="tr-t-${k}"></td></tr>`; }).join('')}</tbody></table></div>
     <div class="form3">
       <label>O que fazer com o valor<select id="tr-dest"><option value="credito">Gerar crédito para o cliente (vale-troca)</option><option value="dinheiro">Devolver o dinheiro / estornar</option></select></label>
@@ -2933,7 +2933,7 @@ function secaoTema() {
       <label class="full">Título da tela de entrada<input id="tm-titulo" value="${esc(t.titulo)}"></label>
       <label class="full">Frase da tela de entrada<input id="tm-frase" value="${esc(t.frase)}"></label>
       <label class="full">Destaques da tela de entrada (um por linha)<textarea id="tm-topicos" rows="3">${esc(t.topicos)}</textarea></label>
-      <label class="full">Mensagem no painel (aparece para todas as vendedoras)<textarea id="tm-mensagem" rows="2" placeholder="Ex.: Meta de novembro: R$ 60.000 · Promoção de polos até sábado">${esc(t.mensagem)}</textarea></label>
+      <label class="full">Mensagem no painel (aparece para todos os vendedores)<textarea id="tm-mensagem" rows="2" placeholder="Ex.: Meta de novembro: R$ 60.000 · Promoção de polos até sábado">${esc(t.mensagem)}</textarea></label>
     </div>
     <div class="acoes" style="margin-top:12px"><button class="btn" data-act="temaPadrao">Voltar ao padrão</button><button class="btn pri" data-act="salvarTema">Salvar aparência</button></div>
   </div>
@@ -3524,7 +3524,7 @@ ACT.relXlsx = el => {
 };
 
 /* ===== Comissões =====
-   Regra por vendedora: base "vendido" (vendas do período) ou "recebido" (o que entrou no período, crediário quando a parcela é paga);
+   Regra por vendedor: base "vendido" (vendas do período) ou "recebido" (o que entrou no período, crediário quando a parcela é paga);
    tipo "fixo" (um %), "meta" (o % da maior faixa atingida vale sobre tudo) ou "escalonada" (cada parte da base com o % da sua faixa).
    Devoluções/trocas das vendas dela descontam no período em que acontecem. */
 const BASES_COM = [['venda', 'Sobre o valor vendido'], ['recebido', 'Só sobre o que foi recebido']];
@@ -3600,11 +3600,11 @@ function comissoes() {
   return `${cabTela('Comissões')}
   <section class="card"><div class="filtros"><label>Mês<input type="month" id="com-mes" value="${de.slice(0, 7)}"></label><label>De<input type="date" data-filtro="com.de" value="${de}"></label><label>Até<input type="date" data-filtro="com.ate" value="${ate}"></label><span style="flex:1"></span>
     <button class="btn" data-act="comPdf">PDF</button><button class="btn" data-act="comXlsx">Excel</button><button class="btn pri" data-act="comFecharTodas">Fechar comissões do período</button></div>
-  ${l.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Vendedora</th><th>Regra</th><th class="n">Vendas</th><th class="n">Total vendido</th><th class="n">Base (antes das devoluções)</th><th class="n">Devoluções</th><th class="n">Base</th><th class="n">% efetivo</th><th class="n">Comissão</th><th class="n">Ajustes</th><th class="n">A pagar</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(x => `<tr><td><b>${esc(x.u.nome)}</b></td><td><small>${esc(x.f ? x.f.regraTxt : textoRegra(x.u))}</small></td><td class="n">${x.c.n}</td><td class="n">${fmtR(x.c.tot)}</td><td class="n">${fmtR(x.c.bruto)}</td><td class="n">${x.c.dev ? '-' + fmtR(x.c.dev) : ''}</td><td class="n">${fmtR(x.c.base)}</td><td class="n">${fmtDec(x.c.pct)}%</td><td class="n">${fmtR(x.c.com)}</td><td class="n">${x.aj.length ? fmtR(x.aj.reduce((s, a) => s + a.valor, 0)) : ''}</td><td class="n"><b>${fmtR(x.total)}</b></td><td>${sit(x)}</td>
+  ${l.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Vendedor</th><th>Regra</th><th class="n">Vendas</th><th class="n">Total vendido</th><th class="n">Base (antes das devoluções)</th><th class="n">Devoluções</th><th class="n">Base</th><th class="n">% efetivo</th><th class="n">Comissão</th><th class="n">Ajustes</th><th class="n">A pagar</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(x => `<tr><td><b>${esc(x.u.nome)}</b></td><td><small>${esc(x.f ? x.f.regraTxt : textoRegra(x.u))}</small></td><td class="n">${x.c.n}</td><td class="n">${fmtR(x.c.tot)}</td><td class="n">${fmtR(x.c.bruto)}</td><td class="n">${x.c.dev ? '-' + fmtR(x.c.dev) : ''}</td><td class="n">${fmtR(x.c.base)}</td><td class="n">${fmtDec(x.c.pct)}%</td><td class="n">${fmtR(x.c.com)}</td><td class="n">${x.aj.length ? fmtR(x.aj.reduce((s, a) => s + a.valor, 0)) : ''}</td><td class="n"><b>${fmtR(x.total)}</b></td><td>${sit(x)}</td>
     <td class="n"><button class="lnk" data-act="comExtrato" data-id="${x.u.id}">Extrato</button>${x.f ? `<button class="lnk" data-act="comRecibo" data-id="${x.f.id}">Recibo</button><button class="lnk perigo" data-act="comReabrir" data-id="${x.f.id}">Reabrir</button>` : x.total > 0 ? `<button class="lnk" data-act="comFechar" data-id="${x.u.id}">Fechar</button>` : ''}</td></tr>`).join('')}</tbody>
-    <tfoot><tr><td colspan="2">Total</td><td class="n">${soma('n')}</td><td class="n">${fmtR(soma('tot'))}</td><td class="n">${fmtR(soma('bruto'))}</td><td class="n">${soma('dev') ? '-' + fmtR(soma('dev')) : ''}</td><td class="n">${fmtR(soma('base'))}</td><td></td><td class="n">${fmtR(soma('com'))}</td><td class="n">${soma('aj') ? fmtR(soma('aj')) : ''}</td><td class="n"><b>${fmtR(soma('total'))}</b></td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhuma vendedora com comissão ou venda no período.</p>'}
-  <p class="mut">A regra de cada vendedora fica em Usuárias / usuários → Editar. "Base (antes das devoluções)" = vendas do período (regra sobre o vendido) ou o que foi recebido no período (regra sobre o recebido: à vista na data da venda, crediário quando a parcela é paga). Ajustes = devoluções ou cancelamentos de vendas de meses já fechados.</p></section>
-  <section class="card"><h3>Fechamentos</h3>${(db.comissoes || []).length ? tabSimples(['Período', 'Vendedora', 'Base', 'Comissão', 'Ajustes', 'Total', 'Fechado em', 'Conta a pagar'], (db.comissoes || []).slice().reverse().slice(0, 60).map(f => { const ct = f.contaId && db.pagar.find(p => p.id === f.contaId); return [periodoTxt2(f.de, f.ate), esc(f.nome), fmtR(f.base), fmtR(f.com), fmtR((f.ajustes || []).reduce((s, a) => s + a.valor, 0)), '<b>' + fmtR(f.total) + '</b>', fmtDH(f.quando) + ' · ' + esc(f.por), ct ? (ct.pagoEm ? 'paga ' + fmtDia(ct.pagoEm) : 'vence ' + fmtDia(ct.vencimento)) : 'não lançada']; }), (l60 => ['Total', l60.length + ' fechamento(s)', fmtR(somar(l60, f => f.base)), fmtR(somar(l60, f => f.com)), fmtR(somar(l60, f => (f.ajustes || []).reduce((s, a) => s + a.valor, 0))), fmtR(somar(l60, f => f.total)), '', ''])((db.comissoes || []).slice(-60))) : '<p class="vazio">Nenhum fechamento ainda.</p>'}</section>`;
+    <tfoot><tr><td colspan="2">Total</td><td class="n">${soma('n')}</td><td class="n">${fmtR(soma('tot'))}</td><td class="n">${fmtR(soma('bruto'))}</td><td class="n">${soma('dev') ? '-' + fmtR(soma('dev')) : ''}</td><td class="n">${fmtR(soma('base'))}</td><td></td><td class="n">${fmtR(soma('com'))}</td><td class="n">${soma('aj') ? fmtR(soma('aj')) : ''}</td><td class="n"><b>${fmtR(soma('total'))}</b></td><td colspan="2"></td></tr></tfoot></table></div>` : '<p class="vazio">Nenhum vendedor com comissão ou venda no período.</p>'}
+  <p class="mut">A regra de cada vendedor fica em Usuárias / usuários → Editar. "Base (antes das devoluções)" = vendas do período (regra sobre o vendido) ou o que foi recebido no período (regra sobre o recebido: à vista na data da venda, crediário quando a parcela é paga). Ajustes = devoluções ou cancelamentos de vendas de meses já fechados.</p></section>
+  <section class="card"><h3>Fechamentos</h3>${(db.comissoes || []).length ? tabSimples(['Período', 'Vendedor', 'Base', 'Comissão', 'Ajustes', 'Total', 'Fechado em', 'Conta a pagar'], (db.comissoes || []).slice().reverse().slice(0, 60).map(f => { const ct = f.contaId && db.pagar.find(p => p.id === f.contaId); return [periodoTxt2(f.de, f.ate), esc(f.nome), fmtR(f.base), fmtR(f.com), fmtR((f.ajustes || []).reduce((s, a) => s + a.valor, 0)), '<b>' + fmtR(f.total) + '</b>', fmtDH(f.quando) + ' · ' + esc(f.por), ct ? (ct.pagoEm ? 'paga ' + fmtDia(ct.pagoEm) : 'vence ' + fmtDia(ct.vencimento)) : 'não lançada']; }), (l60 => ['Total', l60.length + ' fechamento(s)', fmtR(somar(l60, f => f.base)), fmtR(somar(l60, f => f.com)), fmtR(somar(l60, f => (f.ajustes || []).reduce((s, a) => s + a.valor, 0))), fmtR(somar(l60, f => f.total)), '', ''])((db.comissoes || []).slice(-60))) : '<p class="vazio">Nenhum fechamento ainda.</p>'}</section>`;
 }
 function extratoHTML(u, de, ate, doc) {
   const f = fechamentoDe(u.id, de, ate), c0 = calcComissao(u, de, ate), c = f ? Object.assign({}, c0, { bruto: f.bruto, dev: f.dev, base: f.base, com: f.com, pct: f.pct }) : c0, aj = f ? f.ajustes || [] : ajustesPendentes(u, de), total = f ? f.total : r2(c.com + aj.reduce((s, a) => s + a.valor, 0));
@@ -3626,7 +3626,7 @@ function baixarXlsx(titulo, sub, cols, linhas, nomeArq) {
 }
 ACT.comXlsx = () => {
   const { de, ate } = periodoCom(), l = vendedorasCom(de, ate).map(u => linhaResumo(u, de, ate));
-  const cols = [C('Vendedora', 's'), C('Regra', 's'), C('Vendas', 'i'), C('Total vendido', 'r'), C('Base antes das devoluções', 'r'), C('Devoluções', 'r'), C('Base', 'r'), C('% efetivo', 'p'), C('Comissão', 'r'), C('Ajustes', 'r'), C('A pagar', 'r'), C('Situação', 's')];
+  const cols = [C('Vendedor', 's'), C('Regra', 's'), C('Vendas', 'i'), C('Total vendido', 'r'), C('Base antes das devoluções', 'r'), C('Devoluções', 'r'), C('Base', 'r'), C('% efetivo', 'p'), C('Comissão', 'r'), C('Ajustes', 'r'), C('A pagar', 'r'), C('Situação', 's')];
   baixarXlsx('Comissões – ' + periodoTxt2(de, ate), `${db.config.loja || ''} · gerado em ${fmtDH(agora())}`, cols,
     l.map(x => ({ c: [x.u.nome, x.f ? x.f.regraTxt : textoRegra(x.u), x.c.n, x.c.tot, x.c.bruto, -x.c.dev, x.c.base, x.c.pct / 100, x.c.com, x.aj.reduce((s, a) => s + a.valor, 0), x.total, x.f ? 'Fechado ' + fmtDia(x.f.quando) : 'Aberto'] }))
       .concat([{ forte: true, c: ['Total', '', l.reduce((s, x) => s + x.c.n, 0), l.reduce((s, x) => s + x.c.tot, 0), l.reduce((s, x) => s + x.c.bruto, 0), -l.reduce((s, x) => s + x.c.dev, 0), l.reduce((s, x) => s + x.c.base, 0), '', l.reduce((s, x) => s + x.c.com, 0), l.reduce((s, x) => s + x.aj.reduce((a, b) => a + b.valor, 0), 0), l.reduce((s, x) => s + x.total, 0), ''] }]),
@@ -3644,7 +3644,7 @@ function abrirFechamento(ids) {
   const { de, ate } = periodoCom(), l = ids.map(id => linhaResumo(db.usuarios.find(u => u.id === id), de, ate)).filter(x => !x.f && x.total > 0);
   if (!l.length) return aviso('Nada a fechar neste período (já fechado ou sem comissão).', 'erro');
   const venc = (() => { const [y, m] = ate.split('-').map(Number); return dataLocal(new Date(y, m, 5)); })();
-  abrirModal('Fechar comissões – ' + periodoTxt2(de, ate), `${tabSimples(['Vendedora', 'Base', 'Comissão', 'Ajustes', 'A pagar'], l.map(x => [esc(x.u.nome), fmtR(x.c.base), fmtR(x.c.com), fmtR(x.aj.reduce((s, a) => s + a.valor, 0)), '<b>' + fmtR(x.total) + '</b>']), ['Total', fmtR(somar(l, x => x.c.base)), fmtR(somar(l, x => x.c.com)), fmtR(somar(l, x => x.aj.reduce((s, a) => s + a.valor, 0))), fmtR(somar(l, x => x.total))])}
+  abrirModal('Fechar comissões – ' + periodoTxt2(de, ate), `${tabSimples(['Vendedor', 'Base', 'Comissão', 'Ajustes', 'A pagar'], l.map(x => [esc(x.u.nome), fmtR(x.c.base), fmtR(x.c.com), fmtR(x.aj.reduce((s, a) => s + a.valor, 0)), '<b>' + fmtR(x.total) + '</b>']), ['Total', fmtR(somar(l, x => x.c.base)), fmtR(somar(l, x => x.c.com)), fmtR(somar(l, x => x.aj.reduce((s, a) => s + a.valor, 0))), fmtR(somar(l, x => x.total))])}
     <div class="form2" style="margin-top:12px"><label class="chk full"><input type="checkbox" id="fc-conta" checked> Lançar no contas a pagar (categoria "Salários e comissões")</label><label>Vencimento do pagamento<input type="date" id="fc-venc" value="${venc}"></label></div>
     <p class="mut">Depois de fechado, o valor do período fica gravado. Devoluções ou cancelamentos posteriores entram como ajuste no próximo fechamento.</p>`,
     `<button class="btn pri" data-act="comConfirmar" data-ids="${l.map(x => x.u.id).join(',')}">Fechar ${l.length} comissão(ões)</button>`, true);
@@ -3671,13 +3671,13 @@ ACT.comReabrir = el => {
 ACT.comConfReabrir = el => { const f = db.comissoes.find(x => x.id === +el.dataset.id); db.pagar = db.pagar.filter(p => p.id !== f.contaId || p.pagoEm); db.comissoes = db.comissoes.filter(x => x !== f); registrar('Comissão reaberta', `${f.nome} · ${periodoTxt2(f.de, f.ate)}`); salvar(); fecharModal(); render(); };
 function reciboComissaoHTML(f) {
   return via => `${cabDoc('RECIBO DE COMISSÃO', f.id, f.quando, via)}
-  <div class="dados"><div><b>Vendedora:</b> ${esc(f.nome)}</div><div><b>Período:</b> ${periodoTxt2(f.de, f.ate)}</div><div><b>Regra:</b> ${esc(f.regraTxt)}</div><div><b>Vendas:</b> ${f.n} · total ${fmtR(f.tot)}</div></div>
+  <div class="dados"><div><b>Vendedor:</b> ${esc(f.nome)}</div><div><b>Período:</b> ${periodoTxt2(f.de, f.ate)}</div><div><b>Regra:</b> ${esc(f.regraTxt)}</div><div><b>Vendas:</b> ${f.n} · total ${fmtR(f.tot)}</div></div>
   <table><tbody><tr><td>${f.regra.base === 'recebido' ? 'Recebido no período' : 'Vendido no período'}</td><td style="text-align:right">${fmtR(f.bruto)}</td></tr><tr><td>(−) Devoluções / trocas</td><td style="text-align:right">${fmtR(-f.dev)}</td></tr><tr><td><b>Base</b></td><td style="text-align:right"><b>${fmtR(f.base)}</b></td></tr><tr><td>Comissão (${fmtDec(f.pct)}% efetivo)</td><td style="text-align:right">${fmtR(f.com)}</td></tr>${(f.ajustes || []).map(a => `<tr><td>Ajuste de ${esc(a.periodo)}</td><td style="text-align:right">${fmtR(a.valor)}</td></tr>`).join('')}</tbody></table>
   <div class="tot"><b>VALOR DA COMISSÃO: ${fmtR(f.total)}</b></div>
-  ${fimDoc(`Declaro que recebi de ${esc(db.config.razao || db.config.loja || 'a loja')} o valor acima, referente à comissão sobre vendas do período ${periodoTxt2(f.de, f.ate)}.`, [esc(f.nome) + ' (vendedora)', esc(db.config.loja || 'Loja')], '')}`;
+  ${fimDoc(`Declaro que recebi de ${esc(db.config.razao || db.config.loja || 'a loja')} o valor acima, referente à comissão sobre vendas do período ${periodoTxt2(f.de, f.ate)}.`, [esc(f.nome) + ' (vendedor)', esc(db.config.loja || 'Loja')], '')}`;
 }
 ACT.comRecibo = el => { const f = db.comissoes.find(x => x.id === +el.dataset.id); mostrarDoc('Recibo de comissão – ' + esc(f.nome), reciboComissaoHTML(f)); };
-/* editor da regra no cadastro da vendedora */
+/* editor da regra no cadastro do vendedor */
 function blocoRegraCom(u) {
   const r = regraCom(u || {}), fx = r.faixas.length ? r.faixas : [{ de: 0, pct: 3 }, { de: 20000, pct: 4 }];
   const sel = (id, ops, v) => `<select id="${id}" class="com-c">${ops.map(([k, t]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
@@ -3789,7 +3789,7 @@ ACT.kpiVendas = el => {
   const hojeSo = el && el.dataset.hoje, de = hojeSo ? hoje() : filtros.rel.de, ate = hojeSo ? hoje() : filtros.rel.ate, vs = vendasDoPeriodo(de, ate);
   const tot = vs.reduce((s, v) => s + v.total, 0), dias = agrupa(vs, v => v.data.slice(0, 10), (a, v) => { a.n++; a.v += v.total; a.q += pecasV(v); });
   modalAnalitico(`Vendas – ${periodoRelTxt(de, ate)}`, `${vs.length} venda(s) · ${fmtN(vs.reduce((s, v) => s + pecasV(v), 0))} peça(s) · total ${fmtR(tot)}. Clique no número da venda para abrir o recibo.`,
-    [C('Nº', 's'), C('Data', 's'), C('Vendedora', 's'), C('Cliente', 's'), C('Pagamento', 's'), C('Peças', 'i'), C('Desconto', 'r'), C('Total', 'r')],
+    [C('Nº', 's'), C('Data', 's'), C('Vendedor', 's'), C('Cliente', 's'), C('Pagamento', 's'), C('Peças', 'i'), C('Desconto', 'r'), C('Total', 'r')],
     vs.map(v => ({ c: [nDoc(v.id), fmtDH(v.data), v.usuario || '', v.cliente || 'Consumidor', v.pagamento || '', pecasV(v), v.desconto || 0, v.total] }))
       .concat([{ forte: true, c: ['Total', '', '', '', '', vs.reduce((s, v) => s + pecasV(v), 0), vs.reduce((s, v) => s + (v.desconto || 0), 0), tot] }]),
     dias.length > 1 ? `<div class="anal-dias">${dias.sort((a, b) => a.k.localeCompare(b.k)).map(d => `<span><b>${fmtDia(d.k)}</b> ${fmtR(d.v)} <small>(${d.n})</small></span>`).join('')}</div>` : '');
@@ -3798,7 +3798,7 @@ ACT.kpiTicket = () => {
   const { de, ate } = filtros.rel, vs = vendasDoPeriodo(de, ate), g = agrupa(vs, v => v.usuario || '—', (a, v) => { a.n++; a.v += v.total; a.q += pecasV(v); }).sort((a, b) => b.v - a.v);
   const tot = vs.reduce((s, v) => s + v.total, 0), pcs = vs.reduce((s, v) => s + pecasV(v), 0);
   modalAnalitico(`Ticket médio – ${periodoRelTxt(de, ate)}`, `Ticket médio = total vendido ÷ número de vendas. Geral: ${fmtR(vs.length ? tot / vs.length : 0)}.`,
-    [C('Vendedora', 's'), C('Vendas', 'i'), C('Peças', 'i'), C('Peças por venda', 's'), C('Total vendido', 'r'), C('Ticket médio', 'r'), C('Maior venda', 'r'), C('Menor venda', 'r')],
+    [C('Vendedor', 's'), C('Vendas', 'i'), C('Peças', 'i'), C('Peças por venda', 's'), C('Total vendido', 'r'), C('Ticket médio', 'r'), C('Maior venda', 'r'), C('Menor venda', 'r')],
     g.map(a => { const l = vs.filter(v => (v.usuario || '—') === a.k).map(v => v.total); return { c: [a.k, a.n, a.q, (a.q / a.n).toFixed(1).replace('.', ','), a.v, a.v / a.n, Math.max(...l), Math.min(...l)] }; })
       .concat([{ forte: true, c: ['Geral', vs.length, pcs, vs.length ? (pcs / vs.length).toFixed(1).replace('.', ',') : '', tot, vs.length ? tot / vs.length : 0, vs.length ? Math.max(...vs.map(v => v.total)) : 0, vs.length ? Math.min(...vs.map(v => v.total)) : 0] }]));
 };
@@ -4093,7 +4093,7 @@ function resultadoFin() {
     <div><h3>Resultado (DRE simplificado)</h3><table class="tb res"><tbody>
       ${linha('Vendas brutas', bruto)}${linha('(−) Descontos', -desc)}${linha('(−) Trocas e devoluções', -dev)}${linha('= Receita líquida', liq, 'sub')}
       ${linha('(−) Custo das mercadorias vendidas', -cmv)}${linha(`= Lucro bruto <small>margem ${liq ? (lb / liq * 100).toFixed(1).replace('.', ',') : '0'}%</small>`, lb, 'sub')}
-      ${linha('(−) Despesas do período (contas a pagar, sem mercadoria)', -totDesp)}${linha('(−) Comissões das vendedoras', -com)}${linha('= Resultado do período', res, 'fim')}
+      ${linha('(−) Despesas do período (contas a pagar, sem mercadoria)', -totDesp)}${linha('(−) Comissões dos vendedores', -com)}${linha('= Resultado do período', res, 'fim')}
     </tbody></table><p class="mut">Custo das mercadorias = custo do produto no momento da venda (vendas feitas antes desta versão usam o custo atual). Compras de mercadoria não entram como despesa porque já estão no custo.</p></div>
     <div><h3>Caixa (o que entrou e saiu)</h3><table class="tb res"><tbody>
       ${Object.keys(ent).sort().map(k => linha(esc(k), ent[k])).join('') || '<tr><td colspan="2" class="mut">Sem entradas.</td></tr>'}${linha('= Total de entradas', totEnt, 'sub')}
@@ -4107,8 +4107,8 @@ function tabelaComissao(vs, de, ate) {
   const ids = [...new Set(vs.map(v => v.usuarioId).concat(db.trocas.filter(t => noPeriodo(t.data, de, ate)).map(t => t.vendaUsuarioId)))];
   const l = ids.map(id => Object.assign({ nome: (db.usuarios.find(u => u.id === id) || {}).nome || '?' }, comissaoDe(id, de, ate))).sort((a, b) => b.base - a.base);
   const t = k => l.reduce((s, x) => s + x[k], 0);
-  return tabSimples(['Vendedora', 'Vendas', 'Peças', 'Total vendido', 'Devoluções', 'Base', '%', 'Comissão'], l.map(x => [esc(x.nome), x.n, fmtN(x.pecas), fmtR(x.tot), fmtR(x.dev), fmtR(x.base), fmtDec(x.pct) + '%', '<b>' + fmtR(x.com) + '</b>']),
-    ['Total', t('n'), fmtN(t('pecas')), fmtR(t('tot')), fmtR(t('dev')), fmtR(t('base')), '', fmtR(t('com'))]) + '<p class="mut">Comissão pela regra de cada vendedora (Usuárias / usuários). Extrato, fechamento e recibo no menu Comissões.</p>';
+  return tabSimples(['Vendedor', 'Vendas', 'Peças', 'Total vendido', 'Devoluções', 'Base', '%', 'Comissão'], l.map(x => [esc(x.nome), x.n, fmtN(x.pecas), fmtR(x.tot), fmtR(x.dev), fmtR(x.base), fmtDec(x.pct) + '%', '<b>' + fmtR(x.com) + '</b>']),
+    ['Total', t('n'), fmtN(t('pecas')), fmtR(t('tot')), fmtR(t('dev')), fmtR(t('base')), '', fmtR(t('com'))]) + '<p class="mut">Comissão pela regra de cada vendedor (Usuárias / usuários). Extrato, fechamento e recibo no menu Comissões.</p>';
 }
 
 /* ===== Giro por coleção, peças paradas e reposição ===== */
@@ -4427,7 +4427,7 @@ function secaoSeguranca() {
       ${item(!antigas.length, 'Senhas no padrão forte', antigas.length ? `${antigas.length} usuário(s) ainda com senha no padrão antigo: ${esc(antigas.map(u => u.nome).join(', '))}. Converte sozinho no próximo acesso de cada um.` : 'Todas as senhas guardadas com PBKDF2 (210 mil repetições).')}
       ${item(adms.length >= 1 && adms.length <= 2, 'Administradores', `${adms.length} administrador(es) ativo(s). Deixe o perfil de administrador só para o dono/gerente.`)}
       ${item(masters.length === 1 ? true : masters.length ? null : false, 'Usuário master (suporte)', masters.length ? `${esc(masters.map(u => u.nome).join(', '))}: só o master instala atualizações e altera o próprio cadastro.` : 'Nenhum: crie o usuário master do suporte em Usuários (enquanto não existir, qualquer administrador pode criá-lo).')}
-      ${item(s.bloqueioMin > 0 ? true : false, 'Bloqueio por falta de uso', s.bloqueioMin > 0 ? `A tela bloqueia após ${s.bloqueioMin} minutos sem uso.` : 'Desligado: qualquer pessoa usa o sistema se a vendedora sair do caixa.')}
+      ${item(s.bloqueioMin > 0 ? true : false, 'Bloqueio por falta de uso', s.bloqueioMin > 0 ? `A tela bloqueia após ${s.bloqueioMin} minutos sem uso.` : 'Desligado: qualquer pessoa usa o sistema se o vendedor sair do caixa.')}
       ${item(true, 'Proteção contra tentativa de senha', `Após ${s.tentativas} senhas erradas o usuário fica bloqueado (5 min, depois 10, 20…).${bloq.length ? ' Bloqueado agora: ' + esc(bloq.map(u => u.nome).join(', ')) + '.' : ''}`)}
       ${item(diasBk <= 1, 'Backup recente', ub ? `Último arquivo de backup: ${fmtDH(ub)}.` : 'Nenhum arquivo de backup feito.')}
       ${item(c.ativo ? true : false, 'Backup criptografado', c.ativo ? 'Os arquivos de backup só abrem com a senha do backup.' : 'Os arquivos de backup podem ser lidos por quem tiver o arquivo (pen drive perdido, nuvem invadida).')}
@@ -4469,30 +4469,31 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.08-01', itens: ['Nome neutro: em todo o sistema, recibos, termos, relatórios, Ajuda e Manual, "Vendedora" passou a ser "Vendedor" (a loja pode ter vendedores e vendedoras). Os cadastros e o histórico não mudam.'] },
   { v: '2026.11.07-07', itens: ['Ajuda e Manual do suporte atualizados: LGPD (autorização de mensagens, cópia dos dados, anonimização e aviso de privacidade), backup na nuvem, e-mail de monitoramento, gerador de licenças com tela e o botão Voltar que zera ao clicar no logo da loja.'] },
   { v: '2026.11.07-06', itens: ['LGPD (privacidade dos clientes): no cadastro do cliente, campo "Mensagens de promoção e aniversário" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.', 'Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.', 'Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.', 'Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero).'] },
   { v: '2026.11.07-05', itens: ['E-mail de monitoramento (configurado pelo master em Configurações → E-mail de monitoramento): a loja manda um resumo nos horários marcados (padrão 10h e 17h) com vendas, caixa, estoque, condicionais, financeiro, backup, licença, celular, ações de atenção do dia e erros do servidor.', 'Aviso por e-mail na hora em que alguém entra como master (no computador ou no celular).'] },
   { v: '2026.11.07-04', itens: ['Backup na nuvem: Configurações → Backup e dados → Backup na nuvem. Com o aplicativo do Google Drive (ou o OneDrive) instalado e conectado com o e-mail da loja, o sistema cria a pasta "Controle de Estoque - <loja>/Backups" no Drive e o backup diário criptografado vai para lá. Aviso no topo se o envio parar.'] },
   { v: '2026.11.07-03', itens: ['Manual do suporte (só o usuário master): implantação passo a passo, configurações aba por aba, licença e Premium, atualizações, backup, celular, diagnóstico de problemas, roteiro de treinamento e rotina do suporte, com prints e busca. Imprime em PDF.'] },
   { v: '2026.11.07-02', itens: ['Menu lateral: embaixo do nome da loja aparecem o CNPJ e uma frase que você escolhe (antes era fixo "Controle de estoque"). Para mudar: Configurações → Empresa → Frase abaixo do nome no menu; deixe em branco para não mostrar.'] },
-  { v: '2026.11.07-01', itens: ['Metas escalonadas: cada vendedora pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.',
-    'A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e a vendedora sobe de faixa, aparece "lançar diferença" (só o que falta).'] },
+  { v: '2026.11.07-01', itens: ['Metas escalonadas: cada vendedor pode ter até 4 faixas de venda, cada uma com o seu bônus (ex.: R$ 30 mil → R$ 500, R$ 40 mil → R$ 600, R$ 50 mil → R$ 700). Vale o bônus da maior faixa atingida.',
+    'A tela de metas mostra as faixas, qual foi atingida e quanto falta para a próxima. Se o bônus já foi lançado e o vendedor sobe de faixa, aparece "lançar diferença" (só o que falta).'] },
   { v: '2026.11.06-02', itens: ['Taxas de cartão por bandeira (Visa, Mastercard, Elo, American Express, Hipercard): em Maquininhas e taxas cada maquininha tem uma tabela com débito, crédito 1x e 2x a 12x por bandeira; o que ficar em branco usa a linha "Todas as bandeiras".',
     'Na venda com cartão escolhe-se a bandeira; o recibo mostra, por exemplo, "Cartão de crédito Visa 3x". Cartões a receber mostra a bandeira no detalhe e um resumo "Taxas por bandeira".',
     'Cashback e crédito: se uma venda paga com crédito for cancelada, o valor volta para o mesmo crédito, com a mesma validade (antes voltava sem validade).',
     'Configurações e telas com campos alinhados: as caixas de uma mesma linha ficam na mesma altura, mesmo quando o título do campo ocupa duas linhas.'] },
   { v: '2026.11.06-01', itens: ['Produtos e estoque: novo botão "Etiquetas dos selecionados". Marque os produtos na caixinha da linha e imprima só as etiquetas deles (o botão "Etiquetas dos produtos listados" continua imprimindo tudo o que está na lista).'] },
-  { v: '2026.11.04-21', itens: ['Confirmação da vendedora mais segura: a senha provisória definida pelo administrador (que a vendedora ainda não trocou) não serve mais para confirmar a venda. A vendedora precisa entrar uma vez com a própria senha ou cadastrar o PIN.',
-    'Depois de 5 PINs/senhas errados para a mesma vendedora, a confirmação fica bloqueada por 5 minutos.',
-    'O histórico registra como a vendedora confirmou (PIN ou senha) em cada venda e condicional.'] },
-  { v: '2026.11.04-20', itens: ['PIN de vendedora mais fácil de achar: botão próprio (teclado numérico) ao lado do seu nome, link "cadastrar meu PIN" embaixo do campo Vendedora e aviso no Painel para quem ainda não cadastrou.'] },
-  { v: '2026.11.04-19', itens: ['Vendedora da venda: em Vendas e Condicionais há o campo "Vendedora (quem atendeu)". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.',
-    'Se a vendedora escolhida não for a logada, ela confirma com o PIN dela (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada uma entra com o próprio usuário, sem PIN.',
-    'O administrador pode corrigir a vendedora de uma venda (Vendas realizadas → vendedora), com motivo. Comissão já fechada vira ajuste no próximo fechamento.',
+  { v: '2026.11.04-21', itens: ['Confirmação do vendedor mais segura: a senha provisória definida pelo administrador (que o vendedor ainda não trocou) não serve mais para confirmar a venda. O vendedor precisa entrar uma vez com a própria senha ou cadastrar o PIN.',
+    'Depois de 5 PINs/senhas errados para o mesmo vendedor, a confirmação fica bloqueada por 5 minutos.',
+    'O histórico registra como o vendedor confirmou (PIN ou senha) em cada venda e condicional.'] },
+  { v: '2026.11.04-20', itens: ['PIN de vendedor mais fácil de achar: botão próprio (teclado numérico) ao lado do seu nome, link "cadastrar meu PIN" embaixo do campo Vendedor e aviso no Painel para quem ainda não cadastrou.'] },
+  { v: '2026.11.04-19', itens: ['Vendedor da venda: em Vendas e Condicionais há o campo "Vendedor (quem atendeu)". A venda, a comissão e a meta ficam com quem atendeu, mesmo com outra pessoa logada no computador.',
+    'Se o vendedor escolhido não for quem está logado, a pessoa confirma com o PIN (4 a 6 números, cadastrado em Minha senha) ou com a senha. No celular cada um entra com o próprio usuário, sem PIN.',
+    'O administrador pode corrigir o vendedor de uma venda (Vendas realizadas → vendedor), com motivo. Comissão já fechada vira ajuste no próximo fechamento.',
     'Opção em Configurações → Vendas e estoque: exigir PIN em toda venda (para computador que fica sempre aberto num usuário só).'] },
-  { v: '2026.11.04-18', itens: ['Recurso Premium "Metas das vendedoras": novo menu Metas. O administrador define a meta do mês de cada vendedora (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).',
-    'Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedora em PDF e Excel.',
-    'A vendedora vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique.'] },
+  { v: '2026.11.04-18', itens: ['Recurso Premium "Metas dos vendedores": novo menu Metas. O administrador define a meta do mês de cada vendedor (e da loja), os dias de loja aberta e o bônus por bater a meta (R$ fixo ou % do vendido).',
+    'Acompanhamento: vendido, % atingido, quanto falta, quanto precisa vender por dia nos dias que restam, projeção pelo ritmo e ranking. Dia a dia de cada vendedor em PDF e Excel.',
+    'O vendedor vê a própria meta no Painel e no menu Metas (também no celular). O bônus de quem bateu a meta é lançado em Contas a pagar com um clique.'] },
   { v: '2026.11.04-17', itens: ['Aniversários e cashback: o administrador pode estornar um crédito dado (presente de aniversário ou cashback), informando o motivo. O que já foi usado não volta; estorna o que sobrou. Também na ficha do cliente (Clientes → Ver).',
     'Os cards do cashback (gerado no mês, em aberto, vence em 7 dias, vencido no mês) abrem o analítico ao clicar, com PDF e Excel. "Em aberto" passa a incluir os presentes de aniversário.'] },
   { v: '2026.11.04-16', itens: ['Recurso Premium "Aniversariantes e cashback": novo menu Aniversários e cashback. Lista de aniversariantes (hoje, próximos 7 dias, mês, próximo mês) com mensagem pronta para o WhatsApp e, se quiser, presente de aniversário em crédito com validade.',
@@ -4510,11 +4511,11 @@ const NOVIDADES = [
     'Novo menu Cartões a receber: quanto cai na conta e em que dia, por maquininha, com o total das taxas pagas. Conferência do depósito: digite quanto caiu no banco e o sistema mostra a diferença. Sai em PDF e Excel.'] },
   { v: '2026.11.04-11', itens: ['Novo menu Recursos Premium (administradores): mostra os recursos adicionais, quais estão liberados e como contratar.',
     'Os recursos Premium são liberados um a um pela P.A.S Soluções Tecnológicas, dentro do código da licença (Configurações → Licença). A Venda pelo celular passou a ser um recurso Premium.',
-    'Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas das vendedoras.'] },
+    'Próximos recursos Premium: taxas de cartão e conciliação, inventário em lote com leitor, promoções programadas, aniversariantes e cashback, metas dos vendedores.'] },
   { v: '2026.11.04-10', itens: ['Celular: a foto do produto tirada pela câmera do celular agora é salva (antes era recusada sem aviso).', 'Se a foto não puder ser salva, aparece o motivo na tela.'] },
   { v: '2026.11.04-09', itens: ['Celular: a tela de entrada mostra a logo e o nome da loja.', 'Celular: letras, botões e tabelas menores, para caber mais na tela.'] },
   { v: '2026.11.04-08', itens: ['Venda pelo celular: o QR Code da tela de liberação aparecia minúsculo; agora sai em tamanho legível para a câmera do celular.'] },
-  { v: '2026.11.04-07', itens: ['Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): as vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada uma com o próprio usuário e senha.',
+  { v: '2026.11.04-07', itens: ['Venda pelo celular (recurso adicional, liberado só pelo usuário master em Configurações → Venda pelo celular): os vendedores vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, cada um com o próprio usuário e senha.',
     'Leitura do código de barras pela câmera do celular: etiquetas do sistema (Code 128) e código do fabricante (EAN-13). Lê um item atrás do outro, com bipe.',
     'No celular aparecem só Vendas, Produtos, Clientes e Ajuda. Backup, atualização, configurações e senhas ficam só no computador do caixa; o celular não recebe as senhas de ninguém.',
     'Conexão segura (HTTPS) com certificado próprio da loja, instalado uma vez em cada celular pelo QR Code da tela de liberação.'] },
@@ -4527,7 +4528,7 @@ const NOVIDADES = [
     'Ao fechar o caixa, sai o comprovante e, em seguida, o relatório de movimentação completo (em ordem de horário, com o saldo de dinheiro linha a linha). No histórico, os dois ficam disponíveis separados.',
     'Reabrir caixa: só administrador e master, só o último caixa fechado e sempre com o motivo, que aparece no histórico, no comprovante e na movimentação.'] },
   { v: '2026.11.04-02', itens: ['Novo menu Caixa: abertura com o troco, sangria (retirada) e suprimento (entrada) com motivo, e fechamento com a contagem do dinheiro, do Pix e de cada cartão. O relatório mostra o esperado, o contado e a diferença de cada forma, para imprimir e assinar.',
-    'Opções em Configurações → Vendas e estoque: exigir caixa aberto para vender e fechamento cego (a vendedora não vê o valor esperado).',
+    'Opções em Configurações → Vendas e estoque: exigir caixa aberto para vender e fechamento cego (o vendedor não vê o valor esperado).',
     'Tipos de peça e grades de tamanho configuráveis (Configurações → Vendas e estoque): crie tipos (ex.: Vestido, Jaqueta, Body), escolha grades prontas (letras, numeração adulto e feminina, infantil, bebê, calçados, tamanho único) e o prefixo do código. Há listas prontas de moda feminina, infantil e acessórios.'] },
   { v: '2026.11.04-01', itens: ['Segurança: o servidor do banco de dados só aceita pedidos do próprio sistema. Antes, uma página da internet aberta no navegador conseguia apagar dados; agora é recusada e fica registrada no log do servidor.',
     'Segurança: o sistema não pode mais ser aberto escondido dentro de outro site (proteção contra clique falso).',
@@ -4551,7 +4552,7 @@ const NOVIDADES = [
     'Configurações → Sobre e atualização: botão "Verificar atualização agora".'] },
   { v: '2026.11.03-05', itens: ['Produtos e estoque com abas: Com estoque, Sem estoque, Abaixo do mínimo, Em condicional, Inativos e Todos, cada uma com a quantidade. Os produtos zerados ficam juntos na aba "Sem estoque" e saem da lista comum.',
     'Lista "Por modelo": uma linha por modelo com a grade de tamanhos e o estoque de cada um (vermelho = sem estoque, laranja = abaixo do mínimo); "Por tamanho" mostra a lista detalhada de antes.',
-    'Cards clicáveis: no Painel e nos Relatórios, clique no card para ver o analítico (vendas, ticket médio por vendedora, estoque por modelo, abaixo do mínimo), com PDF e Excel.',
+    'Cards clicáveis: no Painel e nos Relatórios, clique no card para ver o analítico (vendas, ticket médio por vendedor, estoque por modelo, abaixo do mínimo), com PDF e Excel.',
     'Na lista Por modelo, clicar num tamanho abre as ações dele: editar, ajustar estoque, histórico, etiquetas e excluir.',
     'Números de documento clicáveis em todas as telas (vendas, condicionais, trocas, entradas, comissões, movimentações, financeiro, logs): clique no número e abre o documento que o gerou.'] },
   { v: '2026.11.03-04', itens: ['As novidades de cada versão aparecem para TODOS os administradores, um por um, na primeira entrada depois da atualização.',
@@ -4560,11 +4561,11 @@ const NOVIDADES = [
   { v: '2026.11.03-03', itens: ['Histórico de logs (menu do administrador): grava tudo o que cada pessoa faz — entradas no sistema, vendas, condicionais, trocas, clientes, estoque, financeiro, comissões, configurações, backups, impressões, PDFs, WhatsApp, exportações e telas abertas — com filtros e exportação para CSV/Excel.',
     'Controle de versões: botão "Histórico de versões" em Configurações → Backup e dados, com as versões instaladas neste computador e o que mudou em cada uma.',
     'O histórico de logs vai junto no arquivo de backup (opção) e volta na restauração.'] },
-  { v: '2026.11.03-02', itens: ['A janela "Sistema atualizado" agora fica guardada até um administrador entrar (antes podia não aparecer se uma vendedora entrasse primeiro, se a janela fosse recarregada ou se o sistema abrisse já logado).'] },
+  { v: '2026.11.03-02', itens: ['A janela "Sistema atualizado" agora fica guardada até um administrador entrar (antes podia não aparecer se um vendedor entrasse primeiro, se a janela fosse recarregada ou se o sistema abrisse já logado).'] },
   { v: '2026.11.03-01', itens: [
     'Atualização mais segura: número de versão, cópia automática dos dados antes de atualizar, ATUALIZAR.bat e VOLTAR_VERSAO_ANTERIOR.bat.',
     'Recibos em PDF para o WhatsApp (e "Copiar imagem"), em todos os documentos.',
-    'Comissões: regra por vendedora (sobre o vendido ou o recebido; fixo, meta ou escalonada), extrato, fechamento, recibo e contas a pagar.',
+    'Comissões: regra por vendedor (sobre o vendido ou o recebido; fixo, meta ou escalonada), extrato, fechamento, recibo e contas a pagar.',
     'Relatórios de estoque sintético e analítico (tipo e tamanho, mercadoria, marca, faixa de preço) com PDF e Excel.',
     'Botão Voltar em todas as telas, menu lateral fixo e tabelas longas com rolagem própria.',
     'Fotos dos produtos (arquivo ou câmera), na lista, na busca e no carrinho.',
@@ -5021,10 +5022,10 @@ const AJUDA_MAPA = [
   ['movs', 'todos', 'Histórico de tudo o que entrou e saiu do estoque: entradas, vendas, condicionais, trocas, cancelamentos e ajustes.'],
   ['financeiro', 'adm', 'Contas a receber (crediário e outros títulos), contas a pagar e caixa e resultado.'],
   ['cartoes', 'adm', 'Cartões a receber: quanto cai de cada maquininha e em que dia, já com as taxas, e conferência com o extrato (recurso Premium).'],
-  ['comissoes', 'adm', 'Comissão de cada vendedora pela regra dela: extrato, fechamento do mês, recibo, PDF e Excel.'],
-  ['metas', 'todos', 'Metas do mês por vendedora, com faixas de bônus, ranking, ritmo e dia a dia (recurso Premium).'],
-  ['relatorios', 'adm', 'Vendas do período por vendedora, forma de pagamento, tipo e marca, e estoque por tipo e tamanho (sintético ou analítico, em PDF ou Excel).'],
-  ['usuarios', 'adm', 'Cadastro de vendedoras e administradores: perfil, senha e regra de comissão.'],
+  ['comissoes', 'adm', 'Comissão de cada vendedor pela regra de cada um: extrato, fechamento do mês, recibo, PDF e Excel.'],
+  ['metas', 'todos', 'Metas do mês por vendedor, com faixas de bônus, ranking, ritmo e dia a dia (recurso Premium).'],
+  ['relatorios', 'adm', 'Vendas do período por vendedor, forma de pagamento, tipo e marca, e estoque por tipo e tamanho (sintético ou analítico, em PDF ou Excel).'],
+  ['usuarios', 'adm', 'Cadastro de vendedores e administradores: perfil, senha e regra de comissão.'],
   ['logs', 'adm', 'Histórico de logs: quem fez o quê e quando no sistema.'],
   ['premium', 'adm', 'Recursos Premium: o que a licença libera (celular, taxas, inventário, promoções, cashback, metas) e onde configurar cada um.'],
   ['config', 'adm', 'Configurações: empresa e logo, recibos e impressão (vias, Pix), aparência, vendas e estoque, segurança, sobre e atualização, licença, backup e dados (com backup na nuvem). O master vê também o E-mail de monitoramento.'],
@@ -5033,23 +5034,23 @@ const AJUDA_MAPA = [
   ['ajuda', 'todos', 'Esta tela: mapa do sistema, passo a passo e perguntas e respostas. Dica: clicar no logo ou no nome da loja, no alto do menu, volta ao Painel e limpa o botão Voltar.']
 ];
 const AJUDA_PASSOS = [
-  { t: 'Vender para outra vendedora no mesmo computador (PIN)', quem: 'todos', ir: 'vendas', p: [
+  { t: 'Vender para outro vendedor no mesmo computador (PIN)', quem: 'todos', ir: 'vendas', p: [
     'Monte a venda normalmente, mesmo com outra pessoa logada.',
-    'Em <b>Vendedora (quem atendeu)</b>, escolha o seu nome.',
+    'Em <b>Vendedor (quem atendeu)</b>, escolha o seu nome.',
     'Ao finalizar, digite o seu <b>PIN</b> (ou a sua senha). A venda, a comissão e a meta ficam no seu nome; o sistema guarda também quem estava logado.',
-    'Para cadastrar o PIN: clique no botão de <b>teclado numérico</b> ao lado do seu nome (embaixo, na barra da esquerda) ou em <b>cadastrar meu PIN</b> embaixo do campo Vendedora, digite a senha atual e um PIN de 4 a 6 números.',
+    'Para cadastrar o PIN: clique no botão de <b>teclado numérico</b> ao lado do seu nome (embaixo, na barra da esquerda) ou em <b>cadastrar meu PIN</b> embaixo do campo Vendedor, digite a senha atual e um PIN de 4 a 6 números.',
     'No celular não precisa: você já entra com o seu usuário.'] },
   { t: 'Definir as metas do mês', quem: 'adm', rec: 'metas', ir: 'metas', p: [
     'Abra <b>Metas</b>, escolha o <b>Mês</b> e clique em <b>Definir metas do mês</b>.',
-    'Informe a meta em R$ de cada vendedora (em branco = sem meta) e, se quiser, a <b>Meta da loja</b>.',
+    'Informe a meta em R$ de cada vendedor (em branco = sem meta) e, se quiser, a <b>Meta da loja</b>.',
     'Faixas: a <b>Faixa 1</b> é a meta (vendas do mês e bônus). Se quiser bônus escalonado, preencha as faixas 2, 3 e 4 com valores maiores (ex.: R$ 30.000 → 500, R$ 40.000 → 600, R$ 50.000 → 700). Vale o bônus da maior faixa atingida; não soma. Em <b>Bônus em</b> escolha R$ (valor fixo) ou % do vendido.',
     'Marque os <b>dias de loja aberta</b> (ex.: segunda a sábado): o sistema usa para calcular quanto vender por dia.',
     'Clique em <b>Salvar metas</b>. No mês seguinte, use <b>Copiar do mês anterior</b> para não digitar tudo de novo.'] },
   { t: 'Acompanhar as metas e pagar o bônus', quem: 'adm', rec: 'metas', ir: 'metas', p: [
     'Em <b>Metas</b> aparece o ranking: vendido, % atingido, quanto falta, quanto precisa vender por dia, a projeção pelo ritmo e a situação (no ritmo, abaixo do ritmo, meta batida).',
-    'Vendido = vendas da vendedora no mês menos as devoluções e trocas dessas vendas (o mesmo critério das comissões).',
+    'Vendido = vendas do vendedor no mês menos as devoluções e trocas dessas vendas (o mesmo critério das comissões).',
     'Clique em <b>dia a dia</b> para ver cada dia: vendido, acumulado e quanto deveria ter acumulado (PDF e Excel).',
-    'Quem bateu a meta mostra o bônus e a faixa: clique em <b>lançar bônus</b> e ele entra em Financeiro → Contas a pagar, como as comissões. Se depois a vendedora sobe de faixa, aparece <b>lançar diferença</b> (só o que falta).'] },
+    'Quem bateu a meta mostra o bônus e a faixa: clique em <b>lançar bônus</b> e ele entra em Financeiro → Contas a pagar, como as comissões. Se depois o vendedor sobe de faixa, aparece <b>lançar diferença</b> (só o que falta).'] },
   { t: 'Ver a minha meta', quem: 'todos', rec: 'metas', ir: 'metas', p: [
     'A sua meta do mês aparece no <b>Painel</b>: quanto já vendeu, quanto falta e quanto precisa vender por dia.',
     'No menu <b>Metas</b> você vê a sua meta e o ranking da equipe (em %). No celular também.'] },
@@ -5077,7 +5078,7 @@ const AJUDA_PASSOS = [
     'Para parar antes do fim, clique em <b>encerrar</b>. Uma promoção agendada que ainda não começou pode ser editada ou excluída.'] },
   { t: 'Ver o resultado de uma promoção', quem: 'adm', rec: 'promocoes', ir: 'promocoes', p: [
     'Em <b>Promoções</b>, cada linha mostra as peças vendidas, o faturado e o desconto dado.',
-    'Clique em <b>vendas</b> para ver cada venda (vendedora, produto, preço normal e de promoção) e tirar em PDF ou Excel.'] },
+    'Clique em <b>vendas</b> para ver cada venda (vendedor, produto, preço normal e de promoção) e tirar em PDF ou Excel.'] },
   { t: 'Fazer o inventário (contagem do estoque)', quem: 'adm', rec: 'inventario', ir: 'inventario', p: [
     'Abra <b>Inventário</b>. Escolha se é a loja toda ou só um <b>Tipo</b>, <b>Marca</b> ou <b>Coleção</b> e clique em <b>Iniciar inventário</b>.',
     'A equipe conta as peças: no computador, passe o leitor na etiqueta de cada peça (cada leitura conta 1; para várias peças iguais, digite a quantidade antes). No celular, abra <b>Inventário</b> e toque em <b>Contar pela câmera</b>. Várias pessoas podem contar ao mesmo tempo.',
@@ -5123,8 +5124,8 @@ const AJUDA_PASSOS = [
   { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b> para etiquetar tudo o que está na lista, ou marque a caixinha dos produtos que quer e clique em <b>Etiquetas dos selecionados</b>. Também há <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
   { t: 'Ajustar o estoque (contagem)', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, clique no <b>tamanho</b> do produto.', 'Escolha <b>Ajustar</b>.', 'Informe a <b>Quantidade contada na loja</b> e o <b>Motivo</b>.', 'Clique em <b>Salvar ajuste</b>. O ajuste fica registrado em Movimentações.'] },
   { t: 'Cancelar uma venda', quem: 'adm', ir: 'vendas', p: ['Em <b>Vendas → Vendas realizadas</b>, ache a venda (use as datas De / Até).', 'Clique em <b>Cancelar</b> e informe o <b>Motivo do cancelamento</b>.', 'Confirme. As peças voltam ao estoque. Se havia parcelas já pagas, devolva o valor ao cliente.'] },
-  { t: 'Cadastrar uma vendedora', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Nova vendedora / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedora</b> e a senha inicial.', 'Defina a regra de comissão dela.', 'Salve. No primeiro acesso, ela troca a senha.'] },
-  { t: 'Fechar as comissões do mês', quem: 'adm', ir: 'comissoes', p: ['Abra <b>Comissões</b> e escolha o mês.', 'Confira o valor de cada vendedora (o botão <b>Extrato</b> mostra o detalhe).', 'Clique em <b>Fechar comissões do período</b>.', 'Imprima o <b>Recibo</b> de cada vendedora ou gere o PDF / Excel.'] },
+  { t: 'Cadastrar um vendedor', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Novo vendedor / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedor</b> e a senha inicial.', 'Defina a regra de comissão dele.', 'Salve. No primeiro acesso, ele troca a senha.'] },
+  { t: 'Fechar as comissões do mês', quem: 'adm', ir: 'comissoes', p: ['Abra <b>Comissões</b> e escolha o mês.', 'Confira o valor de cada vendedor (o botão <b>Extrato</b> mostra o detalhe).', 'Clique em <b>Fechar comissões do período</b>.', 'Imprima o <b>Recibo</b> de cada vendedor ou gere o PDF / Excel.'] },
   { t: 'Registrar se o cliente aceita mensagens (LGPD)', quem: 'todos', ir: 'clientes', p: [
     'Ao cadastrar ou editar o cliente (Clientes → <b>+ Novo cliente</b> ou <b>Editar</b>), pergunte se ele quer receber promoções e mensagem de aniversário pelo WhatsApp.',
     'Em <b>Mensagens de promoção e aniversário pelo WhatsApp (LGPD)</b>, escolha <b>Autoriza</b> ou <b>Não autoriza</b>. Quem ainda não foi perguntado fica como <b>Não perguntado</b>.',
@@ -5159,8 +5160,8 @@ const AJUDA_PASSOS = [
   { t: 'Trocar a minha senha', quem: 'todos', ir: '', p: ['Clique no <b>cadeado</b> ao lado do seu nome, no canto do menu.', 'Digite a senha atual e a nova duas vezes (pelo menos 6 caracteres, com letras e números).', 'Salve.'] }
 ];
 const AJUDA_PERGUNTAS = [
-  { p: 'A venda saiu no nome da vendedora errada.', quem: 'adm', r: 'Em Vendas → Vendas realizadas, clique em vendedora na linha da venda, escolha a vendedora certa e informe o motivo. A comissão e a meta passam para ela; se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento.' },
-  { p: 'A venda não entrou na meta da vendedora.', quem: 'adm', rec: 'metas', r: 'A meta conta as vendas feitas no usuário da vendedora (quem estava logado ao finalizar). Venda feita no usuário de outra pessoa entra na meta dessa pessoa. Vendas canceladas e devoluções saem da conta.' },
+  { p: 'A venda saiu no nome do vendedor errado.', quem: 'adm', r: 'Em Vendas → Vendas realizadas, clique em vendedor na linha da venda, escolha o vendedor certo e informe o motivo. A comissão e a meta passam para ele; se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento.' },
+  { p: 'A venda não entrou na meta do vendedor.', quem: 'adm', rec: 'metas', r: 'A meta conta as vendas feitas no usuário do vendedor (quem estava logado ao finalizar). Venda feita no usuário de outra pessoa entra na meta dessa pessoa. Vendas canceladas e devoluções saem da conta.' },
   { p: 'Dei um presente ou cashback por engano. Como desfaço?', quem: 'adm', rec: 'cashback', r: 'Em Aniversários e cashback, clique em Estornar presente na linha do cliente, ou abra Clientes → Ver e clique em estornar no crédito. Informe o motivo. Só volta o que ainda não foi usado; o estorno fica no extrato e no histórico.' },
   { p: 'O cashback do cliente sumiu.', quem: 'adm', rec: 'cashback', r: 'Provavelmente venceu: crédito com validade que não é usado a tempo vence sozinho e aparece no extrato do cliente como "Cashback vencido". Veja em Aniversários e cashback → Extrato do cashback.' },
   { p: 'Cancelei uma venda que tinha gerado cashback.', quem: 'adm', rec: 'cashback', r: 'O cashback daquela venda é estornado junto. Se o cliente já tinha usado o crédito, o saldo dele pode ficar negativo e é descontado da próxima vez.' },
@@ -5192,7 +5193,7 @@ const AJUDA_PERGUNTAS = [
   { p: 'Abri o sistema e apareceu "Abra pelo atalho Controle de Estoque".', quem: 'todos', r: 'O arquivo do sistema foi aberto direto. Feche e use o atalho com a logo da loja na área de trabalho.' },
   { p: 'Vendi errado. Como corrijo?', quem: 'todos', r: 'Peça ao administrador para cancelar a venda (Vendas → Vendas realizadas → Cancelar) e faça a venda de novo.' },
   { p: 'Como vejo o que entrou e saiu de um produto?', quem: 'todos', r: 'Em Movimentações, filtre pelo produto. O administrador também vê pelo tamanho do produto → Histórico.' },
-  { p: 'Quem vê o custo dos produtos e os relatórios?', quem: 'todos', r: 'Só o administrador. Vendedoras vendem, fazem condicionais, lançam entradas e consultam o estoque.' },
+  { p: 'Quem vê o custo dos produtos e os relatórios?', quem: 'todos', r: 'Só o administrador. Vendedores vendem, fazem condicionais, lançam entradas e consultam o estoque.' },
   { p: 'Onde vejo o que os clientes ainda devem (crediário)?', quem: 'adm', r: 'Financeiro → Contas a receber. Para registrar um pagamento, clique em Receber na parcela.' },
   { p: 'O recibo sai com mais (ou menos) vias do que eu quero.', quem: 'adm', r: 'Configurações → Recibos e impressão: escolha quantas vias. Na bobina térmica, cada via sai começando numa folha nova.' },
   { p: 'Onde ficam os dados da loja? Limpar o navegador apaga?', quem: 'adm', r: 'Ficam no banco de dados SQLite (pasta ControleEstoqueLoja/dados), gravado pelo servidor local. Limpar o navegador não apaga nada. O servidor guarda uma cópia do banco por dia na pasta backups. Nunca apague a pasta dados.' },
@@ -5504,7 +5505,7 @@ ACT.cxCard = el => {
   if (k === 'vendas') {
     const vs = vendasValidas().filter(v => noCaixa(v.data, c)).sort((a, b) => a.data.localeCompare(b.data)), tot = vs.reduce((s, v) => s + v.total, 0);
     return modalAnalitico('Vendas do caixa nº ' + nDoc(c.id), `${vs.length} venda(s) desde ${fmtDH(c.abertura.em)} · total ${veEsperado() ? fmtR(tot) : '—'}. Clique no número da venda para abrir o recibo.`,
-      [C('Nº', 's'), C('Hora', 's'), C('Vendedora', 's'), C('Cliente', 's'), C('Pagamento', 's'), C('Peças', 'i'), C('Total', 'r')],
+      [C('Nº', 's'), C('Hora', 's'), C('Vendedor', 's'), C('Cliente', 's'), C('Pagamento', 's'), C('Peças', 'i'), C('Total', 'r')],
       vs.map(v => ({ c: [nDoc(v.id), fmtDH(v.data), v.usuario || '', v.cliente || 'Consumidor', pagsVenda(v).map(p => p.forma).join(' + '), pecasV(v), veEsperado() ? v.total : 0] })).concat([{ forte: true, c: ['Total', '', '', '', '', vs.reduce((s, v) => s + pecasV(v), 0), veEsperado() ? tot : 0] }]));
   }
   if (k === 'dinheiro') {
@@ -5750,7 +5751,7 @@ ACT.verVersoes = () => {
 /* ===== Recursos Premium (adicionais liberados pela licença) ===== */
 const PREMIUM = [
   { k: 'celular', nome: 'Venda pelo celular', pronto: true, ic: '<rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
-    desc: 'As vendedoras vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, com leitura do código de barras pela câmera e foto dos produtos.' },
+    desc: 'Os vendedores vendem pelo celular (Android ou iPhone) no Wi-Fi da loja, com leitura do código de barras pela câmera e foto dos produtos.' },
   { k: 'taxas', nome: 'Taxas de cartão e conciliação', pronto: true, ic: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
     desc: 'Taxas da maquininha por bandeira e parcela, quanto cai na conta e quando, e conferência com o extrato da operadora.' },
   { k: 'inventario', nome: 'Inventário em lote com leitor', pronto: true, ic: '<path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/>',
@@ -5759,8 +5760,8 @@ const PREMIUM = [
     desc: 'Descontos por coleção, marca ou produto com data de início e fim: o preço muda sozinho na venda e volta ao normal no fim.' },
   { k: 'cashback', nome: 'Aniversariantes e cashback', pronto: true, ic: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
     desc: 'Aniversariantes do mês com mensagem pronta para o WhatsApp e crédito de cashback que o cliente usa na próxima compra.' },
-  { k: 'metas', nome: 'Metas das vendedoras', pronto: true, ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
-    desc: 'Meta do mês por vendedora, acompanhamento dia a dia e ranking, ligado às comissões.' }
+  { k: 'metas', nome: 'Metas dos vendedores', pronto: true, ic: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    desc: 'Meta do mês por vendedor, acompanhamento dia a dia e ranking, ligado às comissões.' }
 ];
 const temRecurso = k => !!(licInfo && licInfo.l && licInfo.sit !== 'bloqueada' && (licInfo.l.recursos || []).indexOf(k) >= 0);
 function premium() {
@@ -6223,7 +6224,7 @@ ACT.promoVendas = el => {
   vendasValidas().forEach(v => v.itens.forEach(i => { if (i.promoId === x.id) linhas.push({ c: [nDoc(v.id), fmtDH(v.data), v.usuario, i.codigo, i.nome + ' ' + i.tamanho, i.qtd, i.precoDe || i.preco, i.preco, r2(i.qtd * i.preco), r2(i.qtd * ((i.precoDe || i.preco) - i.preco))] }); }));
   const r = resultadoPromo(x); linhas.push({ forte: true, c: ['Total', r.vendas + ' venda(s)', '', '', '', r.pecas, '', '', r.fat, r.desc] });
   modalAnalitico('Promoção ' + x.nome, `${fmtDec(x.pct)}% · ${alvoTxt(x)} · ${fmtDia(x.inicio)} a ${fmtDia(x.fim)}`,
-    [C('Venda', 's'), C('Data', 's'), C('Vendedora', 's'), C('Código', 's'), C('Produto', 's'), C('Qtd', 'i'), C('Preço normal', 'r'), C('Preço promoção', 'r'), C('Total', 'r'), C('Desconto dado', 'r')], linhas);
+    [C('Venda', 's'), C('Data', 's'), C('Vendedor', 's'), C('Código', 's'), C('Produto', 's'), C('Qtd', 'i'), C('Preço normal', 'r'), C('Preço promoção', 'r'), C('Total', 'r'), C('Desconto dado', 'r')], linhas);
 };
 ACT.ajudaPromo = () => ajudaRecurso('promocoes', 'Passo a passo – promoções');
 /* ===== Premium: aniversariantes e cashback =====
@@ -6397,8 +6398,8 @@ ACT.fidCard = el => {
   modalAnalitico('Crédito vencido neste mês', 'Cashback e presentes que venceram sem uso desde ' + fmtDia(mesIni), [C('Venceu em', 's'), C('Cliente', 's'), C('Referência', 's'), C('Valor vencido', 'r')], linhas);
 };
 ACT.ajudaFid = () => ajudaRecurso('cashback', 'Passo a passo – aniversários e cashback');
-/* ===== Premium: metas das vendedoras =====
-   Meta do mês em R$ para cada vendedora e para a loja. Vendido = vendas da vendedora no mês menos as devoluções/trocas
+/* ===== Premium: metas dos vendedores =====
+   Meta do mês em R$ para cada vendedor e para a loja. Vendido = vendas do vendedor no mês menos as devoluções/trocas
    dessas vendas no mês (o mesmo critério das comissões). Mostra quanto falta, quanto precisa vender por dia nos dias de
    loja aberta que restam, a projeção pelo ritmo atual e o ranking. Bônus de meta (R$ fixo ou % do vendido) ao bater 100%,
    lançado em Contas a pagar como as comissões. */
@@ -6458,12 +6459,12 @@ function metas() {
   ${!com.length && !loja ? `<section class="card"><p class="vazio">Nenhuma meta definida para ${mes.slice(5)}/${mes.slice(0, 4)}.${adm() ? ' Clique em <b>Definir metas do mês</b>.' : ''}</p></section>` : ''}
   ${minha && minha.s ? cartaoMeta(minha.s, 'Minha meta', true) : ''}
   ${loja && adm() ? cartaoMeta(loja, 'Meta da loja', true) : ''}
-  ${com.length ? `<section class="card"><h3>Ranking</h3><div class="tabw"><table class="tb"><thead><tr><th></th><th>Vendedora</th><th style="width:30%">Atingido</th>${adm() ? '<th class="n">Meta</th><th class="n">Vendido</th><th class="n">Falta</th><th class="n">Por dia</th><th class="n">Projeção</th><th class="n">Bônus</th>' : ''}<th>Situação</th>${adm() ? '<th></th>' : ''}</tr></thead><tbody>
+  ${com.length ? `<section class="card"><h3>Ranking</h3><div class="tabw"><table class="tb"><thead><tr><th></th><th>Vendedor</th><th style="width:30%">Atingido</th>${adm() ? '<th class="n">Meta</th><th class="n">Vendido</th><th class="n">Falta</th><th class="n">Por dia</th><th class="n">Projeção</th><th class="n">Bônus</th>' : ''}<th>Situação</th>${adm() ? '<th></th>' : ''}</tr></thead><tbody>
     ${com.map((x, i) => { const s = x.s, cts = contasBonus(s.m), lanc = cts.length ? cts : null; return `<tr><td>${medalha(i)}</td><td><b>${esc(x.u.nome)}</b></td><td>${barraMeta(s.pct)}<small>${Math.round(s.pct * 100)}%</small></td>
       ${adm() ? `<td class="n">${fmtR(s.m.valor)}</td><td class="n">${fmtR(s.vendido)}</td><td class="n">${s.falta ? fmtR(s.falta) : '—'}</td><td class="n">${s.falta && s.resta ? fmtR(s.porDia) : '—'}</td><td class="n">${s.proj == null ? '—' : fmtR(s.proj)}</td><td class="n">${s.bonus ? fmtR(s.bonus) + (s.faixas.length > 1 ? `<br><small class="mut">faixa ${s.nivel + 1} de ${s.faixas.length}</small>` : '') : '—'}</td>` : ''}
       <td><span class="tag ${SIT_META[s.sit][0]}">${SIT_META[s.sit][1]}</span></td>
       ${adm() ? `<td class="n"><button class="lnk" data-act="metaDiaDia" data-id="${x.u.id}">dia a dia</button>${s.aLancar > 0.009 ? ` <button class="lnk" data-act="metaBonus" data-id="${x.u.id}">${lanc ? 'lançar diferença (' + fmtR(s.aLancar) + ')' : 'lançar bônus'}</button>` : ''}${lanc ? ` <span class="tag ok">${fmtR(s.lancado)} ${lanc.every(p => p.pagoEm) ? 'pago' : 'a pagar'}</span>` : ''}</td>` : ''}</tr>`; }).join('')}</tbody>
-    ${adm() ? `<tfoot><tr><td colspan="3">Total · ${com.length} vendedora(s)</td><td class="n">${fmtR(r2(somar(com, x => x.s.m.valor)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.vendido)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.falta)))}</td><td></td><td class="n">${com.some(x => x.s.proj == null) ? '—' : fmtR(r2(somar(com, x => x.s.proj)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.bonus)))}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div></section>` : ''}`;
+    ${adm() ? `<tfoot><tr><td colspan="3">Total · ${com.length} vendedor(es)</td><td class="n">${fmtR(r2(somar(com, x => x.s.m.valor)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.vendido)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.falta)))}</td><td></td><td class="n">${com.some(x => x.s.proj == null) ? '—' : fmtR(r2(somar(com, x => x.s.proj)))}</td><td class="n">${fmtR(r2(somar(com, x => x.s.bonus)))}</td><td colspan="2"></td></tr></tfoot>` : ''}</table></div></section>` : ''}`;
 }
 document.addEventListener('change', e => { if (e.target && e.target.id === 'meta-mes' && e.target.value) { metaMes = e.target.value; render(); } });
 ACT.metaDefinir = () => {
@@ -6474,7 +6475,7 @@ ACT.metaDefinir = () => {
     return `<tr data-meta="${id}"><td><b>${esc(nome)}</b></td>${[0, 1, 2, 3].map(k => loja && k ? '<td></td>' : cel(fx[k], k, loja)).join('')}
     <td>${loja ? '' : `<select class="mt-bt"><option value="valor" ${m.bonusTipo !== 'pct' ? 'selected' : ''}>R$</option><option value="pct" ${m.bonusTipo === 'pct' ? 'selected' : ''}>% do vendido</option></select>`}</td></tr>`; };
   abrirModal('Metas de ' + mes.slice(5) + '/' + mes.slice(0, 4), `<p class="mut" style="margin-top:0">Em cada faixa: quanto vender no mês (R$) e o bônus. A <b>faixa 1 é a meta</b>; as outras são opcionais e precisam ser maiores. Vale o bônus da maior faixa atingida (não soma).</p>
-    <div class="tabw"><table class="tb mt-tab"><thead><tr><th>Vendedora</th><th>Faixa 1 (meta)</th><th>Faixa 2</th><th>Faixa 3</th><th>Faixa 4</th><th>Bônus em</th></tr></thead><tbody>
+    <div class="tabw"><table class="tb mt-tab"><thead><tr><th>Vendedor</th><th>Faixa 1 (meta)</th><th>Faixa 2</th><th>Faixa 3</th><th>Faixa 4</th><th>Bônus em</th></tr></thead><tbody>
     ${lin('loja', 'Meta da loja (total)')}${us.map(u => lin(u.id, u.nome)).join('')}</tbody></table></div>
     <p class="mut">Deixe a faixa 1 em branco para quem não tem meta. A meta da loja é opcional (sem bônus). Exemplo: R$ 30.000 → 500, R$ 40.000 → 600, R$ 50.000 → 700.</p>
     <h4 class="rel-sec">Dias de loja aberta (para calcular quanto vender por dia)</h4><div class="dias-sem">${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d, i) => `<label class="chk"><input type="checkbox" class="mt-dia" value="${i}" ${diasLoja().indexOf(i) >= 0 ? 'checked' : ''}> ${d}</label>`).join('')}</div>`,
@@ -6529,11 +6530,11 @@ ACT.metaBonus = el => {
   db.pagar.push(p); s.m.bonusContas = contasBonus(s.m).map(c => c.id).concat(p.id); if (!s.m.bonusConta) s.m.bonusConta = p.id;
   registrar('Bônus de meta lançado', `${u.nome} ${mes}: ${fmtR(s.aLancar)}${dif ? ' (diferença; total ' + fmtR(s.bonus) + ')' : ''}${fx} (vendido ${fmtR(s.vendido)})`); salvar(); render(); aviso(`Bônus de ${fmtR(s.aLancar)} lançado em Contas a pagar (vence ${fmtDia(venc)}).`, 'ok');
 };
-ACT.ajudaMetas = () => ajudaRecurso('metas', 'Passo a passo – metas das vendedoras');
-/* ===== Vendedora da venda (comissão e meta justas) =====
-   A venda fica no nome de quem atendeu, não de quem está logado. No computador, o campo "Vendedora" vem com a pessoa
-   logada; se for outra, ela confirma com o PIN dela (ou a senha). No celular cada uma entra com o próprio usuário, então
-   não há escolha nem PIN. O administrador pode corrigir a vendedora de uma venda depois, com motivo; se a comissão do mês
+ACT.ajudaMetas = () => ajudaRecurso('metas', 'Passo a passo – metas dos vendedores');
+/* ===== Vendedor da venda (comissão e meta justas) =====
+   A venda fica no nome de quem atendeu, não de quem está logado. No computador, o campo "Vendedor" vem com a pessoa
+   logada; se for outra pessoa, ela confirma com o PIN (ou a senha). No celular cada pessoa entra com o próprio usuário, então
+   não há escolha nem PIN. O administrador pode corrigir o vendedor de uma venda depois, com motivo; se a comissão do mês
    já foi fechada, a diferença vira ajuste no próximo fechamento (como nas devoluções). */
 const ITER_PIN = 60000;
 const vendedorasLista = () => db.usuarios.filter(u => u.ativo !== false && u.perfil !== 'master').sort((a, b) => a.nome.localeCompare(b.nome));
@@ -6541,7 +6542,7 @@ const vendDe = tipo => { const id = +((form[tipo] || {}).vend || 0); return (!MO
 function campoVendedora(tipo) {
   if (MODO_REDE) return '';
   const v = vendDe(tipo), l = vendedorasLista(); if (l.length < 2) return '';
-  return `<label><span>Vendedora (quem atendeu) · <button type="button" class="lnk" data-act="meuPin" style="font-size:inherit;padding:0">${eu.pinHash ? 'trocar meu PIN' : 'cadastrar meu PIN'}</button></span><select data-f="${tipo}.vend">${l.map(u => `<option value="${u.id}" ${u.id === v.id ? 'selected' : ''}>${esc(u.nome)}${u.id === eu.id ? ' (logada)' : ''}</option>`).join('')}</select></label>`;
+  return `<label><span>Vendedor (quem atendeu) · <button type="button" class="lnk" data-act="meuPin" style="font-size:inherit;padding:0">${eu.pinHash ? 'trocar meu PIN' : 'cadastrar meu PIN'}</button></span><select data-f="${tipo}.vend">${l.map(u => `<option value="${u.id}" ${u.id === v.id ? 'selected' : ''}>${esc(u.nome)}${u.id === eu.id ? ' (você)' : ''}</option>`).join('')}</select></label>`;
 }
 let pinOk = null;
 const precisaPin = tipo => { if (MODO_REDE) return null; const v = vendDe(tipo); return v && (v.id !== eu.id || db.config.pinSempre) ? v : null; };
@@ -6554,8 +6555,8 @@ const precisaPin = tipo => { if (MODO_REDE) return null; const v = vendDe(tipo);
   };
 });
 function pedirPin(u, acao, tipo) {
-  abrirModal('Confirmar a vendedora', `<p>${tipo === 'venda' ? 'Esta venda' : 'Esta condicional'} vai ficar no nome de <b>${esc(u.nome)}</b>${u.id !== eu.id ? ` (está logado: ${esc(eu.nome)})` : ''}.</p>
-    ${!u.pinHash && u.trocarSenha ? `<p class="err">${esc(u.nome.split(' ')[0])} ainda não cadastrou o PIN e só tem a senha provisória criada pelo administrador. Para a venda ficar no nome dela, ela precisa entrar uma vez no sistema com o próprio usuário (trocando a senha) ou cadastrar o PIN. Enquanto isso, escolha outra vendedora.</p>` : ''}
+  abrirModal('Confirmar o vendedor', `<p>${tipo === 'venda' ? 'Esta venda' : 'Esta condicional'} vai ficar no nome de <b>${esc(u.nome)}</b>${u.id !== eu.id ? ` (está logado: ${esc(eu.nome)})` : ''}.</p>
+    ${!u.pinHash && u.trocarSenha ? `<p class="err">${esc(u.nome.split(' ')[0])} ainda não cadastrou o PIN e só tem a senha provisória criada pelo administrador. Para a venda ficar no nome dessa pessoa, ela precisa entrar uma vez no sistema com o próprio usuário (trocando a senha) ou cadastrar o PIN. Enquanto isso, escolha outro vendedor.</p>` : ''}
     <label>${esc(u.nome.split(' ')[0])}, digite o seu PIN${u.pinHash ? '' : ' (ainda não cadastrado: use a sua senha)'}<input id="pin-v" type="password" inputmode="${u.pinHash ? 'numeric' : 'text'}" autocomplete="off" data-enter="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}" autofocus></label>
     <p class="mut">Pode usar o PIN ou a senha do sistema. O PIN é cadastrado em Minha senha (cadeado, embaixo do nome).</p>`,
     `<button class="btn pri" data-act="pinConfirmar" data-id="${u.id}" data-acao="${acao}" data-tipo="${tipo}">Confirmar</button>`);
@@ -6576,17 +6577,17 @@ ACT.pinConfirmar = async el => {
   if (e.ate > Date.now()) return aviso(`Muitas tentativas erradas para ${u.nome}. Tente de novo em ${Math.ceil((e.ate - Date.now()) / 60000)} minuto(s).`, 'erro');
   const como = await conferePin(u, v);
   if (!como) {
-    e.n++; if (e.n >= 5) { e.n = 0; e.ate = Date.now() + 5 * 60000; registrar('Confirmação de vendedora bloqueada por 5 minutos', u.nome + ' (5 tentativas erradas)'); }
-    ERROS_PIN[u.id] = e; registrar('PIN/senha errada ao confirmar vendedora', u.nome); salvar();
+    e.n++; if (e.n >= 5) { e.n = 0; e.ate = Date.now() + 5 * 60000; registrar('Confirmação de vendedor bloqueada por 5 minutos', u.nome + ' (5 tentativas erradas)'); }
+    ERROS_PIN[u.id] = e; registrar('PIN/senha errada ao confirmar vendedor', u.nome); salvar();
     const i = $('#pin-v'); if (i) { i.value = ''; i.focus(); }
     return aviso(!u.pinHash && u.trocarSenha ? `${u.nome} ainda não tem PIN nem senha própria: a senha provisória não vale.` : 'PIN ou senha incorreto.', 'erro');
   }
   delete ERROS_PIN[u.id];
-  registrar('Vendedora confirmada', `${u.nome} com ${como}${u.id !== eu.id ? ' (logado: ' + eu.nome + ')' : ''}`);
+  registrar('Vendedor confirmado', `${u.nome} com ${como}${u.id !== eu.id ? ' (logado: ' + eu.nome + ')' : ''}`);
   pinOk = { uid: u.id, tipo: el.dataset.tipo, em: Date.now() }; fecharModal(); ACT[el.dataset.acao]();
 };
-// PIN da própria vendedora
-ACT.meuPin = () => abrirModal('Meu PIN de vendedora', `<p class="mut">O PIN confirma que a venda é sua quando outra pessoa está logada no computador do caixa. Use de 4 a 6 números.</p>
+// PIN do próprio vendedor
+ACT.meuPin = () => abrirModal('Meu PIN de vendedor', `<p class="mut">O PIN confirma que a venda é sua quando outra pessoa está logada no computador do caixa. Use de 4 a 6 números.</p>
   <div class="form2"><label class="full">Senha atual (para confirmar)<input id="mp-senha" type="password"></label><label>Novo PIN<input id="mp-pin" type="password" inputmode="numeric" maxlength="6"></label><label>Repita o PIN<input id="mp-pin2" type="password" inputmode="numeric" maxlength="6" data-enter="salvarMeuPin"></label></div>`,
   `${eu.pinHash ? '<button class="btn perigo" data-act="tirarMeuPin">Apagar PIN</button>' : ''}<button class="btn pri" data-act="salvarMeuPin">Salvar PIN</button>`);
 ACT.salvarMeuPin = async () => {
@@ -6603,9 +6604,9 @@ ACT.tirarMeuPin = () => { delete eu.pinHash; delete eu.pinSal; registrar('Apagou
 ACT.trocarVendedora = el => {
   if (!adm()) return;
   const v = db.vendas.find(x => x.id === +el.dataset.id); if (!v) return;
-  abrirModal('Vendedora da venda nº ' + nDoc(v.id), `<p>${fmtDH(v.data)} · ${esc(v.cliente || 'Consumidor')} · ${fmtR(v.total)}<br>Hoje no nome de <b>${esc(v.usuario)}</b>${v.registradoPor && v.registradoPor !== v.usuario ? ` (registrada por ${esc(v.registradoPor)})` : ''}.</p>
+  abrirModal('Vendedor da venda nº ' + nDoc(v.id), `<p>${fmtDH(v.data)} · ${esc(v.cliente || 'Consumidor')} · ${fmtR(v.total)}<br>Hoje no nome de <b>${esc(v.usuario)}</b>${v.registradoPor && v.registradoPor !== v.usuario ? ` (registrada por ${esc(v.registradoPor)})` : ''}.</p>
     <div class="form2"><label>Passar para<select id="tv-u">${vendedorasLista().map(u => `<option value="${u.id}" ${u.id === v.usuarioId ? 'selected' : ''}>${esc(u.nome)}</option>`).join('')}</select></label><label>Motivo<input id="tv-mot" placeholder="ex.: venda feita no usuário da Ana"></label></div>
-    <p class="mut">A comissão e a meta passam para a vendedora escolhida. Se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento das duas.</p>
+    <p class="mut">A comissão e a meta passam para o vendedor escolhido. Se a comissão do mês já foi fechada, a diferença entra como ajuste no próximo fechamento das duas.</p>
     ${(v.vendHist || []).length ? '<h4 class="rel-sec">Alterações anteriores</h4>' + tabSimples(['Quando', 'De', 'Para', 'Por', 'Motivo'], v.vendHist.map(h => [fmtDH(h.em), esc(h.de), esc(h.para), esc(h.por), esc(h.motivo)])) : ''}`,
     `<button class="btn pri" data-act="trocarVendedoraOk" data-id="${v.id}">Salvar</button>`);
 };
@@ -6616,7 +6617,7 @@ ACT.trocarVendedoraOk = el => {
   v.vendHist = (v.vendHist || []).concat([{ em: agora(), de: v.usuario, para: u.nome, por: eu.nome, motivo: mot }]);
   const de = v.usuario; v.usuario = u.nome; v.usuarioId = u.id;
   db.trocas.filter(t => t.venda === v.id).forEach(t => { t.vendaUsuarioId = u.id; });
-  registrar('Vendedora da venda alterada', `venda nº ${nDoc(v.id)}: ${de} → ${u.nome} – ${mot}`); salvar(); fecharModal(); render(); aviso(`Venda nº ${nDoc(v.id)} passou para ${u.nome}.`, 'ok');
+  registrar('Vendedor da venda alterado', `venda nº ${nDoc(v.id)}: ${de} → ${u.nome} – ${mot}`); salvar(); fecharModal(); render(); aviso(`Venda nº ${nDoc(v.id)} passou para ${u.nome}.`, 'ok');
 };
 /* ===== Manual do suporte (só o usuário master) =====
    Orientações de implantação, configuração, licença, atualização, backup, celular, diagnóstico e treinamento.
@@ -6627,9 +6628,9 @@ const MANUAL = [
   { id: 'visao', t: 'Visão geral e perfis de acesso', h: `
     <p>O sistema roda no computador do caixa: um servidor local grava tudo no banco <code>dados\\loja.sqlite</code> e o Edge abre a tela pelo atalho <b>Controle de Estoque</b>. Celulares acessam pelo Wi-Fi da loja quando o recurso Premium está liberado.</p>
     <table class="tb mn-tb"><thead><tr><th>Perfil</th><th>O que faz</th><th>Quem deve ter</th></tr></thead><tbody>
-      <tr><td><b>Vendedora</b></td><td>Vende, faz condicional, troca, cadastra cliente, abre/fecha caixa (fechamento cego se configurado), consulta produtos, vê a própria meta.</td><td>Equipe de vendas</td></tr>
-      <tr><td><b>Administrador</b></td><td>Tudo da vendedora + produtos, entradas, financeiro, comissões, metas, promoções, relatórios, usuários, configurações, licença.</td><td>Dono e gerente (o mínimo de pessoas)</td></tr>
-      <tr><td><b>Master (suporte)</b></td><td>Tudo do administrador + instalar atualizações, este manual, cadastrar outros masters. Não aparece como vendedora nas metas.</td><td>Só o suporte (P.A.S)</td></tr></tbody></table>
+      <tr><td><b>Vendedor</b></td><td>Vende, faz condicional, troca, cadastra cliente, abre/fecha caixa (fechamento cego se configurado), consulta produtos, vê a própria meta.</td><td>Equipe de vendas</td></tr>
+      <tr><td><b>Administrador</b></td><td>Tudo do vendedor + produtos, entradas, financeiro, comissões, metas, promoções, relatórios, usuários, configurações, licença.</td><td>Dono e gerente (o mínimo de pessoas)</td></tr>
+      <tr><td><b>Master (suporte)</b></td><td>Tudo do administrador + instalar atualizações, este manual, cadastrar outros masters. Não aparece como vendedor nas metas.</td><td>Só o suporte (P.A.S)</td></tr></tbody></table>
     <p class="mn-dica">Regra: nunca entregue a senha do master à loja. Enquanto não existe master, um administrador consegue criar o primeiro; depois disso, só um master cria outro.</p>
     ${mnP('login', 'Tela de entrada (usuário e senha de cada pessoa).')}` },
   { id: 'implantacao', t: 'Implantação numa loja nova (passo a passo)', h: `
@@ -6641,7 +6642,7 @@ const MANUAL = [
       <li><b>Licença:</b> Configurações → Licença → cole o código <code>PAS1-…</code> → Ativar.</li>
       <li><b>Tipos e grades:</b> Configurações → Vendas e estoque → Tipos de peça e grades (prefixo do código e tamanhos de cada tipo).</li>
       <li><b>Produtos:</b> importe a planilha (Produtos → Importar planilha / Modelo da planilha) ou o XML da nota em Entrada de mercadoria. Imprima as etiquetas.</li>
-      <li><b>Usuários:</b> cadastre vendedoras com senha provisória; cada uma entra uma vez, troca a senha e cadastra o PIN.</li>
+      <li><b>Usuários:</b> cadastre vendedores com senha provisória; cada um entra uma vez, troca a senha e cadastra o PIN.</li>
       <li><b>Recibo e Pix:</b> Configurações → Recibos e impressão: papel, vias, chave Pix (gere o Pix de teste de R$ 1,00).</li>
       <li><b>Regras:</b> Configurações → Vendas e estoque: caixa obrigatório, PIN em toda venda (opcional), fechamento cego. Segurança: bloqueio por falta de uso e tentativas de senha.</li>
       <li><b>Backup:</b> Configurações → Backup e dados: pasta extra (pen drive/OneDrive), horário, e ligue a criptografia do backup anotando a senha <b>fora do computador</b>. Ligue o <b>backup na nuvem</b> (Google Drive para computador instalado e conectado na conta da loja).</li>
@@ -6692,11 +6693,11 @@ const MANUAL = [
       <li>Recursos Premium → <b>Ligar venda pelo celular</b>. Aparecem o QR Code e os endereços (HTTPS 8443 e instalação 8788).${mnP('cel_premium', 'Recursos Premium com a venda pelo celular ligada.')}</li>
       <li>Windows perguntou sobre rede: <b>Redes privadas → Permitir</b>. Não abriu: rode <code>LIBERAR_CELULAR_NO_FIREWALL.bat</code> como administrador.</li>
       <li>No celular: ler o QR → baixar o certificado → instalar e marcar como confiável (iPhone: Ajustes → Geral → Sobre → Ajustes de Confiança).</li>
-      <li>Abrir o sistema e entrar com o usuário da vendedora.${mnP('cel_login', 'Entrada no celular com logo e nome da loja.', 1)}${mnP('cel_vendas', 'Vendas no celular: botão Ler pela câmera.', 1)}${mnP('cel_camera', 'Leitura do código de barras pela câmera.', 1)}</li>
+      <li>Abrir o sistema e entrar com o usuário do vendedor.${mnP('cel_login', 'Entrada no celular com logo e nome da loja.', 1)}${mnP('cel_vendas', 'Vendas no celular: botão Ler pela câmera.', 1)}${mnP('cel_camera', 'Leitura do código de barras pela câmera.', 1)}</li>
       <li>Peça ao técnico da internet para fixar o IP do computador do caixa (reserva de DHCP).</li></ol>` },
   { id: 'telas', t: 'Telas principais (referência)', h: `
     <h4>Painel</h4><p>Clicar no logo ou no nome da loja (alto do menu) abre o Painel e limpa o botão "Voltar para…".</p>${mnP('painel', 'Painel: avisos, indicadores do dia e listas de atenção.')}
-    <h4>Vendas</h4><p>Leitor ou busca → carrinho → vendedora (PIN se não for a logada) → cliente → pagamento (bandeira, maquininha e parcelas no cartão) → finalizar e recibo.</p>${mnP('vendas', 'Venda com promoção, crédito do cliente e cartão Visa 2x.')}
+    <h4>Vendas</h4><p>Leitor ou busca → carrinho → vendedor (PIN se não for quem está logado) → cliente → pagamento (bandeira, maquininha e parcelas no cartão) → finalizar e recibo.</p>${mnP('vendas', 'Venda com promoção, crédito do cliente e cartão Visa 2x.')}
     <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo).</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
@@ -6721,9 +6722,9 @@ const MANUAL = [
       <tr><td>Sistema em modo consulta</td><td>Licença vencida há mais de 10 dias</td><td>Licença nova.</td></tr>
       <tr><td>Celular não abre</td><td>Mesmo Wi-Fi? IP mudou? Firewall?</td><td>LIBERAR_CELULAR_NO_FIREWALL.bat; conferir o endereço na tela.</td></tr>
       <tr><td>"Não seguro" / câmera não abre no celular</td><td>Certificado instalado e confiável?</td><td>Refazer a instalação do certificado.</td></tr>
-      <tr><td>PIN recusado</td><td>Vendedora com senha provisória? 5 erros?</td><td>Ela entra e troca a senha/cadastra o PIN; esperar 5 min.</td></tr>
+      <tr><td>PIN recusado</td><td>Vendedor com senha provisória? 5 erros?</td><td>Ele entra e troca a senha/cadastra o PIN; esperar 5 min.</td></tr>
       <tr><td>Usuário bloqueado</td><td>Senhas erradas seguidas</td><td>Usuárias / usuários → Editar → Salvar libera.</td></tr>
-      <tr><td>Venda no nome errado</td><td>Vendas realizadas</td><td>Link "vendedora", com motivo.</td></tr>
+      <tr><td>Venda no nome errado</td><td>Vendas realizadas</td><td>Link "vendedor", com motivo.</td></tr>
       <tr><td>Etiqueta saiu errada</td><td>Formato em Etiquetas (A4/bobina)</td><td>Ajustar formato e quantidade antes de imprimir.</td></tr>
       <tr><td>E-mail de monitoramento: "o Gmail recusou o e-mail ou a senha"</td><td>Senha normal em vez de senha de app; conta diferente da que criou a senha</td><td>Gerar senha de app na mesma conta (verificação em duas etapas ligada) e colar de novo.</td></tr>
       <tr><td>E-mail não chega</td><td>Caixa "Enviar" marcada? Spam? Último erro na tela</td><td>Enviar e-mail de teste; olhar <code>dados</code>/servidor.log.</td></tr>
@@ -6731,12 +6732,12 @@ const MANUAL = [
       <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
     <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
   { id: 'treinamento', t: 'Roteiro de treinamento', h: `
-    <h4>Módulo 1 – Vendedoras (cerca de 1 hora)</h4>
-    <ol class="mn-passos"><li>Entrar, trocar a senha provisória e cadastrar o PIN.</li><li>Abrir o caixa com o troco.</li><li>Venda com leitor, cliente, desconto e duas formas de pagamento; recibo e WhatsApp.</li><li>Venda no cartão escolhendo bandeira e parcelas.</li><li>Venda para outra vendedora (PIN).</li><li>Condicional: saída, acerto e devolução.</li><li>Troca e devolução (crédito ou dinheiro).</li><li>Cadastro de cliente com data de nascimento.</li><li>Fechar o caixa (fechamento cego se configurado).</li><li>No celular: entrar, vender e ler código pela câmera.</li></ol>
+    <h4>Módulo 1 – Vendedores (cerca de 1 hora)</h4>
+    <ol class="mn-passos"><li>Entrar, trocar a senha provisória e cadastrar o PIN.</li><li>Abrir o caixa com o troco.</li><li>Venda com leitor, cliente, desconto e duas formas de pagamento; recibo e WhatsApp.</li><li>Venda no cartão escolhendo bandeira e parcelas.</li><li>Venda para outro vendedor (PIN).</li><li>Condicional: saída, acerto e devolução.</li><li>Troca e devolução (crédito ou dinheiro).</li><li>Cadastro de cliente com data de nascimento.</li><li>Fechar o caixa (fechamento cego se configurado).</li><li>No celular: entrar, vender e ler código pela câmera.</li></ol>
     <h4>Módulo 2 – Administradores (cerca de 2 horas)</h4>
-    <ol class="mn-passos"><li>Entrada de mercadoria (XML) e etiquetas.</li><li>Produtos: preço, mínimo, foto, inativar.</li><li>Financeiro: receber crediário, pagar contas.</li><li>Comissões e metas (faixas e bônus).</li><li>Promoções e cashback.</li><li>Inventário.</li><li>Relatórios (PDF/Excel).</li><li>Usuários, reabertura de caixa, correção de vendedora.</li><li>Backup: exportar e conferir a pasta extra.</li></ol>
+    <ol class="mn-passos"><li>Entrada de mercadoria (XML) e etiquetas.</li><li>Produtos: preço, mínimo, foto, inativar.</li><li>Financeiro: receber crediário, pagar contas.</li><li>Comissões e metas (faixas e bônus).</li><li>Promoções e cashback.</li><li>Inventário.</li><li>Relatórios (PDF/Excel).</li><li>Usuários, reabertura de caixa, correção de vendedor.</li><li>Backup: exportar e conferir a pasta extra.</li></ol>
     <h4>Checklist de conclusão</h4>
-    <ul class="mn-check"><li>Todas as vendedoras com senha própria e PIN.</li><li>Uma venda real de cada forma de pagamento feita pela equipe.</li><li>Caixa aberto e fechado uma vez com o administrador.</li><li>Backup automático gravando na pasta extra.</li><li>Administrador sabe onde ver a licença e quem chamar.</li></ul>` },
+    <ul class="mn-check"><li>Todos os vendedores com senha própria e PIN.</li><li>Uma venda real de cada forma de pagamento feita pela equipe.</li><li>Caixa aberto e fechado uma vez com o administrador.</li><li>Backup automático gravando na pasta extra.</li><li>Administrador sabe onde ver a licença e quem chamar.</li></ul>` },
   { id: 'rotina', t: 'Rotina do suporte', h: `
     <table class="tb mn-tb"><thead><tr><th>Quando</th><th>O que conferir</th></tr></thead><tbody>
       <tr><td>Semanal</td><td>Último backup e pasta extra; avisos no painel; Configurações → Segurança sem alertas.</td></tr>
@@ -6925,7 +6926,7 @@ function secaoCelular() {
   if (!srvInfo || !srvInfo.rede) return '<section class="card"><p class="err">O servidor deste computador precisa ser atualizado (versão 2026.11.04-07 ou mais nova) para liberar a venda pelo celular. Use Atualização do sistema.</p></section>';
   const r = srvInfo.rede, ligado = !!r.ativo;
   return `<section class="card"><div class="cfg-cab"><h3>Venda pelo celular <span class="tag ${ligado ? 'ok' : 'in'}">${ligado ? 'ligada' : 'desligada'}</span></h3>
-      <p class="mut">Recurso adicional: as vendedoras vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Recurso Premium liberado na licença; os administradores ligam ou desligam aqui.</p></div>
+      <p class="mut">Recurso adicional: os vendedores vendem pelo celular, no Wi-Fi da loja, com leitura do código de barras pela câmera. Recurso Premium liberado na licença; os administradores ligam ou desligam aqui.</p></div>
     ${r.erro ? `<p class="err">Não foi possível ligar: ${esc(r.erro)}</p>` : ''}
     ${ligado ? `<div class="cel-qr"><div>${qrSVG(r.instalar, 200)}<small>1. No celular, leia este QR Code (câmera) para instalar o certificado da loja e abrir o sistema</small></div>
       <div class="cel-end"><p><b>Instalar no celular:</b><br><code>${esc(r.instalar)}</code></p><p><b>Endereço do sistema no celular:</b><br><code>${esc(r.endereco)}</code></p>
