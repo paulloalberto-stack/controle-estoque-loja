@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.08-01">
+<meta name="versao-sistema" content="2026.11.08-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -501,6 +501,14 @@ input[data-maiusc]::placeholder{text-transform:none}
 .tam-chip{display:inline-flex;flex-direction:column;align-items:center;min-width:42px;padding:3px 6px;border:1.5px solid #cfd4dd;border-radius:8px;background:#fff;cursor:pointer;font:inherit;line-height:1.15}
 .tam-chip b{font-size:12px}.tam-chip span{font-size:11.5px;color:var(--mut)}
 .tam-chip:hover{border-color:var(--ac)}
+:root{--loc-ar-f:#4ade80;--loc-es-f:#60a5fa}
+.loc{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11.5px;font-weight:700;line-height:1.5;white-space:nowrap}
+.loc-ar{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.loc-es{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.loc-barra{display:block;align-self:stretch;height:4px;border-radius:2px;margin-top:2px}
+.loc-linha{margin-top:3px;display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
+.rbox.loc-box-ar{background:#f0fdf4;border-color:#86efac}.rbox.loc-box-es{background:#eff6ff;border-color:#93c5fd}
+.btn.loc-btn{background:linear-gradient(90deg,#dcfce7,#dbeafe);border-color:#93c5fd;color:#1e3a5f}
 .tam-chip.zero{border-color:#f3b8a8;background:#fff4f0}.tam-chip.zero span{color:#b42318;font-weight:700}
 .tam-chip.baixo{border-color:#f3cf8f;background:#fffaf0}.tam-chip.baixo span{color:#b45309;font-weight:700}
 .tam-chip.fora{opacity:.45}
@@ -711,7 +719,7 @@ const form = {
 };
 function novaFormVenda() { return { cliente: '', doc: '', desc: '', desct: 'R', pags: [{ forma: 'Dinheiro', valor: '' }], parc: 1, venc1: '' }; }
 const filtros = {
-  prod: { busca: '', tipo: '', marca: '', tam: '', faixa: '', sit: 'estoque', col: '', modo: 'modelo' },
+  prod: { busca: '', tipo: '', marca: '', tam: '', faixa: '', sit: 'estoque', col: '', modo: 'modelo', loc: '' },
   mov: { busca: '', tipo: '', de: '', ate: '' },
   vh: { de: '', ate: '' },
   rel: { de: '', ate: '', parado: '60' },
@@ -1085,6 +1093,7 @@ function agendarGravacao(json) {
   });
 }
 function salvar() {
+  try { if (typeof acertarLocais === 'function') acertarLocais(); } catch (e) { }
   db._salvo = Math.max(Date.now(), (db._salvo || 0) + 1); salvamentos++;
   const json = MODO_SERVIDOR && parcialOk ? '' : JSON.stringify(db);   // com o servidor novo, a gravação manda só o que mudou
   let okLs = true;
@@ -1426,6 +1435,7 @@ function entradas() {
       ${campo('Fornecedor', 'entrada.forn', f.forn, 'list="dl-forn"')}
       ${campo('Nota fiscal', 'entrada.nf', f.nf)}
       ${campo('Observação', 'entrada.obs', f.obs)}
+      <label>Guardar em<select data-f="entrada.loc"><option value="araras" ${(f.loc || 'araras') === 'araras' ? 'selected' : ''}>Araras (salão)</option><option value="estoque" ${f.loc === 'estoque' ? 'selected' : ''}>Estoque (lá atrás)</option></select></label>
     </div>
     ${picker('entrada')}
     <div id="cart-entrada">${tabelaCarrinho('entrada')}</div>
@@ -1449,12 +1459,13 @@ function produtos() {
       <label>Tamanho${sel('tam', tams, 'Todos')}</label>
       <label>Preço de venda${sel('faixa', FAIXAS.map((x, i) => [String(i), x[2]]), 'Todos')}</label>
       <label>Coleção${sel('col', [...new Set(db.produtos.map(p => p.colecao).filter(Boolean))].sort(), 'Todas')}</label>
+      <label>Localização${sel('loc', [['araras', 'Araras'], ['estoque', 'Estoque (lá atrás)']], 'Todas')}</label>
     </div>
     <div class="prod-topo"><div class="abas" id="prod-abas">${abasProd()}</div>
       <div class="seg" title="Como mostrar a lista">${[['modelo', 'Por modelo'], ['tamanho', 'Por tamanho']].map(([v, t]) => `<button class="${(f.modo || 'modelo') === v ? 'on' : ''}" data-act="prodModo" data-v="${v}">${t}</button>`).join('')}</div></div>
     <div class="acoes" style="justify-content:space-between">
       <span class="mut" id="prod-resumo"></span>
-      <span>${adm() ? '<button class="btn pri" data-act="novoProduto">+ Novo produto</button> <button class="btn ac" data-act="importarPlanilha">Importar planilha</button> <button class="btn" data-act="modeloPlanilha" title="Planilha de exemplo com as colunas que o sistema entende">Modelo da planilha</button> <button class="btn perigo" data-act="excluirSelecionados">Excluir selecionados</button> ' : ''}${adm() ? '<button class="btn pri" data-act="etiquetasSel">Etiquetas dos selecionados</button> ' : ''}<button class="btn" data-act="etiquetasFiltro">Etiquetas dos produtos listados</button> <button class="btn" data-act="imprimirCompra">Imprimir lista de compra</button></span>
+      <span><button class="btn loc-btn" data-act="locLote" title="Passar peças das Araras para o Estoque (lá atrás) e vice-versa">Transferir Araras ⇄ Estoque</button> ${adm() ? '<button class="btn pri" data-act="novoProduto">+ Novo produto</button> <button class="btn ac" data-act="importarPlanilha">Importar planilha</button> <button class="btn" data-act="modeloPlanilha" title="Planilha de exemplo com as colunas que o sistema entende">Modelo da planilha</button> <button class="btn perigo" data-act="excluirSelecionados">Excluir selecionados</button> ' : ''}${adm() ? '<button class="btn pri" data-act="etiquetasSel">Etiquetas dos selecionados</button> ' : ''}<button class="btn" data-act="etiquetasFiltro">Etiquetas dos produtos listados</button> <button class="btn" data-act="imprimirCompra">Imprimir lista de compra</button></span>
     </div>
     <div id="tb-prod">${tabelaProdutos()}</div>
   </section>`;
@@ -1473,6 +1484,7 @@ function produtosFiltrados(sitForcada) {
     if (f.tam && p.tamanho !== f.tam) return false;
     if (f.faixa !== '') { const x = FAIXAS[+f.faixa]; if (p.preco < x[0] || p.preco >= x[1]) return false; }
     if (f.col && (p.colecao || '') !== f.col) return false;
+    if (f.loc && qLocal(p, f.loc) <= 0) return false;
     if (sit === 'abaixo' && !estaBaixo(p)) return false;
     if (sit === 'zerado' && p.estoque > 0) return false;
     if (sit === 'cond' && !emCond(p.id)) return false;
@@ -1482,29 +1494,29 @@ function produtosFiltrados(sitForcada) {
 }
 function tabelaModelos(l) {
   const sit = filtros.prod.sit || '', grupos = [...agrupar(l, chaveModelo)];
-  setTimeout(() => { const r = $('#prod-resumo'); if (r) r.textContent = `${grupos.length} modelo(s) · ${l.length} produto(s) (tamanho) · ${fmtN(l.reduce((s, p) => s + p.estoque, 0))} peça(s) · ${fmtR(l.reduce((s, p) => s + p.estoque * p.preco, 0))} a preço de venda`; });
+  setTimeout(() => { const r = $('#prod-resumo'); if (r) r.textContent = `${grupos.length} modelo(s) · ${l.length} produto(s) (tamanho) · ${fmtN(l.reduce((s, p) => s + p.estoque, 0))} peça(s) (Araras ${fmtN(somaLoc(l, 'araras'))} · Estoque ${fmtN(somaLoc(l, 'estoque'))}) · ${fmtR(l.reduce((s, p) => s + p.estoque * p.preco, 0))} a preço de venda`; });
   if (!l.length) return `<p class="vazio">${db.produtos.length ? (sit === 'zerado' ? 'Nenhum produto sem estoque. Tudo com peças na loja.' : 'Nenhum produto com esses filtros.') : 'Nenhum produto cadastrado ainda.' + (adm() ? ' Clique em "+ Novo produto".' : '')}</p>`;
   return `<div class="tabw"><table class="tb tb-modelos"><thead><tr>${adm() ? '<th><input type="checkbox" id="sel-todos" title="Selecionar todos os listados"></th>' : ''}<th></th><th>Modelo</th><th>Marca</th><th>Cor</th><th>Tamanhos e estoque</th><th class="n">Peças</th><th class="n">Venda</th><th>Situação</th><th></th></tr></thead><tbody>${grupos.map(([k, lst]) => {
     const p0 = lst[0], todos = db.produtos.filter(x => (sit === 'inativo' ? x.ativo === false : x.ativo !== false) && chaveModelo(x) === k).sort((a, b) => ordTam(a.tamanho) - ordTam(b.tamanho) || String(a.tamanho).localeCompare(b.tamanho));
     const pecas = todos.reduce((s, x) => s + x.estoque, 0), cond = todos.reduce((s, x) => s + emCond(x.id), 0), zerados = todos.filter(x => x.estoque <= 0), baixos = todos.filter(x => x.estoque > 0 && estaBaixo(x));
     const precos = [...new Set(todos.map(x => x.preco))], noFiltro = new Set(lst.map(x => x.id));
-    const chip = x => `<button class="tam-chip${x.estoque <= 0 ? ' zero' : estaBaixo(x) ? ' baixo' : ''}${noFiltro.has(x.id) ? '' : ' fora'}" data-act="tamMenu" data-id="${x.id}" title="${esc(x.codigo)} · tamanho ${esc(x.tamanho)} · estoque ${x.estoque}${emCond(x.id) ? ' · ' + emCond(x.id) + ' em condicional' : ''} · mínimo ${x.minimo}"><b>${esc(x.tamanho)}</b><span>${x.estoque}</span></button>`;
+    const chip = x => `<button class="tam-chip${x.estoque <= 0 ? ' zero' : estaBaixo(x) ? ' baixo' : ''}${noFiltro.has(x.id) ? '' : ' fora'}" data-act="tamMenu" data-id="${x.id}" title="${esc(x.codigo)} · tamanho ${esc(x.tamanho)} · estoque ${x.estoque} (Araras ${qAraras(x)} · Estoque ${qFundo(x)})${emCond(x.id) ? ' · ' + emCond(x.id) + ' em condicional' : ''} · mínimo ${x.minimo}"><b>${esc(x.tamanho)}</b><span>${x.estoque}</span>${barraLoc(x)}</button>`;
     const situ = pecas <= 0 ? '<span class="tag zr">Sem estoque</span>' : zerados.length ? `<span class="tag bx">Faltam: ${zerados.map(x => esc(x.tamanho)).join(', ')}</span>` : baixos.length ? '<span class="tag bx">Abaixo do mínimo</span>' : '<span class="tag ok">OK</span>';
     return `<tr class="${pecas <= 0 ? 'linha-zero' : ''}">${adm() ? `<td><input type="checkbox" class="sel-prod" value="${lst.map(x => x.id).join(',')}"></td>` : ''}<td class="td-foto"><button class="mini-btn" data-act="verFoto" data-id="${p0.id}" title="Foto e tamanhos">${miniHTML(p0)}</button></td>
       <td><b>${esc(nomeProd(p0))}</b><small>${esc(todos.map(x => x.codigo).slice(0, 1)[0] || '')}${todos.length > 1 ? ' … ' + esc(todos[todos.length - 1].codigo) : ''}${p0.colecao ? ' · ' + esc(p0.colecao) : ''}</small></td><td>${esc(p0.marca)}</td><td>${esc(p0.cor || '')}</td>
-      <td><div class="tam-grade">${todos.map(chip).join('')}</div></td><td class="n"><b>${pecas}</b>${cond ? `<small>${cond} em cond.</small>` : ''}</td><td class="n">${precos.length > 1 ? fmtR(Math.min(...precos)) + ' a ' + fmtR(Math.max(...precos)) : fmtR(precos[0])}</td><td>${situ}</td>
+      <td><div class="tam-grade">${todos.map(chip).join('')}</div></td><td class="n"><b>${pecas}</b>${cond ? `<small>${cond} em cond.</small>` : ''}${pecas > 0 ? `<div class="loc-linha">${seloLoc('araras', somaLoc(todos, 'araras'))}${somaLoc(todos, 'estoque') ? seloLoc('estoque', somaLoc(todos, 'estoque')) : ''}</div>` : ''}</td><td class="n">${precos.length > 1 ? fmtR(Math.min(...precos)) + ' a ' + fmtR(Math.max(...precos)) : fmtR(precos[0])}</td><td>${situ}</td>
       <td class="n"><button class="lnk" data-act="etqModelo" data-ids="${todos.map(x => x.id).join(',')}">Etiquetas</button></td></tr>`;
-  }).join('')}</tbody></table></div><p class="mut">Clique num tamanho para ver as ações dele (${adm() ? 'editar, ajustar estoque, histórico, etiquetas, excluir' : 'histórico, etiquetas'}). Vermelho = sem estoque · laranja = abaixo do mínimo.</p>`;
+  }).join('')}</tbody></table></div><p class="mut">Clique num tamanho para ver as ações dele (${adm() ? 'editar, ajustar estoque, histórico, etiquetas, excluir' : 'histórico, etiquetas'}). Vermelho = sem estoque · laranja = abaixo do mínimo. Barrinha embaixo do número: <span class="loc loc-ar">verde = Araras</span> <span class="loc loc-es">azul = Estoque (lá atrás)</span>.</p>`;
 }
 function tabelaProdutos() {
   const l = produtosFiltrados();
   if ((filtros.prod.modo || 'modelo') === 'modelo') return tabelaModelos(l);
   setTimeout(() => { const r = $('#prod-resumo'); if (r) r.textContent = `${l.length} produto(s) · ${fmtN(l.reduce((s, p) => s + p.estoque, 0))} peça(s) · ${fmtR(l.reduce((s, p) => s + p.estoque * p.preco, 0))} a preço de venda`; });
   if (!l.length) return `<p class="vazio">${db.produtos.length ? 'Nenhum produto com esses filtros.' : 'Nenhum produto cadastrado ainda.' + (adm() ? ' Clique em "+ Novo produto".' : '')}</p>`;
-  return `<div class="tabw"><table class="tb"><thead><tr>${adm() ? '<th><input type="checkbox" id="sel-todos" title="Selecionar todos os listados"></th>' : ''}<th></th><th>Código</th><th>Tipo</th><th>Descrição</th><th>Marca</th><th>Tam.</th><th>Cor</th>${adm() ? '<th class="n">Custo</th>' : ''}<th class="n">Venda</th><th class="n">Estoque</th><th class="n">Em cond.</th><th class="n">Mínimo</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p => { const ec = emCond(p.id); return `<tr class="${estaBaixo(p) ? 'baixo' : ''}">${adm() ? `<td><input type="checkbox" class="sel-prod" value="${p.id}"></td>` : ''}<td class="td-foto"><button class="mini-btn" data-act="verFoto" data-id="${p.id}" title="Ver foto e tamanhos">${miniHTML(p)}</button></td><td>${esc(p.codigo)}${p.barras ? `<small>${esc(p.barras)}</small>` : ''}</td><td>${esc(p.tipo)}</td><td>${esc(p.descricao)}${p.colecao ? `<small>${esc(p.colecao)}</small>` : ''}</td><td>${esc(p.marca)}</td><td><b>${esc(p.tamanho)}</b></td><td>${esc(p.cor)}</td>${adm() ? `<td class="n">${fmtR(p.custo)}</td>` : ''}<td class="n">${fmtR(p.preco)}</td><td class="n"><b>${p.estoque}</b></td><td class="n">${ec || ''}</td><td class="n">${p.minimo}</td><td>${situacao(p)}</td><td class="n"><button class="lnk" data-act="etiquetas" data-id="${p.id}">Etiquetas</button><button class="lnk" data-act="histProduto" data-id="${p.id}">Histórico</button>${adm() ? `<button class="lnk" data-act="editarProduto" data-id="${p.id}">Editar</button><button class="lnk" data-act="ajustarEstoque" data-id="${p.id}">Ajustar</button><button class="lnk perigo" data-act="excluirProduto" data-id="${p.id}">Excluir</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  return `<div class="tabw"><table class="tb"><thead><tr>${adm() ? '<th><input type="checkbox" id="sel-todos" title="Selecionar todos os listados"></th>' : ''}<th></th><th>Código</th><th>Tipo</th><th>Descrição</th><th>Marca</th><th>Tam.</th><th>Cor</th>${adm() ? '<th class="n">Custo</th>' : ''}<th class="n">Venda</th><th class="n">Estoque</th><th class="n">Em cond.</th><th class="n">Mínimo</th><th>Situação</th><th></th></tr></thead><tbody>${l.map(p => { const ec = emCond(p.id); return `<tr class="${estaBaixo(p) ? 'baixo' : ''}">${adm() ? `<td><input type="checkbox" class="sel-prod" value="${p.id}"></td>` : ''}<td class="td-foto"><button class="mini-btn" data-act="verFoto" data-id="${p.id}" title="Ver foto e tamanhos">${miniHTML(p)}</button></td><td>${esc(p.codigo)}${p.barras ? `<small>${esc(p.barras)}</small>` : ''}</td><td>${esc(p.tipo)}</td><td>${esc(p.descricao)}${p.colecao ? `<small>${esc(p.colecao)}</small>` : ''}</td><td>${esc(p.marca)}</td><td><b>${esc(p.tamanho)}</b></td><td>${esc(p.cor)}</td>${adm() ? `<td class="n">${fmtR(p.custo)}</td>` : ''}<td class="n">${fmtR(p.preco)}</td><td class="n"><b>${p.estoque}</b>${p.estoque > 0 ? `<div class="loc-linha">${selosLoc(p)}</div>` : ''}</td><td class="n">${ec || ''}</td><td class="n">${p.minimo}</td><td>${situacao(p)}</td><td class="n"><button class="lnk" data-act="etiquetas" data-id="${p.id}">Etiquetas</button><button class="lnk" data-act="histProduto" data-id="${p.id}">Histórico</button>${adm() ? `<button class="lnk" data-act="editarProduto" data-id="${p.id}">Editar</button><button class="lnk" data-act="ajustarEstoque" data-id="${p.id}">Ajustar</button><button class="lnk perigo" data-act="excluirProduto" data-id="${p.id}">Excluir</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 
-const TIPOS_MOV = ['INVENTÁRIO', 'ENTRADA', 'VENDA', 'CONDICIONAL SAÍDA', 'CONDICIONAL DEVOLUÇÃO', 'VENDA DE CONDICIONAL', 'TROCA / DEVOLUÇÃO', 'CANCELAMENTO DE VENDA', 'AJUSTE', 'EXCLUSÃO DE ENTRADA'];
+const TIPOS_MOV = ['INVENTÁRIO', 'ENTRADA', 'VENDA', 'CONDICIONAL SAÍDA', 'CONDICIONAL DEVOLUÇÃO', 'VENDA DE CONDICIONAL', 'TROCA / DEVOLUÇÃO', 'CANCELAMENTO DE VENDA', 'AJUSTE', 'TRANSFERÊNCIA', 'EXCLUSÃO DE ENTRADA'];
 function movs() {
   const f = filtros.mov;
   return `<h2>Movimentações de estoque</h2>
@@ -1529,7 +1541,7 @@ function tabelaMovs() {
     return true;
   }).slice(-500).reverse();
   if (!l.length) return '<p class="vazio">Nenhuma movimentação.</p>';
-  return `<p class="mut">${l.length === 500 ? 'Mostrando as 500 mais recentes.' : l.length + ' movimentação(ões).'}</p><div class="tabw"><table class="tb"><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th class="n">Qtd</th><th class="n">Saldo</th><th>Referência</th><th>Usuário</th></tr></thead><tbody>${l.map(m => { const p = prod(m.prod); return `<tr><td>${fmtDH(m.data)}</td><td>${esc(p.codigo)}</td><td>${esc(nomeCompleto(p))}</td><td>${esc(m.tipo)}</td><td class="n ${m.qtd > 0 ? 'ok' : m.qtd < 0 ? 'err' : ''}"><b>${m.qtd > 0 ? '+' : ''}${m.qtd}</b></td><td class="n">${m.saldo}</td><td>${esc(m.ref)}</td><td>${esc(m.usuario)}</td></tr>`; }).join('')}</tbody><tfoot><tr><td colspan="4">Total · ${l.length} movimentação(ões)</td><td class="n">+${somar(l, m => m.qtd > 0 ? m.qtd : 0)} / ${somar(l, m => m.qtd < 0 ? m.qtd : 0)}</td><td colspan="3">entradas / saídas de peças</td></tr></tfoot></table></div>`;
+  return `<p class="mut">${l.length === 500 ? 'Mostrando as 500 mais recentes.' : l.length + ' movimentação(ões).'}</p><div class="tabw"><table class="tb"><thead><tr><th>Data</th><th>Código</th><th>Produto</th><th>Tipo</th><th class="n">Qtd</th><th class="n">Saldo</th><th>Referência</th><th>Usuário</th></tr></thead><tbody>${l.map(m => { const p = prod(m.prod); return `<tr><td>${fmtDH(m.data)}</td><td>${esc(p.codigo)}</td><td>${esc(nomeCompleto(p))}</td><td>${esc(m.tipo)}</td><td class="n ${m.qtd > 0 ? 'ok' : m.qtd < 0 ? 'err' : ''}"><b>${m.transf ? '⇄ ' + m.transf : (m.qtd > 0 ? '+' : '') + m.qtd}</b></td><td class="n">${m.saldo}</td><td>${esc(m.ref)}</td><td>${esc(m.usuario)}</td></tr>`; }).join('')}</tbody><tfoot><tr><td colspan="4">Total · ${l.length} movimentação(ões)</td><td class="n">+${somar(l, m => m.qtd > 0 ? m.qtd : 0)} / ${somar(l, m => m.qtd < 0 ? m.qtd : 0)}</td><td colspan="3">entradas / saídas de peças</td></tr></tfoot></table></div>`;
 }
 
 function relatorios() {
@@ -1842,6 +1854,7 @@ ACT.addItem = el => {
   const c = carrinho[tipo], ex = c.find(i => i.prod === p.id), nova = (ex ? ex.qtd : 0) + q;
   if (tipo !== 'entrada' && nova > p.estoque) return aviso(`Estoque insuficiente: ${nomeCompleto(p)} — disponível: ${p.estoque}${emCond(p.id) ? ' (há ' + emCond(p.id) + ' em condicional)' : ''}.`, 'erro');
   if (ex) ex.qtd = nova; else c.push({ prod: p.id, qtd: q, valor: tipo === 'entrada' ? p.custo : precoVenda(p) });
+  if (tipo !== 'entrada' && nova > qAraras(p) && qFundo(p) > 0) setTimeout(() => aviso(`${p.codigo} ${p.tamanho}: ${nova > qAraras(p) && qAraras(p) > 0 ? 'só ' + qAraras(p) + ' nas Araras; ' : ''}pegar no ESTOQUE (lá atrás) – há ${qFundo(p)} lá.`, 'ok'), 50);
   render(); const pi = $('#pk-' + tipo); if (pi) { pi.value = ''; pi.focus(); }
 };
 /* lista de sugestões da busca de produto (mostra o item completo) */
@@ -1855,7 +1868,7 @@ function itemLista(p, tipo, i) {
   const ec = emCond(p.id), sem = tipo !== 'entrada' && p.estoque <= 0;
   return `<div class="pk-it${sem ? ' sem' : ''}" data-pk="${tipo}" data-id="${p.id}" data-i="${i}" title="${esc(nomeCompleto(p))}">${miniHTML(p)}<span class="pk-tam">${esc(p.tamanho)}</span>
     <div class="pk-info"><div class="pk-nome">${esc(nomeProd(p))} <span class="pk-marca">· ${esc(p.marca)}</span></div><div class="pk-det">${esc(p.codigo)}${p.barras ? ' · ' + esc(p.barras) : ''}${p.cor ? ' · Cor: <b>' + esc(p.cor) + '</b>' : ''}${p.colecao ? ' · ' + esc(p.colecao) : ''}</div></div>
-    <div class="pk-dir"><b>${fmtR(tipo === 'entrada' ? p.custo : precoVenda(p))}</b>${tipo !== 'entrada' && promoDe(p) ? ' <span class="tag ok">promoção</span>' : ''}<small class="${p.estoque <= 0 ? 'err' : ''}">${tipo === 'entrada' ? 'custo · ' : ''}estoque ${p.estoque}${ec ? ` · ${ec} em cond.` : ''}</small></div></div>`;
+    <div class="pk-dir"><b>${fmtR(tipo === 'entrada' ? p.custo : precoVenda(p))}</b>${tipo !== 'entrada' && promoDe(p) ? ' <span class="tag ok">promoção</span>' : ''}<small class="${p.estoque <= 0 ? 'err' : ''}">${tipo === 'entrada' ? 'custo · ' : ''}estoque ${p.estoque}${tipo !== 'entrada' && qFundo(p) ? ` <span class="loc loc-ar">A ${qAraras(p)}</span> <span class="loc loc-es">E ${qFundo(p)}</span>` : ''}${ec ? ` · ${ec} em cond.` : ''}</small></div></div>`;
 }
 function mostrarLista(inp) {
   const tipo = inp.dataset.tipo, box = $('#pkl-' + tipo), txt = inp.value.trim();
@@ -2069,7 +2082,8 @@ ACT.confirmarEntrada = () => {
   if (c.some(i => i.qtd < 1)) return aviso('Quantidade inválida.', 'erro');
   const e = { id: db.seq.ent++, data: agora(), usuario: eu.nome, fornecedor: f.forn.trim(), nf: f.nf.trim(), obs: f.obs.trim(), itens: c.map(it => itemDoc(prod(it.prod), it.qtd, r2(it.valor))) };
   e.total = r2(e.itens.reduce((s, i) => s + i.qtd * i.preco, 0));
-  e.itens.forEach(i => { const p = prod(i.prod); p.estoque += i.qtd; if (i.preco > 0) p.custo = i.preco; mov(p, 'ENTRADA', i.qtd, `Entrada nº ${nDoc(e.id)}${e.nf ? ' – NF ' + e.nf : ''}${e.fornecedor ? ' – ' + e.fornecedor : ''}`); });
+  e.loc = f.loc === 'estoque' ? 'estoque' : 'araras';
+  e.itens.forEach(i => { const p = prod(i.prod); p.estoque += i.qtd; if (e.loc === 'estoque') p.estqFundo = qFundo(p) + i.qtd; if (i.preco > 0) p.custo = i.preco; mov(p, 'ENTRADA', i.qtd, `Entrada nº ${nDoc(e.id)}${e.nf ? ' – NF ' + e.nf : ''}${e.fornecedor ? ' – ' + e.fornecedor : ''}${e.loc === 'estoque' ? ' → Estoque' : ''}`); });
   e.cnpj = f.cnpj || '';
   if (f.dups && f.dups.length) e.contas = f.dups.map((x, k) => { const r = { id: db.seq.pag++, descricao: `NF ${e.nf || ''} – duplicata ${x.n || k + 1}`, fornecedor: e.fornecedor, categoria: CATEGORIAS[0], vencimento: x.venc || hoje(), valor: r2(x.valor), pagoEm: '', forma: '', entrada: e.id }; db.pagar.push(r); return r.id; });
   db.entradas.push(e);
@@ -2143,14 +2157,18 @@ ACT.salvarProduto = el => {
 ACT.ajustarEstoque = el => {
   const p = prod(+el.dataset.id);
   abrirModal('Ajuste de estoque (inventário)', `<p><b>${esc(p.codigo)}</b> – ${esc(nomeCompleto(p))}</p><p>Estoque no sistema: <b>${p.estoque}</b>${emCond(p.id) ? ` (mais ${emCond(p.id)} fora em condicional, não contar)` : ''}</p>
-    <div class="form2"><label>Quantidade contada na loja<input id="aj-qtd" type="number" min="0" value="${p.estoque}"></label><label>Motivo<input id="aj-motivo" placeholder="Ex.: inventário, peça avariada, furto"></label></div>`,
+    <div class="form2"><label>Quantidade contada na loja (total)<input id="aj-qtd" type="number" min="0" value="${p.estoque}"></label><label>Destas, no <span class="loc loc-es">Estoque</span> (lá atrás)<input id="aj-fundo" type="number" min="0" value="${qFundo(p)}"></label><label class="full">Motivo<input id="aj-motivo" placeholder="Ex.: inventário, peça avariada, furto"></label></div>
+    <p class="mut">O resto fica nas <span class="loc loc-ar">Araras</span>.</p>`,
     `<button class="btn pri" data-act="salvarAjuste" data-id="${p.id}">Salvar ajuste</button>`);
 };
 ACT.salvarAjuste = el => {
   const p = prod(+el.dataset.id), q = int($('#aj-qtd').value), m = $('#aj-motivo').value.trim();
   if (!m) return aviso('Informe o motivo.', 'erro');
-  const dif = q - p.estoque; if (!dif) return fecharModal();
-  p.estoque = q; mov(p, 'AJUSTE', dif, m); salvar(); fecharModal(); render(); aviso('Estoque ajustado.', 'ok');
+  const dif = q - p.estoque, nf = Math.max(0, Math.min(q, int(($('#aj-fundo') || {}).value)));
+  if (!dif && nf === qFundo(p)) return fecharModal();
+  if (dif) { p.estoque = q; mov(p, 'AJUSTE', dif, m); }
+  const d2 = nf - qFundo(p); if (d2 > 0) moverLocal(p, 'araras', d2, 'ajuste: ' + m); else if (d2 < 0) moverLocal(p, 'estoque', -d2, 'ajuste: ' + m);
+  salvar(); fecharModal(); render(); aviso('Estoque ajustado.', 'ok');
 };
 /* etiquetas com código de barras */
 const FORMATOS_ETQ = [['A4', 'Folha A4 – 3 colunas (64 × 37 mm, 21 por folha)'], ['50', 'Impressora de etiquetas – 50 × 30 mm'], ['40', 'Impressora de etiquetas – 40 × 25 mm']];
@@ -2275,8 +2293,8 @@ ACT.imprimirCompra = () => {
 ACT.imprimirRel = () => { imprimir(`${cabDoc('RELATÓRIO GERENCIAL', 0, agora(), '')}<p>Vendas de ${fmtDia(filtros.rel.de)} a ${fmtDia(filtros.rel.ate)}</p>${$('#rel').innerHTML}`, 'A4'); };
 ACT.exportarCSV = () => {
   const l = ordenar(db.produtos), q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
-  const linhas = [['Código', 'Tipo', 'Descrição', 'Marca', 'Tamanho', 'Cor', 'Custo', 'Preço venda', 'Estoque', 'Em condicional', 'Mínimo', 'Abaixo do mínimo', 'Ativo'].map(q).join(';')]
-    .concat(l.map(p => [p.codigo, p.tipo, p.descricao, p.marca, p.tamanho, p.cor, fmtDec(p.custo), fmtDec(p.preco), p.estoque, emCond(p.id), p.minimo, estaBaixo(p) ? 'SIM' : '', p.ativo !== false ? 'SIM' : 'NÃO'].map(q).join(';')));
+  const linhas = [['Código', 'Tipo', 'Descrição', 'Marca', 'Tamanho', 'Cor', 'Custo', 'Preço venda', 'Estoque', 'Araras', 'Estoque (lá atrás)', 'Em condicional', 'Mínimo', 'Abaixo do mínimo', 'Ativo'].map(q).join(';')]
+    .concat(l.map(p => [p.codigo, p.tipo, p.descricao, p.marca, p.tamanho, p.cor, fmtDec(p.custo), fmtDec(p.preco), p.estoque, qAraras(p), qFundo(p), emCond(p.id), p.minimo, estaBaixo(p) ? 'SIM' : '', p.ativo !== false ? 'SIM' : 'NÃO'].map(q).join(';')));
   baixar('estoque_' + hoje() + '.csv', '﻿' + linhas.join('\r\n'), 'text/csv;charset=utf-8');
 };
 function baixar(nome, conteudo, tipo) {
@@ -2759,6 +2777,94 @@ ACT.lgpdAnonConf = el => {
   if (velho && velho.length >= 3) db.movs.forEach(m => { if (typeof m.ref === 'string' && m.ref.endsWith(' – ' + velho)) m.ref = m.ref.slice(0, -velho.length) + novo; });
   registrar('Cliente anonimizado (LGPD)', 'cliente nº ' + c.id);
   salvar(); fecharModal(); render(); aviso('Dados do cliente anonimizados.', 'ok');
+};
+
+/* ===== Localização das peças: Araras (salão) × Estoque (lá atrás) =====
+   p.estoque continua sendo o total da loja. p.estqFundo = quantas dessas peças estão no Estoque (lá atrás);
+   Araras = total − Estoque. Produto sem estqFundo = tudo nas Araras (é como ficaram os produtos já cadastrados).
+   Vendas, condicionais e ajustes que baixam o total tiram das Araras primeiro; se as Araras zerarem, o Estoque
+   diminui junto (a peça veio lá de trás). Devoluções, trocas e entradas voltam para as Araras, salvo a entrada
+   marcada para o Estoque. A transferência só muda o lugar: o total não muda. */
+const LOCAIS = { araras: { nome: 'Araras', curto: 'A', cls: 'loc-ar' }, estoque: { nome: 'Estoque', curto: 'E', cls: 'loc-es' } };
+const qFundo = p => Math.max(0, Math.min(int(p.estqFundo) || 0, Math.max(0, int(p.estoque))));
+const qAraras = p => Math.max(0, int(p.estoque)) - qFundo(p);
+const qLocal = (p, l) => l === 'estoque' ? qFundo(p) : qAraras(p);
+function acertarLocais() {
+  db.produtos.forEach(p => { if (p.estqFundo !== undefined) { const f = qFundo(p); if (f !== p.estqFundo) p.estqFundo = f; } });
+}
+const seloLoc = (l, n, longo) => `<span class="loc ${LOCAIS[l].cls}" title="${LOCAIS[l].nome}: ${n} peça(s)">${longo ? LOCAIS[l].nome : LOCAIS[l].curto} ${n}</span>`;
+const selosLoc = (p, longo) => qFundo(p) ? seloLoc('araras', qAraras(p), longo) + ' ' + seloLoc('estoque', qFundo(p), longo) : seloLoc('araras', qAraras(p), longo);
+const barraLoc = p => { const t = Math.max(0, int(p.estoque)); if (!t) return ''; const a = Math.round(qAraras(p) / t * 100); return `<i class="loc-barra" style="background:linear-gradient(90deg,var(--loc-ar-f) ${a}%,var(--loc-es-f) ${a}%)"></i>`; };
+const somaLoc = (l, k) => l.reduce((s, p) => s + qLocal(p, k), 0);
+function moverLocal(p, de, q, ref) {
+  q = int(q); if (q < 1) return false;
+  if (q > qLocal(p, de)) return false;
+  p.estqFundo = qFundo(p) + (de === 'araras' ? q : -q);
+  const para = de === 'araras' ? 'estoque' : 'araras';
+  db.movs.push({ id: db.seq.mov++, data: agora(), usuario: eu.nome, prod: p.id, tipo: 'TRANSFERÊNCIA', qtd: 0, saldo: p.estoque, transf: q, de, para, ref: `${q} peça(s) ${LOCAIS[de].nome} → ${LOCAIS[para].nome}${ref ? ' – ' + ref : ''}` });
+  return true;
+}
+/* transferir um tamanho */
+ACT.locTransf = el => {
+  const p = prod(+el.dataset.id); if (!p) return;
+  const de = el.dataset.de || (qAraras(p) > 0 ? 'araras' : 'estoque');
+  abrirModal('Transferir peças – ' + esc(nomeProd(p)) + ' ' + esc(p.tamanho), `<p><b>${esc(p.codigo)}</b> – ${esc(nomeCompleto(p))}</p>
+    <div class="resumo-tit"><div class="rbox loc-box-ar"><small>Araras</small><b>${qAraras(p)}</b><span>no salão</span></div><div class="rbox loc-box-es"><small>Estoque</small><b>${qFundo(p)}</b><span>lá atrás</span></div></div>
+    <div class="form2"><label>De → para<select id="lt-de"><option value="araras" ${de === 'araras' ? 'selected' : ''}>Araras → Estoque</option><option value="estoque" ${de === 'estoque' ? 'selected' : ''}>Estoque → Araras</option></select></label>
+      <label>Quantidade<input id="lt-qtd" type="number" min="1" value="1" data-enter="locTransfOk" data-id="${p.id}"></label>
+      <label class="full">Observação (opcional)<input id="lt-obs" placeholder="Ex.: reposição da arara, peças repetidas"></label></div>`,
+    `<button class="btn pri" data-act="locTransfOk" data-id="${p.id}">Transferir</button>`);
+  setTimeout(() => { const i = $('#lt-qtd'); if (i) i.select(); }, 50);
+};
+ACT.locTransfOk = el => {
+  const p = prod(+el.dataset.id); if (!p) return;
+  const de = $('#lt-de').value, q = int($('#lt-qtd').value);
+  if (q < 1) return aviso('Informe a quantidade.', 'erro');
+  if (q > qLocal(p, de)) return aviso(`Só há ${qLocal(p, de)} peça(s) em ${LOCAIS[de].nome}.`, 'erro');
+  moverLocal(p, de, q, $('#lt-obs').value.trim());
+  registrar('Transferência de local', `${p.codigo} · ${q} peça(s) ${LOCAIS[de].nome} → ${LOCAIS[de === 'araras' ? 'estoque' : 'araras'].nome}`);
+  salvar(); fecharModal(); render(); aviso(`${q} peça(s) transferida(s) para ${LOCAIS[de === 'araras' ? 'estoque' : 'araras'].nome}.`, 'ok');
+};
+/* transferência em lote (leitor de código de barras) */
+let trLote = { de: 'araras', itens: [] };
+function telaTrLote() {
+  const para = trLote.de === 'araras' ? 'estoque' : 'araras', tot = trLote.itens.reduce((s, i) => s + i.qtd, 0);
+  return `<div class="seg" style="margin-bottom:10px">${[['araras', 'Araras → Estoque'], ['estoque', 'Estoque → Araras']].map(([v, t]) => `<button class="${trLote.de === v ? 'on' : ''}" data-act="trDe" data-v="${v}">${t}</button>`).join('')}</div>
+    <p class="mut" style="margin-top:0">Passe o leitor na etiqueta de cada peça (cada leitura soma 1) ou digite o código e tecle Enter. As peças saem de <span class="loc ${LOCAIS[trLote.de].cls}">${LOCAIS[trLote.de].nome}</span> e vão para <span class="loc ${LOCAIS[para].cls}">${LOCAIS[para].nome}</span>.</p>
+    <div class="form2"><label class="full">Código da etiqueta<input id="tr-cod" autocomplete="off" data-enter="trAdd" placeholder="leitor ou código" autofocus></label></div>
+    ${trLote.itens.length ? tabSimples(['Produto', 'Tam.', 'Disponível em ' + LOCAIS[trLote.de].nome, 'Transferir', ''], trLote.itens.map((i, k) => { const p = prod(i.prod); return [`<b>${esc(p.codigo)}</b> ${esc(nomeProd(p))}${p.cor ? ' · ' + esc(p.cor) : ''}`, esc(p.tamanho), qLocal(p, trLote.de), `<input type="number" min="1" value="${i.qtd}" style="width:70px" data-tr-qtd="${k}">`, `<button class="lnk perigo" data-act="trDel" data-v="${k}">tirar</button>`]; }), ['Total', '', '', tot + ' peça(s)', ''])
+      : '<p class="vazio">Nenhuma peça lida ainda.</p>'}`;
+}
+ACT.locLote = () => { trLote = { de: 'araras', itens: [] }; abrirModal('Transferir peças entre Araras e Estoque', `<div id="tr-corpo">${telaTrLote()}</div>`, `<button class="btn" data-act="trImprimir">Imprimir lista</button><button class="btn pri" data-act="trOk">Confirmar transferência</button>`, true); };
+const trRedesenhar = () => { const c = $('#tr-corpo'); if (c) c.innerHTML = telaTrLote(); const i = $('#tr-cod'); if (i) i.focus(); };
+ACT.trDe = el => { trLote.de = el.dataset.v; trRedesenhar(); };
+ACT.trDel = el => { trLote.itens.splice(+el.dataset.v, 1); trRedesenhar(); };
+ACT.trAdd = () => {
+  const inp = $('#tr-cod'), txt = (inp.value || '').trim(); if (!txt) return;
+  const p = acharExato(txt);
+  inp.value = '';
+  if (!p) return aviso('Etiqueta não encontrada: ' + txt, 'erro');
+  const ex = trLote.itens.find(i => i.prod === p.id), q = (ex ? ex.qtd : 0) + 1;
+  if (q > qLocal(p, trLote.de)) return aviso(`${p.codigo}: só há ${qLocal(p, trLote.de)} peça(s) em ${LOCAIS[trLote.de].nome}.`, 'erro');
+  if (ex) ex.qtd = q; else trLote.itens.push({ prod: p.id, qtd: 1 });
+  trRedesenhar();
+};
+document.addEventListener('change', e => { const k = e.target && e.target.dataset && e.target.dataset.trQtd; if (k !== undefined && trLote.itens[+k]) { trLote.itens[+k].qtd = Math.max(1, int(e.target.value)); } });
+ACT.trOk = () => {
+  if (!trLote.itens.length) return aviso('Leia pelo menos uma peça.', 'erro');
+  const falta = trLote.itens.filter(i => i.qtd > qLocal(prod(i.prod), trLote.de));
+  if (falta.length) return aviso('Quantidade maior que a disponível em ' + LOCAIS[trLote.de].nome + ': ' + falta.map(i => prod(i.prod).codigo).join(', '), 'erro');
+  const para = trLote.de === 'araras' ? 'estoque' : 'araras', tot = trLote.itens.reduce((s, i) => s + i.qtd, 0);
+  trLote.itens.forEach(i => moverLocal(prod(i.prod), trLote.de, i.qtd, 'transferência em lote'));
+  registrar('Transferência de local', `${tot} peça(s) de ${trLote.itens.length} produto(s): ${LOCAIS[trLote.de].nome} → ${LOCAIS[para].nome}`);
+  salvar(); fecharModal(); render(); aviso(`${tot} peça(s) transferida(s) para ${LOCAIS[para].nome}.`, 'ok');
+  trLote = { de: trLote.de, itens: [] };
+};
+ACT.trImprimir = () => {
+  if (!trLote.itens.length) return aviso('Leia pelo menos uma peça.', 'erro');
+  const para = trLote.de === 'araras' ? 'estoque' : 'araras';
+  registrar('Impressão', 'Lista de transferência de local');
+  imprimir(`${cabDoc('TRANSFERÊNCIA: ' + LOCAIS[trLote.de].nome.toUpperCase() + ' → ' + LOCAIS[para].nome.toUpperCase(), '', agora(), '')}<table><thead><tr><th>Código</th><th>Produto</th><th>Tam.</th><th>Qtd</th><th>Conferido</th></tr></thead><tbody>${trLote.itens.map(i => { const p = prod(i.prod); return `<tr><td>${esc(p.codigo)}</td><td>${esc(nomeCompleto(p))}</td><td style="text-align:center">${esc(p.tamanho)}</td><td style="text-align:right"><b>${i.qtd}</b></td><td style="width:80px"></td></tr>`; }).join('')}<tr style="font-weight:700;background:#f3f4f6"><td colspan="3">Total</td><td style="text-align:right">${trLote.itens.reduce((s, i) => s + i.qtd, 0)}</td><td></td></tr></tbody></table><p style="margin-top:30px">Responsável: ______________________________</p>`, 'A4');
 };
 
 /* ===== Trocas e devoluções ===== */
@@ -3822,7 +3928,8 @@ ACT.tamMenu = el => {
   const b = (act, t, cls) => `<button class="btn ${cls || ''}" data-act="${act}" data-id="${p.id}">${t}</button>`;
   abrirModal(`${esc(nomeProd(p))} · ${esc(p.marca)}${p.cor ? ' · ' + esc(p.cor) : ''} – tamanho ${esc(p.tamanho)}`,
     `<div class="resumo-tit"><div class="rbox ${p.estoque <= 0 ? 'err' : estaBaixo(p) ? 'at' : 'ok'}"><small>Estoque</small><b>${p.estoque}</b><span>mínimo ${p.minimo}${emCond(p.id) ? ' · ' + emCond(p.id) + ' em condicional' : ''}</span></div><div class="rbox"><small>Preço</small><b>${fmtR(p.preco)}</b><span>${adm() ? 'custo ' + fmtR(p.custo) : ''}</span></div><div class="rbox"><small>Código</small><b style="font-size:15px">${esc(p.codigo)}</b><span>${esc(p.barras || '')}</span></div></div>
-    <div class="acoes" style="justify-content:flex-start;flex-wrap:wrap">${adm() ? b('editarProduto', 'Editar', 'pri') + b('ajustarEstoque', 'Ajustar estoque') : ''}${b('histProduto', 'Histórico')}${b('etiquetas', 'Etiquetas')}${adm() ? b('excluirProduto', 'Excluir', 'perigo') : ''}</div>`, '');
+    <div class="resumo-tit"><div class="rbox loc-box-ar"><small>Araras</small><b>${qAraras(p)}</b><span>no salão</span></div><div class="rbox loc-box-es"><small>Estoque</small><b>${qFundo(p)}</b><span>lá atrás</span></div></div>
+    <div class="acoes" style="justify-content:flex-start;flex-wrap:wrap">${adm() ? b('editarProduto', 'Editar', 'pri') + b('ajustarEstoque', 'Ajustar estoque') : ''}${p.estoque > 0 ? b('locTransf', 'Transferir Araras ⇄ Estoque', 'loc-btn') : ''}${b('histProduto', 'Histórico')}${b('etiquetas', 'Etiquetas')}${adm() ? b('excluirProduto', 'Excluir', 'perigo') : ''}</div>`, '');
 };
 
 /* ===== Financeiro ===== */
@@ -4469,6 +4576,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.08-02', itens: ['Localização das peças: Araras (salão, verde-claro) e Estoque (lá atrás, azul-claro). Todos os produtos já cadastrados ficaram nas Araras.', 'Produtos e estoque → Transferir Araras ⇄ Estoque: em lote pelo leitor (com lista para imprimir) ou num tamanho só (clique no tamanho). O total da loja não muda; a transferência fica em Movimentações como TRANSFERÊNCIA.', 'Lista de produtos com a barrinha de cor em cada tamanho, os selos A (Araras) e E (Estoque) e o filtro Localização. Entrada de mercadoria escolhe onde guardar; o ajuste de estoque informa quantas estão lá atrás; o CSV ganhou as colunas Araras e Estoque.', 'Na venda e na condicional, se a peça não está nas Araras, o sistema avisa para pegar no Estoque (lá atrás). Venda tira das Araras primeiro.', 'Ajuda e Manual do suporte com o passo a passo da transferência e da localização.'] },
   { v: '2026.11.08-01', itens: ['Nome neutro: em todo o sistema, recibos, termos, relatórios, Ajuda e Manual, "Vendedora" passou a ser "Vendedor" (a loja pode ter vendedores e vendedoras). Os cadastros e o histórico não mudam.'] },
   { v: '2026.11.07-07', itens: ['Ajuda e Manual do suporte atualizados: LGPD (autorização de mensagens, cópia dos dados, anonimização e aviso de privacidade), backup na nuvem, e-mail de monitoramento, gerador de licenças com tela e o botão Voltar que zera ao clicar no logo da loja.'] },
   { v: '2026.11.07-06', itens: ['LGPD (privacidade dos clientes): no cadastro do cliente, campo "Mensagens de promoção e aniversário" (Autoriza / Não autoriza / Não perguntado); quem não autoriza fica com o WhatsApp de aniversário e de cashback bloqueado.', 'Clientes → Privacidade (LGPD): resumo das autorizações e aviso de privacidade editável para imprimir no balcão.', 'Clientes → Ver: Cópia dos dados (PDF ou arquivo) e Anonimizar, para atender o pedido do cliente sem perder vendas e valores nos relatórios.', 'Clicar no ícone/nome da loja no menu abre o Painel e limpa o botão Voltar (começa do zero).'] },
@@ -5016,7 +5124,7 @@ const AJUDA_MAPA = [
   ['clientes', 'todos', 'Cadastro de clientes, compras, condicionais e créditos (vale-troca) de cada um, com a autorização de mensagens de promoção (LGPD). O administrador tem o botão Privacidade (LGPD) e, em Ver, a cópia dos dados e a anonimização.'],
   ['fidelidade', 'todos', 'Aniversariantes do dia, da semana e do mês com WhatsApp pronto, presente de aniversário e cashback das compras (recurso Premium).'],
   ['entradas', 'todos', 'Entrada de mercadoria no estoque, à mão ou importando o XML da nota fiscal do fornecedor, com impressão das etiquetas.'],
-  ['produtos', 'todos', 'Lista de produtos por modelo e tamanho, com foto e abas (com estoque, sem estoque, abaixo do mínimo, em condicional, inativos). O administrador cadastra, edita, ajusta estoque e imprime etiquetas e a lista de compra.'],
+  ['produtos', 'todos', 'Lista de produtos por modelo e tamanho, com foto e abas (com estoque, sem estoque, abaixo do mínimo, em condicional, inativos). Mostra onde estão as peças: Araras (verde-claro, no salão) e Estoque (azul-claro, lá atrás), com transferência entre os dois. O administrador cadastra, edita, ajusta estoque e imprime etiquetas e a lista de compra.'],
   ['inventario', 'todos', 'Contagem do estoque pelo leitor ou pela câmera do celular, com sobras, faltas e ajuste no final (recurso Premium).'],
   ['promocoes', 'adm', 'Promoções com desconto em % e data de início e fim, por tipo, marca, coleção ou código (recurso Premium).'],
   ['movs', 'todos', 'Histórico de tudo o que entrou e saiu do estoque: entradas, vendas, condicionais, trocas, cancelamentos e ajustes.'],
@@ -5119,7 +5227,18 @@ const AJUDA_PASSOS = [
   { t: 'Registrar uma condicional (saída)', quem: 'todos', ir: 'condicionais', p: ['Abra <b>Condicionais</b>.', 'Adicione as peças (leitor ou busca + <b>Adicionar</b>).', 'Preencha <b>Cliente</b> e <b>Telefone</b> (obrigatórios), CPF, endereço e a data em <b>Devolver até</b>.', 'Clique em <b>Registrar saída e imprimir termo</b>. As peças saem do estoque e o cliente assina o termo.'] },
   { t: 'Fazer o acerto da condicional', quem: 'todos', ir: 'condicionais', p: ['Em <b>Condicionais → Em aberto</b>, clique em <b>Acertar / devolução</b> na condicional do cliente.', 'Informe quantas peças de cada item o cliente <b>devolveu</b> (ou use <b>Devolveu tudo</b> / <b>Comprou tudo</b>).', 'Para o que ele ficou, escolha a forma de pagamento.', 'Confirme: o que voltou entra no estoque e o que ficou vira venda com recibo.'] },
   { t: 'Fazer uma troca ou devolução', quem: 'todos', ir: 'trocas', p: ['Abra <b>Trocas e devoluções</b>.', 'Digite o número do recibo da venda e clique em <b>Buscar venda</b>. (Sem o recibo em mãos: procure a venda em Vendas → Vendas realizadas.)', 'Informe a quantidade de cada peça que volta.', 'Escolha se o valor vira <b>vale-troca</b> (crédito do cliente, precisa de nome e telefone) ou é <b>devolvido</b>.', 'Confirme. As peças voltam ao estoque. Para levar outra peça na troca, faça uma venda nova usando o vale-troca.'] },
-  { t: 'Dar entrada de mercadoria', quem: 'todos', ir: 'entradas', p: ['Abra <b>Entrada de mercadoria</b>.', 'Com nota fiscal eletrônica: clique em <b>Importar XML da NF-e do fornecedor</b> e escolha o arquivo XML. Os itens novos são cadastrados na hora.', 'Sem XML: preencha Fornecedor e Nota fiscal e adicione os produtos e as quantidades. (Produto novo precisa ser cadastrado antes em Produtos e estoque.)', 'Clique em <b>Confirmar entrada no estoque</b>.', 'Em <b>Últimas entradas</b>, clique em <b>Etiquetas</b> para imprimir as etiquetas das peças que chegaram.'] },
+  { t: 'Dar entrada de mercadoria', quem: 'todos', ir: 'entradas', p: ['Abra <b>Entrada de mercadoria</b>.', 'Com nota fiscal eletrônica: clique em <b>Importar XML da NF-e do fornecedor</b> e escolha o arquivo XML. Os itens novos são cadastrados na hora.', 'Em <b>Guardar em</b>, escolha <b>Araras</b> (salão) ou <b>Estoque</b> (lá atrás).', 'Sem XML: preencha Fornecedor e Nota fiscal e adicione os produtos e as quantidades. (Produto novo precisa ser cadastrado antes em Produtos e estoque.)', 'Clique em <b>Confirmar entrada no estoque</b>.', 'Em <b>Últimas entradas</b>, clique em <b>Etiquetas</b> para imprimir as etiquetas das peças que chegaram.'] },
+  { t: 'Transferir peças entre Araras e Estoque (lá atrás)', quem: 'todos', ir: 'produtos', p: [
+    'Cada peça fica em um de dois lugares: <span class="loc loc-ar">Araras</span> (no salão, verde-claro) ou <span class="loc loc-es">Estoque</span> (lá atrás, azul-claro). O total da loja é a soma dos dois.',
+    'Várias peças de uma vez: em <b>Produtos e estoque</b>, clique em <b>Transferir Araras ⇄ Estoque</b>, escolha o sentido (<b>Araras → Estoque</b> ou <b>Estoque → Araras</b>) e passe o leitor na etiqueta de cada peça (cada leitura soma 1). Dá para corrigir a quantidade na lista ou <b>tirar</b> um item.',
+    'Se quiser, clique em <b>Imprimir lista</b> para levar ao estoque e conferir. Depois clique em <b>Confirmar transferência</b>.',
+    'Um tamanho só: clique no tamanho do produto → <b>Transferir Araras ⇄ Estoque</b> → escolha o sentido e a quantidade → <b>Transferir</b>.',
+    'A transferência só muda o lugar, não o total. Ela fica em Movimentações como TRANSFERÊNCIA (⇄).'] },
+  { t: 'Ver onde estão as peças (Araras ou Estoque)', quem: 'todos', ir: 'produtos', p: [
+    'Na lista por modelo, cada tamanho tem uma barrinha embaixo do número: verde = Araras, azul = Estoque; meio a meio = tem nos dois lugares.',
+    'Na coluna Peças aparecem os selos <span class="loc loc-ar">A 12</span> (Araras) e <span class="loc loc-es">E 7</span> (Estoque). Clique no tamanho para ver as quantidades de cada lugar.',
+    'Use o filtro <b>Localização</b> para listar só o que está nas Araras ou só o que está no Estoque (lá atrás).',
+    'Na venda e na condicional, a busca mostra A e E ao lado do estoque e, se a peça não estiver nas Araras, o sistema avisa para pegar no Estoque.'] },
   { t: 'Cadastrar um produto', quem: 'adm', ir: 'produtos', p: ['Abra <b>Produtos e estoque</b> e clique em <b>+ Novo produto</b>.', 'Preencha tipo, descrição, marca, cor, tamanhos, preço de venda, custo e estoque mínimo.', 'Se quiser, coloque a foto (arquivo ou câmera).', 'Salve. Para muitos produtos de uma vez, use <b>Importar planilha</b> (baixe antes o <b>Modelo da planilha</b>).'] },
   { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b> para etiquetar tudo o que está na lista, ou marque a caixinha dos produtos que quer e clique em <b>Etiquetas dos selecionados</b>. Também há <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
   { t: 'Ajustar o estoque (contagem)', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, clique no <b>tamanho</b> do produto.', 'Escolha <b>Ajustar</b>.', 'Informe a <b>Quantidade contada na loja</b> e o <b>Motivo</b>.', 'Clique em <b>Salvar ajuste</b>. O ajuste fica registrado em Movimentações.'] },
@@ -5178,6 +5297,9 @@ const AJUDA_PERGUNTAS = [
   { p: 'Como faço o botão "Voltar para…" do topo sumir?', quem: 'todos', r: 'Clique no logo ou no nome da loja, no alto do menu: abre o Painel e o Voltar começa do zero.' },
   { p: 'O e-mail de monitoramento não chegou ou deu erro.', quem: 'master', r: 'Configurações → E-mail de monitoramento mostra o último envio e o último erro. "O Gmail recusou o e-mail ou a senha" = use a senha de app de 16 letras (não a senha normal) da mesma conta que envia. Confira também o spam e se a caixa Enviar o e-mail de monitoramento está marcada.' },
   { p: 'O backup na nuvem está com aviso de atraso.', quem: 'adm', r: 'Confira se o Google Drive (ou o OneDrive) está aberto e conectado no computador do caixa e se a pasta indicada em Configurações → Backup e dados → Backup na nuvem existe. O sistema só envia backup criptografado.' },
+  { p: 'Vendi uma peça que estava no Estoque (lá atrás). Preciso transferir antes?', quem: 'todos', r: 'Não. A venda tira primeiro das Araras; se lá não tiver, a peça sai do Estoque sozinha. O sistema avisa na hora de adicionar para você pegar lá atrás.' },
+  { p: 'A mercadoria nova vai direto para lá atrás. Como registro?', quem: 'todos', r: 'Em Entrada de mercadoria, no campo Guardar em, escolha Estoque (lá atrás) antes de confirmar. Para o salão, deixe Araras.' },
+  { p: 'Devolução e troca voltam para onde?', quem: 'todos', r: 'Para as Araras. Se a peça for guardada lá atrás, faça a transferência Araras → Estoque.' },
   { p: 'Esqueci a minha senha. E agora?', quem: 'todos', r: 'Peça a um administrador: Usuárias / usuários → Editar / senha → digite uma senha nova e salve. No próximo acesso você define a sua.' },
   { p: 'Apareceu que o meu usuário está bloqueado.', quem: 'todos', r: 'Depois de várias senhas erradas seguidas, o usuário fica bloqueado por alguns minutos. Espere ou peça ao administrador: Usuárias / usuários → Editar / senha → Salvar libera na hora.' },
   { p: 'O sistema pediu a senha de novo no meio do trabalho.', quem: 'todos', r: 'É o bloqueio por falta de uso, para ninguém usar o seu usuário quando você sai do caixa. Digite a senha: a venda que estava sendo montada continua lá.' },
@@ -6701,7 +6823,8 @@ const MANUAL = [
     <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo).</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
-    <h4>Produtos e estoque</h4><p>Filtros, grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
+    <h4>Produtos e estoque</h4><p>Filtros (inclusive <b>Localização</b>), grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>
+    <p><b>Araras × Estoque:</b> <code>p.estoque</code> é o total; <code>p.estqFundo</code> = peças lá atrás; Araras = total − Estoque (produto antigo sem o campo = tudo nas Araras). Venda, condicional e ajuste que baixam o total tiram das Araras primeiro e só depois do Estoque; devolução, troca e entrada voltam para as Araras, salvo a entrada com "Guardar em: Estoque". Transferência (lote pelo leitor com lista para imprimir, ou um tamanho pelo menu do tamanho) só muda o lugar: movimentação TRANSFERÊNCIA com qtd 0 e ⇄ n. O ajuste de estoque pede o total e quantas estão lá atrás. Cores: Araras verde-claro, Estoque azul-claro (selos A/E, barrinha nos tamanhos, caixas no menu do tamanho). CSV do estoque tem as colunas Araras e Estoque. Inventário conta o total: depois de finalizar, ajuste a quantidade lá atrás pelo Ajustar estoque se precisar.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
     <h4>Entrada de mercadoria</h4>${mnP('entradas', 'Entrada manual ou pelo XML da NF-e.')}
     <h4>Financeiro</h4>${mnP('financeiro', 'Contas a receber e a pagar.')}
     <h4>Relatórios</h4>${mnP('relatorios', 'Relatórios com totais, PDF e Excel.')}
@@ -6729,11 +6852,12 @@ const MANUAL = [
       <tr><td>E-mail de monitoramento: "o Gmail recusou o e-mail ou a senha"</td><td>Senha normal em vez de senha de app; conta diferente da que criou a senha</td><td>Gerar senha de app na mesma conta (verificação em duas etapas ligada) e colar de novo.</td></tr>
       <tr><td>E-mail não chega</td><td>Caixa "Enviar" marcada? Spam? Último erro na tela</td><td>Enviar e-mail de teste; olhar <code>dados</code>/servidor.log.</td></tr>
       <tr><td>Backup na nuvem atrasado / pasta inacessível</td><td>Google Drive aberto e conectado? Criptografia ligada?</td><td>Abrir o Drive, conferir a pasta Backups; ligar a criptografia.</td></tr>
+      <tr><td>Quantidade das Araras/Estoque não bate com a prateleira</td><td>Transferência não lançada; venda tirou do Estoque porque as Araras zeraram</td><td>Ajustar estoque (total e "no Estoque") ou fazer a transferência; conferir Movimentações → TRANSFERÊNCIA.</td></tr>
       <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
     <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
   { id: 'treinamento', t: 'Roteiro de treinamento', h: `
     <h4>Módulo 1 – Vendedores (cerca de 1 hora)</h4>
-    <ol class="mn-passos"><li>Entrar, trocar a senha provisória e cadastrar o PIN.</li><li>Abrir o caixa com o troco.</li><li>Venda com leitor, cliente, desconto e duas formas de pagamento; recibo e WhatsApp.</li><li>Venda no cartão escolhendo bandeira e parcelas.</li><li>Venda para outro vendedor (PIN).</li><li>Condicional: saída, acerto e devolução.</li><li>Troca e devolução (crédito ou dinheiro).</li><li>Cadastro de cliente com data de nascimento.</li><li>Fechar o caixa (fechamento cego se configurado).</li><li>No celular: entrar, vender e ler código pela câmera.</li></ol>
+    <ol class="mn-passos"><li>Entrar, trocar a senha provisória e cadastrar o PIN.</li><li>Abrir o caixa com o troco.</li><li>Venda com leitor, cliente, desconto e duas formas de pagamento; recibo e WhatsApp.</li><li>Venda no cartão escolhendo bandeira e parcelas.</li><li>Venda para outro vendedor (PIN).</li><li>Transferir peças Araras ⇄ Estoque pelo leitor.</li><li>Condicional: saída, acerto e devolução.</li><li>Troca e devolução (crédito ou dinheiro).</li><li>Cadastro de cliente com data de nascimento.</li><li>Fechar o caixa (fechamento cego se configurado).</li><li>No celular: entrar, vender e ler código pela câmera.</li></ol>
     <h4>Módulo 2 – Administradores (cerca de 2 horas)</h4>
     <ol class="mn-passos"><li>Entrada de mercadoria (XML) e etiquetas.</li><li>Produtos: preço, mínimo, foto, inativar.</li><li>Financeiro: receber crediário, pagar contas.</li><li>Comissões e metas (faixas e bônus).</li><li>Promoções e cashback.</li><li>Inventário.</li><li>Relatórios (PDF/Excel).</li><li>Usuários, reabertura de caixa, correção de vendedor.</li><li>Backup: exportar e conferir a pasta extra.</li></ol>
     <h4>Checklist de conclusão</h4>

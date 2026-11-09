@@ -1,12 +1,16 @@
 {
- "versao": "2026.11.08-01",
- "publicadoEm": "08/11/2026 20:53",
+ "versao": "2026.11.08-02",
+ "publicadoEm": "08/11/2026 21:02",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "3f17514a68116c0c1db365fb2f766187df6d5ccfee248fee855c1d2f2d0fe054",
- "tamanho": 772585,
- "assinatura": "j4F/PFjkfRiRq5J57ZXuA0et1zSkAF3RElK5BUXt8VSY0eO+99X8ENhtRCrO2clfY+wlFcYzx5oh+sOmLJMBAqX9AYp7ohlJMV82b8jqLU8jp07RlPQsy4y14/3dpzh3kZWNDI0CdGJerIn/Z0Yu3L0gu+YKRnwt72Hk9cWjtisRXr4VG/yZtrJcG4pC2B++7a1j1m0BfJSPyz5gLEQGx91YKDnntYw78O8KPoeeGVC+i6ZVpRpG5gePKNy32hjTsA1ki3xbmdKGmFAIrvZrH15QN1nYRpfpKe2LsGpkKy3ejBqTMuryYb021SaXLnT6JIiASW+x4xoAx67M+L/viRMoZ/0yn6T71ByS5zRLFvjMhfXHzepr0pt1vuy/uVFNbnMzxs/D9pQi/da+wba3SMZp8dMRvLkZ7ZzfzYumelYr2FMhOwosHCDXiRUR24aY0PyAp0b9/Xn9EdReQKHAqzfxcCYVkAXkadzNvlg8jYJfO5Y8ULjBDDwJZ2QdgKrx",
+ "sha256": "5545ef737985393df838541e5f8f2a55bc3575b56adbbc548565a0f75d2244d3",
+ "tamanho": 789703,
+ "assinatura": "W/nbIaKQ1V+DeG5p5LYBAYMUH2ptZQvkbRndiafWle+jI/f7Ec2B+uPzrV4HgjR3HrPOwsILTcIFq6vIANmO7ogBIwnMK2DiwwMjwPdN81Ftz3YpveqPBrwVH5im2F/5z1kOZ+DUP9oIllb+iN3+GztmL9Pmvp0nyR7ECGO4Uz77yK6B9VysJvizan+Iyn7yklfjiKE9tRwmyE3mRrtK7374dpWpOiWC/FfZnlZo/yCT+Sib6YXPg2EAfa4kg7IybHdKfCI0aoTBe5uh8JWtwzPuMSoq72K7aQCk531inSKMfiUCR4ujH+xa8aEA/4L/1F+5ssgHGXP8eH74UX8OT+Mdax6FWhlDVK6pTLSJJDjZaJQGiIMon6uCLKNvri84RJfKarar04NxHCkY6gAgDeR3d4CVZv9ay+KDt1jdN7A9YSwfi4Slk6h3ntIh2uUoHBtlzPo5Wwa9t86PJxjWoCwexQCAakvEKErk8PSu5/r4UCcG+jYX44r4dxH1J/lt",
  "novidades": [
-  "Nome neutro: em todo o sistema, recibos, termos, relatórios, Ajuda e Manual, \"Vendedora\" passou a ser \"Vendedor\" (a loja pode ter vendedores e vendedoras). Os cadastros e o histórico não mudam."
+  "Localização das peças: Araras (salão, verde-claro) e Estoque (lá atrás, azul-claro). Todos os produtos já cadastrados ficaram nas Araras.",
+  "Produtos e estoque → Transferir Araras ⇄ Estoque: em lote pelo leitor (com lista para imprimir) ou num tamanho só (clique no tamanho). O total da loja não muda; a transferência fica em Movimentações como TRANSFERÊNCIA.",
+  "Lista de produtos com a barrinha de cor em cada tamanho, os selos A (Araras) e E (Estoque) e o filtro Localização. Entrada de mercadoria escolhe onde guardar; o ajuste de estoque informa quantas estão lá atrás; o CSV ganhou as colunas Araras e Estoque.",
+  "Na venda e na condicional, se a peça não está nas Araras, o sistema avisa para pegar no Estoque (lá atrás). Venda tira das Araras primeiro.",
+  "Ajuda e Manual do suporte com o passo a passo da transferência e da localização."
  ],
  "servidor": {
   "versao": "2026.11.08-01",
