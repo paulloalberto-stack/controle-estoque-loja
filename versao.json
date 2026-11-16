@@ -1,13 +1,12 @@
 {
- "versao": "2026.11.16-02",
- "publicadoEm": "16/11/2026 12:31",
+ "versao": "2026.11.16-03",
+ "publicadoEm": "16/11/2026 12:34",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "18eafc82245342e13666d1674262e04cee918a8084e8bcb2fe5d1fce2a31928d",
- "tamanho": 811404,
- "assinatura": "Pw4jbk5XWkaKUIqwnJKJyJJCLJ/fBaEG1WL8u+ePhfsCmVPgHse9DkcZTmQHPpPUVL6EzUvmP1Jq0WUNiKJa3ThbP6vkqojhoq0FkSc/opZpcjXUOXIozeoGmEWDKCNhzURbp+qzQcVVVhq4f1WpbzKhWtIfseGdvq0G+GJkkyXnaZ8DHi8KdGw8i5vAoqbrfSfXm/En5wfMgaDRICCGvb8KSGfHzNLRDEY4RRv75msJ5L1EKSXjXxkxLFfc/Xnf0yX+7KmwUpHxVuyrFyJ6Sb0LfQvS9sgmsC434xw84nbjaxN1tnOMGVEqUIkWd3UG+6uqQ0HFTfv6Ahwk/e2CRIXtCkUxORBtjRkBlT8ac14JGipxrKHHs5ZidRuZtlK0i/YpjdnGwXq9s2/yPF+hlxDj4K8HfMDynmT9GiRGdEIIeu6QQMrsEHHAfHAsBUKSAYEjI30AblNBwc5CPcCBaISRC0v7l285xcXA1OzZ2YP3BQGJLk2b7c0hVyeKSHP2",
+ "sha256": "64b5590ba93f57ea14b6282afb6453582951bf3038def848ed82b59979e22e4e",
+ "tamanho": 812914,
+ "assinatura": "KvtBpEgCplsmTHXzG7vdrNsTxilMpFSQ8HqWrXpuxIzm6EvvwIgKjdK4B1J9XqPPb7M9BjOQRSfw+n5UgIB9kobsloZ7P36VgsY3fnquMozIokEoVrgQA//Rle/uR94WrR2hzAm8wR6RHdxJk2B3bL0IfNiTEUJdaw3kNW03Rf2A7RJ8QckH16awgAYSyiY9ss495GdVxRRblIQlqq541M53N35BARo32vYNQ74Y6MnMiwhSoKSGTGwwBugctFOT++bIK4WfmQbCAo1buMwR3D6dWjAU8+p3Wtr7M1nY0aUnmF8tAqtThKUp8/P2GkAvev0CpEwB3v8z0seDo3JSnB8LZcaLwS3ixtAYcCuzaaV2JJ2qLJgNq07kiuY2MpqH9a7xgT5n7AHq50OLqnBjIT6hoK2cPbqoUh2Iv+oOb2+Uivs7LH8XpVxcBrRWVOQBTXGIKEpPihH0O3wjyYOBTk9ojhqXCBI0iH4JN6kbiFvtqOJo6GPCudw2egrdvfsW",
  "novidades": [
-  "Vale-troca na venda: ao usar o crédito do cliente, a tela mostra o total, o vale-troca abatido e o valor A PAGAR em destaque.",
-  "Recibo: mostra Total da compra, (−) Vale-troca usado e TOTAL A PAGAR; o pagamento lista só o que o cliente pagou (ex.: Pix R$ 129,99) e o QR Code do Pix sai com o valor a pagar. O saldo de vale-troca que fica aparece embaixo."
+  "Vendas com vale-troca continuam com o valor total das peças, com destaque verde para a parte paga em vale-troca: na lista de vendas (em cada venda e no total), no relatório (cartão Vendas no período e linha da forma Crédito do cliente)."
  ],
  "servidor": {
   "versao": "2026.11.08-01",
