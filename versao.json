@@ -1,15 +1,13 @@
 {
- "versao": "2026.11.16-01",
- "publicadoEm": "16/11/2026 11:57",
+ "versao": "2026.11.16-02",
+ "publicadoEm": "16/11/2026 12:31",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "3a675e5c684378154e4324d5d8958f447a0ea2ca427e9d58acd7664b55218fcf",
- "tamanho": 809453,
- "assinatura": "m+GWbeF6hW7L8s0xP04844JYshUcujKIuRczW6zzcNKDuBSkDUtVhtM4bD7QDZBg8v20Z7BcUVuCTOYsFWNKLCPym9/JP/wnhCzRKxOkdDfMV1rimzJcZhLCwub2V/p0OtoEWo1r+U1g8WxFbqJe1qi1+BsDj4169yrbl9ISiR8twCqOtZsNhLKUeHXgPiJHM7Nzt7zvn3C1P4goHyGps8XAlv0GheSSeN8CRDUVmletLObsrPvcraLhWxx6nMbMBw/dFMCyi1cThOGcEFQkEiP/nfaYtoCL0odIqlBgvKj0ZqI2xJeMfs9odHMFmqs25DxIKQvwQ7F41qjFwLeWhkoUP+tWFvplClwYQSlRrbOVsnMWTLxHmPAZG8CCpiSaGjSfKnel//Wr5efflCGHi2INqHyE+nw8HL6qEITK31tUD70MQzF8VxveLuT+xF/DHNH+IrJue1vC9PlE5taC9Yn0OOcq+RREA6kb3mG1+T05TZsgxmFmYd+Vj1WGmlJp",
+ "sha256": "18eafc82245342e13666d1674262e04cee918a8084e8bcb2fe5d1fce2a31928d",
+ "tamanho": 811404,
+ "assinatura": "Pw4jbk5XWkaKUIqwnJKJyJJCLJ/fBaEG1WL8u+ePhfsCmVPgHse9DkcZTmQHPpPUVL6EzUvmP1Jq0WUNiKJa3ThbP6vkqojhoq0FkSc/opZpcjXUOXIozeoGmEWDKCNhzURbp+qzQcVVVhq4f1WpbzKhWtIfseGdvq0G+GJkkyXnaZ8DHi8KdGw8i5vAoqbrfSfXm/En5wfMgaDRICCGvb8KSGfHzNLRDEY4RRv75msJ5L1EKSXjXxkxLFfc/Xnf0yX+7KmwUpHxVuyrFyJ6Sb0LfQvS9sgmsC434xw84nbjaxN1tnOMGVEqUIkWd3UG+6uqQ0HFTfv6Ahwk/e2CRIXtCkUxORBtjRkBlT8ac14JGipxrKHHs5ZidRuZtlK0i/YpjdnGwXq9s2/yPF+hlxDj4K8HfMDynmT9GiRGdEIIeu6QQMrsEHHAfHAsBUKSAYEjI30AblNBwc5CPcCBaISRC0v7l285xcXA1OzZ2YP3BQGJLk2b7c0hVyeKSHP2",
  "novidades": [
-  "Venda: o desconto já vem em % (dá para trocar para R$ na mesma caixinha). No acerto de condicional também.",
-  "Caixa: clique no valor de Vendas, Recebimentos ou Esperado de cada forma de pagamento para ver as vendas, os títulos ou o extrato que formam aquele total.",
-  "Novo menu Vale-troca e créditos (também em Clientes): saldo de cada cliente (vale-troca, cashback e presente), vencimentos, movimentações por período, extrato por cliente para imprimir, WhatsApp com o saldo, Excel e lista para imprimir. O recibo da venda que usou crédito mostra quanto foi usado e o saldo que ainda fica.",
-  "Venda: ao escolher um cliente com crédito (vale-troca, cashback ou presente), aparece uma janela com o valor e a pergunta se quer usar; \"Usar o crédito\" já coloca no pagamento. O aviso ao lado do cliente ficou em destaque e também abre a pergunta."
+  "Vale-troca na venda: ao usar o crédito do cliente, a tela mostra o total, o vale-troca abatido e o valor A PAGAR em destaque.",
+  "Recibo: mostra Total da compra, (−) Vale-troca usado e TOTAL A PAGAR; o pagamento lista só o que o cliente pagou (ex.: Pix R$ 129,99) e o QR Code do Pix sai com o valor a pagar. O saldo de vale-troca que fica aparece embaixo."
  ],
  "servidor": {
   "versao": "2026.11.08-01",
