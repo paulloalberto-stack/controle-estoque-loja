@@ -1,16 +1,15 @@
 {
- "versao": "2026.11.08-02",
- "publicadoEm": "08/11/2026 21:02",
+ "versao": "2026.11.16-01",
+ "publicadoEm": "16/11/2026 11:57",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "5545ef737985393df838541e5f8f2a55bc3575b56adbbc548565a0f75d2244d3",
- "tamanho": 789703,
- "assinatura": "W/nbIaKQ1V+DeG5p5LYBAYMUH2ptZQvkbRndiafWle+jI/f7Ec2B+uPzrV4HgjR3HrPOwsILTcIFq6vIANmO7ogBIwnMK2DiwwMjwPdN81Ftz3YpveqPBrwVH5im2F/5z1kOZ+DUP9oIllb+iN3+GztmL9Pmvp0nyR7ECGO4Uz77yK6B9VysJvizan+Iyn7yklfjiKE9tRwmyE3mRrtK7374dpWpOiWC/FfZnlZo/yCT+Sib6YXPg2EAfa4kg7IybHdKfCI0aoTBe5uh8JWtwzPuMSoq72K7aQCk531inSKMfiUCR4ujH+xa8aEA/4L/1F+5ssgHGXP8eH74UX8OT+Mdax6FWhlDVK6pTLSJJDjZaJQGiIMon6uCLKNvri84RJfKarar04NxHCkY6gAgDeR3d4CVZv9ay+KDt1jdN7A9YSwfi4Slk6h3ntIh2uUoHBtlzPo5Wwa9t86PJxjWoCwexQCAakvEKErk8PSu5/r4UCcG+jYX44r4dxH1J/lt",
+ "sha256": "3a675e5c684378154e4324d5d8958f447a0ea2ca427e9d58acd7664b55218fcf",
+ "tamanho": 809453,
+ "assinatura": "m+GWbeF6hW7L8s0xP04844JYshUcujKIuRczW6zzcNKDuBSkDUtVhtM4bD7QDZBg8v20Z7BcUVuCTOYsFWNKLCPym9/JP/wnhCzRKxOkdDfMV1rimzJcZhLCwub2V/p0OtoEWo1r+U1g8WxFbqJe1qi1+BsDj4169yrbl9ISiR8twCqOtZsNhLKUeHXgPiJHM7Nzt7zvn3C1P4goHyGps8XAlv0GheSSeN8CRDUVmletLObsrPvcraLhWxx6nMbMBw/dFMCyi1cThOGcEFQkEiP/nfaYtoCL0odIqlBgvKj0ZqI2xJeMfs9odHMFmqs25DxIKQvwQ7F41qjFwLeWhkoUP+tWFvplClwYQSlRrbOVsnMWTLxHmPAZG8CCpiSaGjSfKnel//Wr5efflCGHi2INqHyE+nw8HL6qEITK31tUD70MQzF8VxveLuT+xF/DHNH+IrJue1vC9PlE5taC9Yn0OOcq+RREA6kb3mG1+T05TZsgxmFmYd+Vj1WGmlJp",
  "novidades": [
-  "Localização das peças: Araras (salão, verde-claro) e Estoque (lá atrás, azul-claro). Todos os produtos já cadastrados ficaram nas Araras.",
-  "Produtos e estoque → Transferir Araras ⇄ Estoque: em lote pelo leitor (com lista para imprimir) ou num tamanho só (clique no tamanho). O total da loja não muda; a transferência fica em Movimentações como TRANSFERÊNCIA.",
-  "Lista de produtos com a barrinha de cor em cada tamanho, os selos A (Araras) e E (Estoque) e o filtro Localização. Entrada de mercadoria escolhe onde guardar; o ajuste de estoque informa quantas estão lá atrás; o CSV ganhou as colunas Araras e Estoque.",
-  "Na venda e na condicional, se a peça não está nas Araras, o sistema avisa para pegar no Estoque (lá atrás). Venda tira das Araras primeiro.",
-  "Ajuda e Manual do suporte com o passo a passo da transferência e da localização."
+  "Venda: o desconto já vem em % (dá para trocar para R$ na mesma caixinha). No acerto de condicional também.",
+  "Caixa: clique no valor de Vendas, Recebimentos ou Esperado de cada forma de pagamento para ver as vendas, os títulos ou o extrato que formam aquele total.",
+  "Novo menu Vale-troca e créditos (também em Clientes): saldo de cada cliente (vale-troca, cashback e presente), vencimentos, movimentações por período, extrato por cliente para imprimir, WhatsApp com o saldo, Excel e lista para imprimir. O recibo da venda que usou crédito mostra quanto foi usado e o saldo que ainda fica.",
+  "Venda: ao escolher um cliente com crédito (vale-troca, cashback ou presente), aparece uma janela com o valor e a pergunta se quer usar; \"Usar o crédito\" já coloca no pagamento. O aviso ao lado do cliente ficou em destaque e também abre a pergunta."
  ],
  "servidor": {
   "versao": "2026.11.08-01",

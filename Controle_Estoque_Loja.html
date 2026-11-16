@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.08-02">
+<meta name="versao-sistema" content="2026.11.16-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -501,6 +501,11 @@ input[data-maiusc]::placeholder{text-transform:none}
 .tam-chip{display:inline-flex;flex-direction:column;align-items:center;min-width:42px;padding:3px 6px;border:1.5px solid #cfd4dd;border-radius:8px;background:#fff;cursor:pointer;font:inherit;line-height:1.15}
 .tam-chip b{font-size:12px}.tam-chip span{font-size:11.5px;color:var(--mut)}
 .tam-chip:hover{border-color:var(--ac)}
+.cred-aviso{display:inline-block;background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600;cursor:pointer;animation:credPulso 1.6s ease-in-out 3}
+.cred-aviso b{font-size:16px}
+@keyframes credPulso{50%{box-shadow:0 0 0 6px rgba(245,158,11,.25)}}
+.cred-pop{text-align:center}.cred-pop-v{font-size:40px;font-weight:800;color:#166534;margin:4px 0 6px}.cred-pop .tabw{text-align:left}
+.cx-val{font:inherit;color:inherit;padding:0;text-decoration:underline dotted;text-underline-offset:3px}.cx-val:hover{color:var(--ac)}
 :root{--loc-ar-f:#4ade80;--loc-es-f:#60a5fa}
 .loc{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11.5px;font-weight:700;line-height:1.5;white-space:nowrap}
 .loc-ar{background:#dcfce7;color:#166534;border:1px solid #86efac}
@@ -704,6 +709,18 @@ const TAMANHOS = {
 };
 const PREFIXO = { 'Camisa': 'CAM', 'Camiseta': 'CMT', 'Polo': 'POL', 'Calça': 'CAL', 'Bermuda': 'BER' };
 const CREDIARIO = 'Crediário / a prazo', CREDITO = 'Crédito do cliente (vale-troca)';
+function perguntarCredito(c) {
+  if (!c || view !== 'vendas') return;
+  const s = saldoCredito(c.id), tot = totalVenda(), ls = lotesCredito(c.id).filter(l => l.resto > 0);
+  abrirModal('Este cliente tem crédito', `<div class="cred-pop"><div class="cred-pop-v">${fmtR(s)}</div><p><b>${esc(c.nome)}</b> tem <b>${fmtR(s)}</b> de crédito para usar (vale-troca, cashback ou presente).</p>
+    ${ls.length ? tabSimples(['Origem', 'Vale até', 'Disponível'], ls.map(l => [esc(l.ref || ''), l.validade ? fmtDia(l.validade) : 'sem validade', fmtR(l.resto)])) : ''}
+    <p class="mut">${tot > 0 ? (s >= tot - 0.004 ? `O crédito cobre a venda toda (${fmtR(tot)}).` : `O crédito paga ${fmtR(s)} desta venda (${fmtR(tot)}); o restante ${fmtR(r2(tot - s))} fica em outra forma de pagamento.`) : 'Adicione as peças: o crédito entra como forma de pagamento da venda.'} Pergunte ao cliente se ele quer usar agora.</p></div>`,
+    `<button class="btn" data-act="credNao">Agora não</button><button class="btn pri" data-act="credUsar" data-id="${c.id}">Usar o crédito nesta venda</button>`);
+}
+function aplicarCredito(c) {
+  const s = saldoCredito(c.id), tot = totalVenda(), outras = form.venda.pags.filter(p => p.forma !== CREDITO && p.forma !== 'Dinheiro'), seg = (outras[0] || {}).forma || 'Dinheiro';
+  form.venda.pags = tot > 0 && s < tot - 0.004 ? [{ forma: CREDITO, valor: fmtDec(s) }, { forma: seg, valor: '' }] : [{ forma: CREDITO, valor: '' }];
+}
 const PAGAMENTOS = ['Dinheiro', 'Pix', 'Cartão de débito', 'Cartão de crédito', CREDIARIO, CREDITO];
 const FAIXAS = [[0, 100, 'Até R$ 100'], [100, 200, 'R$ 100 a 200'], [200, 300, 'R$ 200 a 300'], [300, 1e12, 'Acima de R$ 300']];
 const ORDEM_TAM = ['RN', 'PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG', 'XXG', 'EXG', 'G1', 'G2', 'G3', 'G4', 'U', 'UN', 'UNICO', 'ÚNICO'];
@@ -717,10 +734,11 @@ const form = {
   cond: { cliente: '', tel: '', doc: '', end: '', prazo: '' },
   entrada: { forn: '', nf: '', obs: '', cnpj: '', dups: [] }
 };
-function novaFormVenda() { return { cliente: '', doc: '', desc: '', desct: 'R', pags: [{ forma: 'Dinheiro', valor: '' }], parc: 1, venc1: '' }; }
+function novaFormVenda() { return { cliente: '', doc: '', desc: '', desct: 'P', pags: [{ forma: 'Dinheiro', valor: '' }], parc: 1, venc1: '' }; }
 const filtros = {
   prod: { busca: '', tipo: '', marca: '', tam: '', faixa: '', sit: 'estoque', col: '', modo: 'modelo', loc: '' },
   mov: { busca: '', tipo: '', de: '', ate: '' },
+  cred: { busca: '', sit: 'aberto', de: '', ate: '' },
   vh: { de: '', ate: '' },
   rel: { de: '', ate: '', parado: '60' },
   cli: { busca: '' },
@@ -1243,6 +1261,7 @@ function avisoMinimo() {
 
 /* ===== Render geral ===== */
 const ICONES = {
+  creditos: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 6v12" stroke-dasharray="2 2"/><circle cx="7" cy="12" r="1.5"/><path d="M15 10h4M15 14h3"/>',
   painel: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
   caixa: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
   vendas: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
@@ -1269,7 +1288,7 @@ const ICONES = {
 ICONES.ajuda = '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
 const icone = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONES[k] || ICONES.relatorios}</svg>`;
 const iniciais = s => String(s || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['metas', 'Metas'], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['suporte', 'Manual do suporte', 1, 'masterNav'], ['ajuda', 'Ajuda']];
+const MENU = [['painel', 'Painel'], ['vendas', 'Vendas'], ['caixa', 'Caixa'], ['condicionais', 'Condicionais'], ['trocas', 'Trocas e devoluções'], ['clientes', 'Clientes'], ['creditos', 'Vale-troca e créditos'], ['fidelidade', 'Aniversários e cashback'], ['entradas', 'Entrada de mercadoria'], ['produtos', 'Produtos e estoque'], ['inventario', 'Inventário'], ['promocoes', 'Promoções', 1], ['movs', 'Movimentações'], ['financeiro', 'Financeiro', 1], ['cartoes', 'Cartões a receber', 1], ['comissoes', 'Comissões', 1], ['metas', 'Metas'], ['relatorios', 'Relatórios', 1], ['premium', 'Recursos Premium', 1], ['atualizacao', 'Atualização do sistema', 1, 'master'], ['usuarios', 'Usuárias / usuários', 1], ['logs', 'Histórico de logs', 1], ['config', 'Configurações', 1], ['suporte', 'Manual do suporte', 1, 'masterNav'], ['ajuda', 'Ajuda']];
 function render() {
   aplicarTema();
   if (!eu) return telaLogin();
@@ -1670,7 +1689,7 @@ function config() {
     <div class="acoes" style="justify-content:flex-start"><button class="btn perigo" data-act="zerarSistema">Apagar todos os dados…</button></div></section>`)}
   </div></div>`;
 }
-const VIEWS = { suporte, premium, cartoes, inventario, promocoes, fidelidade, metas, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
+const VIEWS = { creditos, suporte, premium, cartoes, inventario, promocoes, fidelidade, metas, caixa, ajuda, atualizacao, painel, vendas, condicionais, trocas, clientes, entradas, produtos, movs, financeiro, comissoes, relatorios, usuarios, logs, config };
 
 /* ===== Documentos ===== */
 function dadosEmpresa(c) {
@@ -1714,6 +1733,7 @@ function reciboHTML(v) {
   <table><thead><tr>${TH_ITEM}<th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${v.itens.map(i => `<tr>${linhaItem(i)}<td style="text-align:right">${i.qtd}</td><td style="text-align:right">${fmtR(i.preco)}</td><td style="text-align:right">${fmtR(i.qtd * i.preco)}</td></tr>`).join('')}</tbody></table>
   <div class="tot">Peças: ${pecasV(v)} · Subtotal: ${fmtR(v.subtotal)}${v.desconto ? ' · Desconto: ' + fmtR(v.desconto) : ''}<br><b>TOTAL: ${fmtR(v.total)}</b></div>
   <div class="tot">${pagsVenda(v).map(p => `${esc(p.forma)}: ${fmtR(p.valor)}`).join(' · ')}${v.troco ? `<br>Dinheiro recebido: ${fmtR(v.dinheiroRecebido)} · <b>Troco: ${fmtR(v.troco)}</b>` : ''}</div>
+  ${v.credUsado && !v.cancelada ? `<div class="tot">Crédito (vale-troca) usado: ${fmtR(v.credUsado)} · <b>Saldo de crédito que ainda fica: ${fmtR(v.credSaldo || 0)}</b></div>` : ''}
   ${v.cashback && !v.cancelada ? `<div class="tot"><b>Você ganhou ${fmtR(v.cashback.valor)} de cashback</b> para usar na próxima compra até ${fmtDia(v.cashback.validade)}.</div>` : ''}
   ${parcelasVenda(v.id).length ? `<div class="parc"><b>Crediário:</b>${parcelasVenda(v.id).map(r => `<span>${r.parcela}/${r.de} · ${fmtDia(r.vencimento)} · ${fmtR(r.valor)}</span>`).join('')}</div>` : ''}
   ${fimDoc(`Declaro que recebi as mercadorias acima relacionadas, em perfeito estado, e que o pagamento foi efetuado na forma indicada.`, [`${esc(v.cliente || 'Cliente')}`, `${esc(v.usuario)} (vendedor)`], qrTexto('Recibo de venda', v.id, v.data, v.total, v.cliente))}`;
@@ -1737,6 +1757,9 @@ function acertoHTML(c) {
 
 /* ===== Ações ===== */
 const ACT = {};
+ACT.credUsar = el => { const c = cli(+el.dataset.id); if (!c) return fecharModal(); aplicarCredito(c); registrar('Crédito do cliente oferecido na venda', `${c.nome} · usar ${fmtR(saldoCredito(c.id))}`); fecharModal(); render(); aviso('Crédito do cliente colocado no pagamento.', 'ok'); };
+ACT.credNao = () => { fecharModal(); render(); };
+ACT.credPergunta = () => { const c = acharCliente(form.venda.cliente); if (c && saldoCredito(c.id) > 0.004) perguntarCredito(c); };
 ACT.fecharModal = fecharModal;
 ACT.imprimirDoc = () => {
   if (!docAtual) return;
@@ -1948,7 +1971,7 @@ function resumoPag() {
   const el = $('#pag-resumo'); if (!el) return;
   const r = calcPags(form.venda.pags, totalVenda());
   el.innerHTML = r.falta ? `<span class="err">Falta receber ${fmtR(r.falta)}</span>` : r.troco ? `<b class="ok" style="font-size:18px">Troco: ${fmtR(r.troco)}</b>` : carrinho.venda.length ? '<span class="ok">Pagamento fechado</span>' : '';
-  const ci = $('#cli-info'); if (ci) { const cl = acharCliente(form.venda.cliente); ci.innerHTML = cl ? `Cliente cadastrado${saldoCredito(cl.id) ? ` · crédito disponível <b>${fmtR(saldoCredito(cl.id))}</b>` : ''}` : (form.venda.cliente.trim() ? 'Cliente não cadastrado' : ''); }
+  const ci = $('#cli-info'); if (ci) { const cl = acharCliente(form.venda.cliente); ci.innerHTML = cl ? (saldoCredito(cl.id) > 0.004 ? `<span class="cred-aviso" data-act="credPergunta" title="Clique para usar o crédito">Crédito disponível <b>${fmtR(saldoCredito(cl.id))}</b>${form.venda.pags.some(p => p.forma === CREDITO) ? ' · <i>usando</i>' : ' · usar?'}</span>` : 'Cliente cadastrado') : (form.venda.cliente.trim() ? 'Cliente não cadastrado' : ''); }
 }
 function validarPags(pags, total, cl, parc, venc1) {
   const r = calcPags(pags, total);
@@ -1967,7 +1990,7 @@ function registrarPags(v, pg) {
   v.pagamentos = pg.linhas; v.troco = pg.troco; v.dinheiroRecebido = pg.recebidoDinheiro;
   v.pagamento = pg.linhas.map(x => x.forma).join(' + ');
   gravarTaxasVenda(v);   // Premium: taxa e prazo do cartão
-  if (pg.cred) db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: pg.cl.id, valor: -pg.cred, ref: 'Usado na venda nº ' + nDoc(v.id), usuario: eu.nome });
+  if (pg.cred) { db.creditos.push({ id: db.seq.cred++, data: agora(), clienteId: pg.cl.id, valor: -pg.cred, ref: 'Usado na venda nº ' + nDoc(v.id), usuario: eu.nome }); v.credUsado = r2(pg.cred); v.credSaldo = saldoCredito(pg.cl.id); }
   if (pg.praz) gerarParcelas(v, pg.praz, pg.parc, pg.venc1);
   gerarCashback(v, pg);   // Premium: cashback
 }
@@ -2033,7 +2056,7 @@ ACT.acertar = el => {
     <p>Informe quantas peças de cada item o cliente <b>devolveu</b>. O restante é considerado <b>comprado</b> e vira venda com recibo.</p>
     <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="acTodos" data-v="dev">Devolveu tudo</button><button class="btn" data-act="acTodos" data-v="comp">Comprou tudo</button></div>
     <div class="tabw"><table class="tb"><thead><tr><th>Produto</th><th>Tam.</th><th class="n">Levou</th><th class="n">Devolveu</th><th class="n">Comprou</th><th class="n">Unitário</th><th class="n">Total</th></tr></thead><tbody>${c.itens.map((i, k) => `<tr><td>${esc(i.codigo)} – ${esc(i.nome)} <span class="mut">${esc(i.marca)}</span></td><td>${esc(i.tamanho)}</td><td class="n">${i.qtd}</td><td class="n"><input class="qtd ac-dev" type="number" min="0" max="${i.qtd}" value="${i.qtd}" data-k="${k}"></td><td class="n" id="ac-comp-${k}">0</td><td class="n">${fmtR(i.preco)}</td><td class="n" id="ac-tot-${k}">${fmtR(0)}</td></tr>`).join('')}</tbody></table></div>
-    <div class="form3"><label>Forma de pagamento<select id="ac-pag">${PAGAMENTOS.map(p => `<option>${p}</option>`).join('')}</select></label><label>Parcelas (crediário)<input id="ac-parc" type="number" min="1" max="24" value="1"></label><label>Desconto<input id="ac-desc" class="val" placeholder="0"></label><label>Tipo do desconto<select id="ac-desct"><option value="R">R$</option><option value="P">%</option></select></label></div>
+    <div class="form3"><label>Forma de pagamento<select id="ac-pag">${PAGAMENTOS.map(p => `<option>${p}</option>`).join('')}</select></label><label>Parcelas (crediário)<input id="ac-parc" type="number" min="1" max="24" value="1"></label><label>Desconto<input id="ac-desc" class="val" placeholder="0"></label><label>Tipo do desconto<select id="ac-desct"><option value="P" selected>%</option><option value="R">R$</option></select></label></div>
     <div class="totais"><span>Subtotal <b id="ac-sub"></b></span><span class="big">Total a pagar <b id="ac-total"></b></span></div></div>`,
     `<button class="btn pri" data-act="confirmarAcerto" data-id="${c.id}">Confirmar acerto</button>`, true);
   calcAcerto();
@@ -2576,7 +2599,7 @@ const btnWhats = (href, txt) => href ? `<a class="lnk" href="${esc(href)}" targe
 
 function clientes() {
   return `<h2>Clientes</h2>
-  <section class="card"><div class="filtros"><label class="lg">Buscar<input data-filtro="cli.busca" value="${esc(filtros.cli.busca)}" placeholder="nome, telefone ou CPF" autofocus></label><span style="flex:1"></span>${adm() ? '<button class="btn" data-act="lgpdPainel">Privacidade (LGPD)</button>' : ''}<button class="btn pri" data-act="novoCliente">+ Novo cliente</button></div>
+  <section class="card"><div class="filtros"><label class="lg">Buscar<input data-filtro="cli.busca" value="${esc(filtros.cli.busca)}" placeholder="nome, telefone ou CPF" autofocus></label><span style="flex:1"></span>${MODO_REDE ? '' : '<button class="btn" data-act="ir" data-v="creditos">Vale-troca e créditos</button>'}${adm() ? '<button class="btn" data-act="lgpdPainel">Privacidade (LGPD)</button>' : ''}<button class="btn pri" data-act="novoCliente">+ Novo cliente</button></div>
   <div id="tb-cli">${tabelaClientes()}</div></section>`;
 }
 function tabelaClientes() {
@@ -2865,6 +2888,66 @@ ACT.trImprimir = () => {
   const para = trLote.de === 'araras' ? 'estoque' : 'araras';
   registrar('Impressão', 'Lista de transferência de local');
   imprimir(`${cabDoc('TRANSFERÊNCIA: ' + LOCAIS[trLote.de].nome.toUpperCase() + ' → ' + LOCAIS[para].nome.toUpperCase(), '', agora(), '')}<table><thead><tr><th>Código</th><th>Produto</th><th>Tam.</th><th>Qtd</th><th>Conferido</th></tr></thead><tbody>${trLote.itens.map(i => { const p = prod(i.prod); return `<tr><td>${esc(p.codigo)}</td><td>${esc(nomeCompleto(p))}</td><td style="text-align:center">${esc(p.tamanho)}</td><td style="text-align:right"><b>${i.qtd}</b></td><td style="width:80px"></td></tr>`; }).join('')}<tr style="font-weight:700;background:#f3f4f6"><td colspan="3">Total</td><td style="text-align:right">${trLote.itens.reduce((s, i) => s + i.qtd, 0)}</td><td></td></tr></tbody></table><p style="margin-top:30px">Responsável: ______________________________</p>`, 'A4');
+};
+
+/* ===== Vale-troca e créditos: controle do saldo de cada cliente =====
+   Saldo = soma dos lançamentos do cliente em db.creditos (trocas, cashback, presente, uso em venda, estorno, vencimento).
+   A composição (vale-troca sem validade × cashback/presente com validade) vem dos lotes (lotesCredito). */
+const origemLote = l => l.cashback ? 'Cashback' : /^Presente/i.test(l.ref || '') ? 'Presente' : 'Vale-troca';
+function dadosCreditos() {
+  try { vencerCreditos(); } catch (e) { }
+  const ids = [...new Set(db.creditos.map(c => c.clienteId))].filter(id => cli(id));
+  return ids.map(id => {
+    const c = cli(id), ls = lotesCredito(id).filter(l => l.resto > 0.004), mv = db.creditos.filter(x => x.clienteId === id).sort((a, b) => String(a.data).localeCompare(String(b.data)));
+    const por = k => r2(ls.filter(l => origemLote(l) === k).reduce((s, l) => s + l.resto, 0)), venc = ls.filter(l => l.validade).map(l => l.validade).sort()[0] || '';
+    const ult = mv[mv.length - 1] || {};
+    return { c, saldo: saldoCredito(id), troca: por('Vale-troca'), cash: por('Cashback'), pres: por('Presente'), venc, ult, n: mv.length };
+  });
+}
+function creditos() {
+  const f = filtros.cred;
+  return `${cabTela('Vale-troca e créditos')}
+  <section class="card"><p class="mut" style="margin-top:0">Saldo que cada cliente ainda tem para usar: vale-troca (trocas e devoluções), cashback e presente de aniversário. O crédito é usado na venda em Pagamento → <b>Crédito do cliente (vale-troca)</b>; o que sobra continua aqui.</p>
+    <div class="filtros"><label class="lg">Buscar cliente<input data-filtro="cred.busca" value="${esc(f.busca)}" placeholder="nome, telefone ou CPF"></label>
+      <label>Mostrar<select data-filtro="cred.sit"><option value="aberto" ${f.sit === 'aberto' ? 'selected' : ''}>Só com saldo</option><option value="vence" ${f.sit === 'vence' ? 'selected' : ''}>Vencendo em 30 dias</option><option value="" ${f.sit === '' ? 'selected' : ''}>Todos que já tiveram crédito</option></select></label>
+      <label>Movimentos de<input type="date" data-filtro="cred.de" value="${f.de}"></label><label>até<input type="date" data-filtro="cred.ate" value="${f.ate}"></label></div>
+    <div id="cred-corpo">${corpoCreditos()}</div></section>`;
+}
+function corpoCreditos() {
+  const f = filtros.cred, b = semAcento(f.busca.trim()), todos = dadosCreditos(), lim = somaDias(30);
+  const l = todos.filter(x => (f.sit === 'aberto' ? x.saldo > 0.004 : f.sit === 'vence' ? x.saldo > 0.004 && x.venc && x.venc <= lim : true) && (!b || semAcento(rotuloCli(x.c)).indexOf(b) >= 0)).sort((a, b2) => b2.saldo - a.saldo || a.c.nome.localeCompare(b2.c.nome));
+  const ab = todos.filter(x => x.saldo > 0.004), tot = k => r2(ab.reduce((s, x) => s + x[k], 0));
+  const mv = db.creditos.filter(x => cli(x.clienteId) && (!f.de || String(x.data).slice(0, 10) >= f.de) && (!f.ate || String(x.data).slice(0, 10) <= f.ate) && (!b || semAcento(rotuloCli(cli(x.clienteId))).indexOf(b) >= 0)).sort((a, b2) => String(b2.data).localeCompare(String(a.data)));
+  const ent = r2(mv.filter(x => x.valor > 0).reduce((s, x) => s + x.valor, 0)), sai = r2(mv.filter(x => x.valor < 0).reduce((s, x) => s + x.valor, 0));
+  return `<div class="resumo-tit"><div class="rbox ok"><small>Saldo em aberto</small><b>${fmtR(tot('saldo'))}</b><span>${ab.length} cliente(s) com crédito</span></div>
+      <div class="rbox"><small>Vale-troca</small><b>${fmtR(tot('troca'))}</b><span>trocas e devoluções (sem validade)</span></div>
+      <div class="rbox"><small>Cashback e presente</small><b>${fmtR(r2(tot('cash') + tot('pres')))}</b><span>com validade</span></div>
+      <div class="rbox ${ab.some(x => x.venc && x.venc <= lim) ? 'at' : ''}"><small>Vence em 30 dias</small><b>${ab.filter(x => x.venc && x.venc <= lim).length}</b><span>cliente(s)</span></div></div>
+    ${l.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Cliente</th><th>Telefone</th><th class="n">Vale-troca</th><th class="n">Cashback / presente</th><th class="n">Saldo</th><th>Vence</th><th>Último movimento</th><th></th></tr></thead><tbody>${l.map(x => `<tr>
+        <td><b>${esc(x.c.nome)}</b></td><td>${esc(x.c.telefone || '')}</td><td class="n">${x.troca ? fmtR(x.troca) : ''}</td><td class="n">${x.cash + x.pres ? fmtR(r2(x.cash + x.pres)) : ''}</td>
+        <td class="n"><b class="${x.saldo > 0.004 ? 'ok' : x.saldo < -0.004 ? 'err' : ''}">${fmtR(x.saldo)}</b></td><td>${x.venc ? fmtDia(x.venc) : x.saldo > 0.004 ? '<span class="mut">sem validade</span>' : ''}</td>
+        <td>${x.ult.data ? fmtDia(String(x.ult.data).slice(0, 10)) + ' · ' + esc(x.ult.ref || '') : ''}</td>
+        <td class="n"><button class="lnk" data-act="verCliente" data-id="${x.c.id}">Ver</button><button class="lnk" data-act="credExtrato" data-id="${x.c.id}">Extrato</button>${x.saldo > 0.004 && !naoAceitaMsg(x.c) ? btnWhats(linkWhats(x.c.telefone, `Olá ${x.c.nome.split(' ')[0]}! Você tem ${fmtR(x.saldo)} de crédito para usar na ${db.config.loja || 'loja'}${x.venc ? ' (parte vale até ' + fmtDia(x.venc) + ')' : ''}.`)) : ''}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="2">Total · ${l.length} cliente(s)</td><td class="n">${fmtR(r2(l.reduce((s, x) => s + x.troca, 0)))}</td><td class="n">${fmtR(r2(l.reduce((s, x) => s + x.cash + x.pres, 0)))}</td><td class="n">${fmtR(r2(l.reduce((s, x) => s + x.saldo, 0)))}</td><td colspan="3"></td></tr></tfoot></table></div>`
+      : `<p class="vazio">${todos.length ? 'Nenhum cliente com esses filtros.' : 'Nenhum cliente com crédito ainda. O crédito nasce na troca/devolução (destino "crédito"), no cashback e no presente de aniversário.'}</p>`}
+    <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="credExcel">Excel</button><button class="btn" data-act="credImprimir">Imprimir lista</button></div>
+    <h4 class="rel-sec">Movimentações de crédito${f.de || f.ate ? ` <span class="mut">(${f.de ? fmtDia(f.de) : 'início'} a ${f.ate ? fmtDia(f.ate) : 'hoje'})</span>` : ''}</h4>
+    ${mv.length ? `<div class="tabw"><table class="tb"><thead><tr><th>Data</th><th>Cliente</th><th>Movimento</th><th class="n">Valor</th></tr></thead><tbody>${mv.slice(0, 300).map(x => `<tr><td>${fmtDH(x.data)}</td><td>${esc(cli(x.clienteId).nome)}</td><td>${esc(x.ref || '')}${x.validade && x.valor > 0 ? ` <span class="mut">(vale até ${fmtDia(x.validade)})</span>` : ''}</td><td class="n"><span class="${x.valor < 0 ? 'err' : 'ok'}">${fmtR(x.valor)}</span></td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${mv.length} movimento(s)${mv.length > 300 ? ' (300 mais recentes na tela)' : ''}</td><td>entradas ${fmtR(ent)} · saídas ${fmtR(sai)}</td><td class="n">${fmtR(r2(ent + sai))}</td></tr></tfoot></table></div>` : '<p class="vazio">Nenhuma movimentação no período.</p>'}`;
+}
+ACT.credExtrato = el => {
+  const c = cli(+el.dataset.id); if (!c) return;
+  const mv = db.creditos.filter(x => x.clienteId === c.id).sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id); let s = 0;
+  const linhas = mv.map(x => { s = r2(s + x.valor); return `<tr><td>${fmtDH(x.data)}</td><td>${esc(x.ref || '')}${x.validade && x.valor > 0 ? ' (vale até ' + fmtDia(x.validade) + ')' : ''}</td><td style="text-align:right">${fmtR(x.valor)}</td><td style="text-align:right"><b>${fmtR(s)}</b></td></tr>`; }).join('');
+  registrar('Impressão', 'Extrato de crédito · cliente nº ' + c.id);
+  imprimir(`${cabDoc('EXTRATO DE CRÉDITO (VALE-TROCA)', '', agora(), '')}<p><b>${esc(c.nome)}</b>${c.telefone ? ' · ' + esc(c.telefone) : ''}${c.doc ? ' · CPF ' + esc(c.doc) : ''}</p>
+    <table><thead><tr><th>Data</th><th>Movimento</th><th>Valor</th><th>Saldo</th></tr></thead><tbody>${linhas}<tr style="font-weight:700;background:#f3f4f6"><td colspan="3">Saldo disponível</td><td style="text-align:right">${fmtR(saldoCredito(c.id))}</td></tr></tbody></table>`, 'A4');
+};
+const colsCred = () => [C('Cliente', 's'), C('Telefone', 's'), C('Vale-troca', 'r'), C('Cashback / presente', 'r'), C('Saldo', 'r'), C('Vence', 's'), C('Último movimento', 's')];
+const linhasCred = () => dadosCreditos().filter(x => x.saldo > 0.004).sort((a, b) => b.saldo - a.saldo).map(x => ({ c: [x.c.nome, x.c.telefone || '', x.troca, r2(x.cash + x.pres), x.saldo, x.venc ? fmtDia(x.venc) : 'sem validade', x.ult.data ? fmtDia(String(x.ult.data).slice(0, 10)) + ' · ' + (x.ult.ref || '') : ''] }));
+ACT.credExcel = () => { const l = linhasCred(); registrar('Exportação', 'Vale-troca e créditos (Excel)'); baixarXlsx('Vale-troca e créditos', `${db.config.loja || ''} · clientes com saldo em ${fmtDia(hoje())}`, colsCred(), l.concat([{ forte: true, c: ['Total', '', r2(l.reduce((s, x) => s + x.c[2], 0)), r2(l.reduce((s, x) => s + x.c[3], 0)), r2(l.reduce((s, x) => s + x.c[4], 0)), '', ''] }]), 'creditos_clientes_' + hoje() + '.xlsx'); };
+ACT.credImprimir = () => {
+  const l = linhasCred(); registrar('Impressão', 'Vale-troca e créditos');
+  imprimir(`${cabDoc('VALE-TROCA E CRÉDITOS DOS CLIENTES', '', agora(), '')}<table><thead><tr><th>Cliente</th><th>Telefone</th><th>Vale-troca</th><th>Cashback/presente</th><th>Saldo</th><th>Vence</th></tr></thead><tbody>${l.map(x => `<tr><td>${esc(x.c[0])}</td><td>${esc(x.c[1])}</td><td style="text-align:right">${fmtR(x.c[2])}</td><td style="text-align:right">${fmtR(x.c[3])}</td><td style="text-align:right"><b>${fmtR(x.c[4])}</b></td><td>${esc(x.c[5])}</td></tr>`).join('')}<tr style="font-weight:700;background:#f3f4f6"><td colspan="4">Total · ${l.length} cliente(s)</td><td style="text-align:right">${fmtR(r2(l.reduce((s, x) => s + x.c[4], 0)))}</td><td></td></tr></tbody></table>`, 'A4');
 };
 
 /* ===== Trocas e devoluções ===== */
@@ -4351,6 +4434,7 @@ function onCampo(e) {
     if (g === 'log') { logLimite = 300; tabelaLogs(); }
     if (g === 'prod') { $('#tb-prod').innerHTML = tabelaProdutos(); if ($('#prod-abas')) $('#prod-abas').innerHTML = abasProd(); }
     if (g === 'mov') $('#tb-mov').innerHTML = tabelaMovs();
+    if (g === 'cred' && $('#cred-corpo')) $('#cred-corpo').innerHTML = corpoCreditos();
     if (g === 'vh') $('#lista-vh').innerHTML = listaVh();
     if (g === 'rel') $('#rel').innerHTML = conteudoRel();
     if (g === 'car' && $('#car-corpo')) $('#car-corpo').innerHTML = corpoCartoes();
@@ -4374,6 +4458,7 @@ function onCampo(e) {
   if (el.closest && el.closest('#acerto')) calcAcerto();
   if (el.closest && el.closest('#modal') && (el.id === 'etq-fmt' || el.id === 'etq-np' || el.classList.contains('etq-q') || el.classList.contains('etq-c') || el.classList.contains('etq-o'))) previaEtq();
   if (el.closest && el.closest('#troca')) calcTroca();
+  if (d.f === 'venda.cliente') { const c = acharCliente(el.value); if (c && (el.value === rotuloCli(c) || e.type === 'change') && saldoCredito(c.id) > 0.004 && form.venda.credPerg !== c.id) { form.venda.credPerg = c.id; setTimeout(() => perguntarCredito(c), 30); } }
   if (d.f === 'cond.cliente') { const c = acharCliente(el.value); if (c && el.value === rotuloCli(c)) { form.cond = Object.assign(form.cond, { cliente: c.nome, tel: c.telefone, doc: c.doc || '', end: c.endereco || '' }); render(); } }
   if (d.filtro === 'cli.busca') $('#tb-cli').innerHTML = tabelaClientes();
   if (d.filtro && d.filtro.indexOf('rec.') === 0 && $('#tb-rec')) $('#tb-rec').innerHTML = blocoReceber();
@@ -4576,6 +4661,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.16-01', itens: ['Venda: o desconto já vem em % (dá para trocar para R$ na mesma caixinha). No acerto de condicional também.', 'Caixa: clique no valor de Vendas, Recebimentos ou Esperado de cada forma de pagamento para ver as vendas, os títulos ou o extrato que formam aquele total.', 'Novo menu Vale-troca e créditos (também em Clientes): saldo de cada cliente (vale-troca, cashback e presente), vencimentos, movimentações por período, extrato por cliente para imprimir, WhatsApp com o saldo, Excel e lista para imprimir. O recibo da venda que usou crédito mostra quanto foi usado e o saldo que ainda fica.', 'Venda: ao escolher um cliente com crédito (vale-troca, cashback ou presente), aparece uma janela com o valor e a pergunta se quer usar; "Usar o crédito" já coloca no pagamento. O aviso ao lado do cliente ficou em destaque e também abre a pergunta.'] },
   { v: '2026.11.08-02', itens: ['Localização das peças: Araras (salão, verde-claro) e Estoque (lá atrás, azul-claro). Todos os produtos já cadastrados ficaram nas Araras.', 'Produtos e estoque → Transferir Araras ⇄ Estoque: em lote pelo leitor (com lista para imprimir) ou num tamanho só (clique no tamanho). O total da loja não muda; a transferência fica em Movimentações como TRANSFERÊNCIA.', 'Lista de produtos com a barrinha de cor em cada tamanho, os selos A (Araras) e E (Estoque) e o filtro Localização. Entrada de mercadoria escolhe onde guardar; o ajuste de estoque informa quantas estão lá atrás; o CSV ganhou as colunas Araras e Estoque.', 'Na venda e na condicional, se a peça não está nas Araras, o sistema avisa para pegar no Estoque (lá atrás). Venda tira das Araras primeiro.', 'Ajuda e Manual do suporte com o passo a passo da transferência e da localização.'] },
   { v: '2026.11.08-01', itens: ['Nome neutro: em todo o sistema, recibos, termos, relatórios, Ajuda e Manual, "Vendedora" passou a ser "Vendedor" (a loja pode ter vendedores e vendedoras). Os cadastros e o histórico não mudam.'] },
   { v: '2026.11.07-07', itens: ['Ajuda e Manual do suporte atualizados: LGPD (autorização de mensagens, cópia dos dados, anonimização e aviso de privacidade), backup na nuvem, e-mail de monitoramento, gerador de licenças com tela e o botão Voltar que zera ao clicar no logo da loja.'] },
@@ -5121,6 +5207,7 @@ const AJUDA_MAPA = [
   ['vendas', 'todos', 'Registrar a venda (leitor de código de barras ou busca), escolher o pagamento (dinheiro, Pix com QR Code, cartões, crediário, vale-troca), dar desconto e emitir o recibo. Embaixo ficam as vendas realizadas.'],
   ['condicionais', 'todos', 'Peças que o cliente leva para provar em casa: registrar a saída com termo e, na volta, fazer o acerto (o que voltou entra no estoque, o que ficou vira venda).'],
   ['trocas', 'todos', 'Troca ou devolução pelo número do recibo: as peças voltam ao estoque e o valor vira vale-troca ou é devolvido.'],
+  ['creditos', 'todos', 'Vale-troca e créditos: saldo que cada cliente ainda tem (vale-troca, cashback e presente), vencimentos, movimentações, extrato do cliente, Excel e lista para imprimir.'],
   ['clientes', 'todos', 'Cadastro de clientes, compras, condicionais e créditos (vale-troca) de cada um, com a autorização de mensagens de promoção (LGPD). O administrador tem o botão Privacidade (LGPD) e, em Ver, a cópia dos dados e a anonimização.'],
   ['fidelidade', 'todos', 'Aniversariantes do dia, da semana e do mês com WhatsApp pronto, presente de aniversário e cashback das compras (recurso Premium).'],
   ['entradas', 'todos', 'Entrada de mercadoria no estoque, à mão ou importando o XML da nota fiscal do fornecedor, com impressão das etiquetas.'],
@@ -5223,7 +5310,9 @@ const AJUDA_PASSOS = [
   { t: 'Abrir e fechar o caixa', quem: 'todos', ir: 'caixa', p: ['No começo do dia, abra <b>Caixa</b>, informe o troco que está na gaveta e clique em <b>Abrir caixa</b>.', 'Durante o dia: <b>Sangria (retirar dinheiro)</b> para tirar dinheiro da gaveta e <b>Suprimento (colocar dinheiro)</b> para colocar, sempre com o motivo.', 'Durante o dia, clique nos cards para ver o detalhe, em <b>Extrato (débito e crédito)</b> para ver saldo inicial, entradas, saídas e saldo final (por forma, com PDF e Excel) ou em <b>Relatório parcial</b> para imprimir a posição atual.', 'No fim do dia, clique em <b>Fechar caixa</b>, conte e informe o dinheiro da gaveta e o total do Pix e de cada cartão.', 'O sistema gera o comprovante (esperado, contado e diferença de cada forma) e, em seguida, a movimentação completa do caixa. Imprima e assine.', 'Fechou com erro? O administrador pode <b>Reabrir</b> o último caixa em Caixas fechados, informando o motivo.'] },
   { t: 'Receber com Pix (QR Code)', quem: 'todos', ir: 'vendas', p: ['Monte a venda normalmente.', 'Em Pagamento escolha <b>Pix</b>: aparece o botão <b>QR Code Pix</b>.', 'Clique nele e mostre o QR Code ao cliente: ele já vem com a chave da loja e o valor.', 'Depois que o cliente pagar, clique em <b>Finalizar venda e emitir recibo</b>.'] },
   { t: 'Vender no crediário (a prazo)', quem: 'todos', ir: 'vendas', p: ['Monte a venda e informe o <b>Cliente</b>.', 'Em Pagamento escolha <b>Crediário / a prazo</b>.', 'Informe as <b>Parcelas do crediário</b> e o <b>1º vencimento</b>.', 'Finalize: as parcelas aparecem no recibo e em Financeiro → Contas a receber, onde o administrador registra cada pagamento.'] },
-  { t: 'Usar o vale-troca do cliente', quem: 'todos', ir: 'vendas', p: ['Monte a venda e escolha o <b>Cliente</b> que tem o crédito.', 'Em Pagamento escolha <b>Crédito do cliente (vale-troca)</b>.', 'Se o crédito não cobrir tudo, use <b>+ dividir com outra forma de pagamento</b> para o restante.'] },
+  { t: 'Usar o vale-troca do cliente', quem: 'todos', ir: 'vendas', p: ['Monte a venda e escolha o <b>Cliente</b>. Se ele tiver crédito (vale-troca, cashback ou presente), abre uma janela com o valor: pergunte se ele quer usar.', '<b>Usar o crédito nesta venda</b> já coloca o crédito no Pagamento. Se o crédito não cobre tudo, o restante fica em outra forma (dinheiro, por padrão): troque a forma se for Pix ou cartão.', '<b>Agora não</b> fecha a janela. O aviso amarelo "Crédito disponível" continua ao lado do cliente; clique nele para perguntar de novo.', 'O recibo mostra quanto foi usado e o <b>saldo que ainda fica</b>. O saldo de todos os clientes está em <b>Vale-troca e créditos</b>.'] },
+  { t: 'Consultar o saldo de vale-troca dos clientes', quem: 'todos', ir: 'creditos', p: ['Abra <b>Vale-troca e créditos</b> (no menu ou pelo botão em Clientes).', 'No alto: saldo em aberto da loja, quanto é vale-troca (sem validade), quanto é cashback/presente (com validade) e quantos clientes têm crédito vencendo em 30 dias.', 'A lista mostra cada cliente com saldo: vale-troca, cashback/presente, saldo, quando vence e o último movimento. Use <b>Buscar</b> e <b>Mostrar</b> (só com saldo, vencendo em 30 dias, todos).', 'Clique em <b>Extrato</b> para imprimir tudo o que entrou e saiu do crédito do cliente, com o saldo linha a linha; <b>WhatsApp</b> manda o saldo para ele (se ele não recusou mensagens).', 'Embaixo ficam as <b>movimentações de crédito</b> (use as datas para escolher o período). <b>Excel</b> e <b>Imprimir lista</b> tiram a relação dos clientes com saldo.'] },
+  { t: 'Ver o que forma cada valor do caixa', quem: 'adm', ir: 'caixa', p: ['Com o caixa aberto, na tabela por forma de pagamento, clique no valor.', '<b>Vendas</b>: abre as vendas daquela forma (número, hora, vendedor, cliente, total da venda e a parte paga naquela forma). Clique no número para abrir o recibo.', '<b>Recebimentos</b>: abre os títulos recebidos (crediário e outros) naquela forma.', '<b>Esperado</b>: abre o extrato da forma, com cada entrada e saída e o saldo.', 'Com o fechamento cego ligado, só o administrador vê esses valores.'] },
   { t: 'Registrar uma condicional (saída)', quem: 'todos', ir: 'condicionais', p: ['Abra <b>Condicionais</b>.', 'Adicione as peças (leitor ou busca + <b>Adicionar</b>).', 'Preencha <b>Cliente</b> e <b>Telefone</b> (obrigatórios), CPF, endereço e a data em <b>Devolver até</b>.', 'Clique em <b>Registrar saída e imprimir termo</b>. As peças saem do estoque e o cliente assina o termo.'] },
   { t: 'Fazer o acerto da condicional', quem: 'todos', ir: 'condicionais', p: ['Em <b>Condicionais → Em aberto</b>, clique em <b>Acertar / devolução</b> na condicional do cliente.', 'Informe quantas peças de cada item o cliente <b>devolveu</b> (ou use <b>Devolveu tudo</b> / <b>Comprou tudo</b>).', 'Para o que ele ficou, escolha a forma de pagamento.', 'Confirme: o que voltou entra no estoque e o que ficou vira venda com recibo.'] },
   { t: 'Fazer uma troca ou devolução', quem: 'todos', ir: 'trocas', p: ['Abra <b>Trocas e devoluções</b>.', 'Digite o número do recibo da venda e clique em <b>Buscar venda</b>. (Sem o recibo em mãos: procure a venda em Vendas → Vendas realizadas.)', 'Informe a quantidade de cada peça que volta.', 'Escolha se o valor vira <b>vale-troca</b> (crédito do cliente, precisa de nome e telefone) ou é <b>devolvido</b>.', 'Confirme. As peças voltam ao estoque. Para levar outra peça na troca, faça uma venda nova usando o vale-troca.'] },
@@ -5304,7 +5393,8 @@ const AJUDA_PERGUNTAS = [
   { p: 'Apareceu que o meu usuário está bloqueado.', quem: 'todos', r: 'Depois de várias senhas erradas seguidas, o usuário fica bloqueado por alguns minutos. Espere ou peça ao administrador: Usuárias / usuários → Editar / senha → Salvar libera na hora.' },
   { p: 'O sistema pediu a senha de novo no meio do trabalho.', quem: 'todos', r: 'É o bloqueio por falta de uso, para ninguém usar o seu usuário quando você sai do caixa. Digite a senha: a venda que estava sendo montada continua lá.' },
   { p: 'O produto não aparece quando eu procuro na venda.', quem: 'todos', r: 'Confira se ele tem estoque: produtos zerados ficam na aba Sem estoque de Produtos e estoque. Tente também pelo código da etiqueta. Produto inativo não aparece para venda.' },
-  { p: 'Como dou desconto?', quem: 'todos', r: 'Na tela de Vendas, no campo Desconto, escolha R$ ou % e digite o valor antes de finalizar.' },
+  { p: 'Como dou desconto?', quem: 'todos', r: 'Na tela de Vendas, no campo Desconto, digite o valor antes de finalizar. Ele já vem em %; para dar em reais, troque para R$ na caixinha ao lado.' },
+  { p: 'Onde vejo quanto de vale-troca o cliente ainda tem?', quem: 'todos', r: 'Em Vale-troca e créditos (menu ou botão em Clientes), ou em Clientes → Ver no cliente. Na venda, o aviso amarelo ao lado do cliente mostra o crédito disponível, e o recibo da venda que usou crédito mostra o saldo que ficou.' },
   { p: 'O cliente quer pagar com duas formas (ex.: Pix e cartão).', quem: 'todos', r: 'Em Pagamento, clique em + dividir com outra forma de pagamento e informe o valor de cada uma.' },
   { p: 'Como mando o recibo pelo WhatsApp?', quem: 'todos', r: 'No recibo da venda, clique em WhatsApp (PDF). O sistema gera o PDF do recibo para enviar ao cliente.' },
   { p: 'O cliente quer trocar mas não tem o recibo.', quem: 'todos', r: 'Ache a venda em Vendas → Vendas realizadas (pelas datas e pelo nome do cliente) e use o número dela em Trocas e devoluções.' },
@@ -5537,7 +5627,7 @@ function caixa() {
       <div class="resumo-tit cx-cards"><div class="rbox ok" data-act="cxCard" data-k="vendas" title="Ver as vendas do caixa"><small>Vendas no caixa</small><b>${r.nVendas}</b><span>${ve ? fmtR(r.total) : ''}</span></div>
       ${ve ? `<div class="rbox" data-act="cxCard" data-k="dinheiro" title="Ver cada entrada e saída de dinheiro"><small>Dinheiro esperado na gaveta</small><b>${fmtR(r.esperado.Dinheiro)}</b><span>troco + vendas + recebimentos + suprimentos − sangrias − devoluções − pagamentos</span></div>` : '<div class="rbox"><small>Fechamento cego</small><b>Conte e informe</b><span>o esperado aparece só para o administrador</span></div>'}
       <div class="rbox" data-act="cxCard" data-k="movs" title="Ver as sangrias e suprimentos"><small>Sangrias / suprimentos</small><b>${fmtR(r.sangria)} / ${fmtR(r.suprimento)}</b><span>${(c.movs || []).length} lançamento(s)</span></div></div>
-      ${ve ? tabSimples(['Forma', 'Vendas', 'Recebimentos', 'Esperado'], FORMAS_CAIXA.map(f => [f, fmtR(r.vendas[f]), fmtR(r.receb[f]), '<b>' + fmtR(r.esperado[f]) + '</b>']), ['Total', fmtR(somar(FORMAS_CAIXA, f => r.vendas[f])), fmtR(somar(FORMAS_CAIXA, f => r.receb[f])), fmtR(somar(FORMAS_CAIXA, f => r.esperado[f]))]) + (Object.keys(r.outras).length ? `<p class="mut">Fora do caixa: ${Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(' · ')}.</p>` : '') + (r.devol || r.pagas ? `<p class="mut">Saídas em dinheiro: devoluções ${fmtR(r.devol)} · contas pagas ${fmtR(r.pagas)}.</p>` : '') : ''}
+      ${ve ? tabSimples(['Forma', 'Vendas', 'Recebimentos', 'Esperado'], FORMAS_CAIXA.map(f => [f, cxLink(f, 'vendas', fmtR(r.vendas[f])), cxLink(f, 'receb', fmtR(r.receb[f])), cxLink(f, 'esp', '<b>' + fmtR(r.esperado[f]) + '</b>')]), ['Total', fmtR(somar(FORMAS_CAIXA, f => r.vendas[f])), fmtR(somar(FORMAS_CAIXA, f => r.receb[f])), fmtR(somar(FORMAS_CAIXA, f => r.esperado[f]))]) + (Object.keys(r.outras).length ? `<p class="mut">Fora do caixa: ${Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(' · ')}.</p>` : '') + (r.devol || r.pagas ? `<p class="mut">Saídas em dinheiro: devoluções ${fmtR(r.devol)} · contas pagas ${fmtR(r.pagas)}.</p>` : '') : ''}
       ${(c.movs || []).length ? `<h4 class="rel-sec">Sangrias e suprimentos</h4>${tabSimples(['Hora', 'Tipo', 'Valor', 'Motivo', 'Por'], c.movs.map(m => [fmtDH(m.em), m.tipo === 'sangria' ? 'Sangria (retirada)' : 'Suprimento (entrada)', fmtR(m.valor), esc(m.motivo || ''), esc(m.por)]), ['Total', 'sangrias ' + fmtR(r.sangria) + ' · suprimentos ' + fmtR(r.suprimento), fmtR(r.suprimento - r.sangria), 'líquido', ''])}` : ''}
       <div class="acoes" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="movCaixa" data-t="sangria">Sangria (retirar dinheiro)</button><button class="btn" data-act="movCaixa" data-t="suprimento">Suprimento (colocar dinheiro)</button>${ve ? '<button class="btn" data-act="cxExtrato">Extrato (débito e crédito)</button><button class="btn" data-act="cxParcial">Relatório parcial</button><button class="btn" data-act="verMovCaixa">Movimentação até agora</button>' : ''}<button class="btn pri" data-act="fecharCaixa">Fechar caixa</button></div>${(c.reaberturas || []).length ? `<p class="mut">Reaberto ${c.reaberturas.length}×: último em ${fmtDH(c.reaberturas[c.reaberturas.length - 1].em)} por ${esc(c.reaberturas[c.reaberturas.length - 1].por)} · motivo: ${esc(c.reaberturas[c.reaberturas.length - 1].motivo)}</p>` : ''}</section>`;
   }
@@ -5622,6 +5712,24 @@ function relParcialHTML(c) {
     <p>Sangrias ${fmtR(r.sangria)} · suprimentos ${fmtR(r.suprimento)} · devoluções em dinheiro ${fmtR(r.devol)} · contas pagas em dinheiro ${fmtR(r.pagas)}${Object.keys(r.outras).length ? ' · fora do caixa: ' + Object.keys(r.outras).map(k => esc(k) + ' ' + fmtR(r.outras[k])).join(', ') : ''}</p>`;
 }
 // cards do caixa aberto: detalhe com PDF e Excel
+const cxLink = (f, k, txt) => `<button class="lnk cx-val" data-act="cxForma" data-f="${esc(f)}" data-k="${k}" title="Ver o que forma este valor">${txt}</button>`;
+ACT.cxForma = el => {
+  const c = caixaAberto(); if (!c) return; if (!veEsperado()) return aviso('Fechamento cego: o detalhe é só para o administrador.', 'erro');
+  const f = el.dataset.f, k = el.dataset.k;
+  if (k === 'esp') return ACT.cxExtrato({ dataset: { id: c.id, forma: f } });
+  if (k === 'receb') {
+    const l = db.receber.filter(x => x.recebidoEm && noCaixa(x.recebidoEm, c) && x.forma === f).sort((a, b) => a.recebidoEm.localeCompare(b.recebidoEm));
+    return modalAnalitico(`Recebimentos em ${f} – caixa nº ${nDoc(c.id)}`, `${l.length} recebimento(s) de títulos (crediário e outros) neste caixa.`,
+      [C('Hora', 's'), C('Cliente', 's'), C('Referente a', 's'), C('Parcela', 's'), C('Valor', 'r')],
+      l.map(x => ({ c: [fmtDH(x.recebidoEm), x.cliente || '', origemRec(x), x.parcela + '/' + x.de, r2(x.valorRecebido || x.valor)] })).concat([{ forte: true, c: ['Total', '', '', '', r2(l.reduce((s, x) => s + (x.valorRecebido || x.valor), 0))] }]));
+  }
+  const vs = vendasValidas().filter(v => noCaixa(v.data, c) && pagsVenda(v).some(p => p.forma === f)).sort((a, b) => a.data.localeCompare(b.data));
+  const naForma = v => r2(pagsVenda(v).filter(p => p.forma === f).reduce((s, p) => s + (+p.valor || 0), 0));
+  return modalAnalitico(`Vendas em ${f} – caixa nº ${nDoc(c.id)}`, `${vs.length} venda(s) com ${f} neste caixa. A coluna "Em ${f}" é a parte paga nessa forma (a venda pode ter sido dividida). Clique no número da venda para abrir o recibo.`,
+    [C('Nº', 's'), C('Hora', 's'), C('Vendedor', 's'), C('Cliente', 's'), C('Pagamento', 's'), C('Total da venda', 'r'), C('Em ' + f, 'r')],
+    vs.map(v => ({ c: [nDoc(v.id), fmtDH(v.data), v.usuario || '', v.cliente || 'Consumidor', pagsVenda(v).map(p => p.forma + (pagsVenda(v).length > 1 ? ' ' + fmtR(+p.valor || 0) : '')).join(' + '), v.total, naForma(v)] }))
+      .concat([{ forte: true, c: ['Total', '', '', '', '', r2(vs.reduce((s, v) => s + v.total, 0)), r2(vs.reduce((s, v) => s + naForma(v), 0))] }]));
+};
 ACT.cxCard = el => {
   const c = caixaAberto(); if (!c) return; const k = el.dataset.k;
   if (k === 'vendas') {
@@ -6820,7 +6928,8 @@ const MANUAL = [
   { id: 'telas', t: 'Telas principais (referência)', h: `
     <h4>Painel</h4><p>Clicar no logo ou no nome da loja (alto do menu) abre o Painel e limpa o botão "Voltar para…".</p>${mnP('painel', 'Painel: avisos, indicadores do dia e listas de atenção.')}
     <h4>Vendas</h4><p>Leitor ou busca → carrinho → vendedor (PIN se não for quem está logado) → cliente → pagamento (bandeira, maquininha e parcelas no cartão) → finalizar e recibo.</p>${mnP('vendas', 'Venda com promoção, crédito do cliente e cartão Visa 2x.')}
-    <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo).</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
+    <h4>Caixa</h4><p>Abertura com troco, sangria, suprimento, extrato débito/crédito, fechamento com conferência e reabertura (só administrador, com motivo). Na tabela por forma, os valores de Vendas, Recebimentos e Esperado são clicáveis (analítico das vendas na forma, títulos recebidos e extrato da forma); escondidos no fechamento cego para quem não é administrador.</p>
+    <h4>Vale-troca e créditos</h4><p>Menu próprio (todos os perfis, só no computador): saldo por cliente (db.creditos), composição pelos lotes (vale-troca sem validade × cashback/presente com validade), vencimento mais próximo, movimentações por período, extrato do cliente (impressão), WhatsApp do saldo, Excel e lista. Na venda, escolher cliente com saldo abre a pergunta "usar o crédito?" uma vez por cliente (form.venda.credPerg); "Usar" põe o crédito no pagamento (e o restante em outra forma). A venda grava credUsado/credSaldo e o recibo mostra o saldo que fica. Desconto da venda e do acerto de condicional começam em %.</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
     <h4>Produtos e estoque</h4><p>Filtros (inclusive <b>Localização</b>), grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>
