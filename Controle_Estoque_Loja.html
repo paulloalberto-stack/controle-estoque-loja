@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.17-01">
+<meta name="versao-sistema" content="2026.11.17-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1656,6 +1656,8 @@ function config() {
     <div class="form2">
       <label>Papel do recibo${sel('papel', [['A4', 'Folha A4'], ['80', 'Bobina 80 mm (impressora térmica)'], ['58', 'Bobina 58 mm (impressora térmica)']], c.papel)}</label>
       <label>Vias por impressão${sel('vias', OPCOES_VIAS, String(c.vias || 2))}</label>
+      ${MODO_SERVIDOR && !MODO_REDE ? `<div class="full imp-dir"><label>Imprimir direto, sem a janela do Windows<select id="cf-impDireta"><option value="">Não (abrir a janela para escolher a impressora)</option>${c.impDireta ? `<option value="${esc(c.impDireta)}" selected>${esc(c.impDireta)}</option>` : ''}</select></label>
+        <div class="acoes" style="justify-content:flex-start;margin-top:6px"><button type="button" class="btn" data-act="impTeste">Imprimir teste direto</button><span class="mut" id="imp-msg">Vale para os comprovantes em bobina (80 ou 58 mm): recibo, condicional, troca, caixa e parcelas. Relatórios A4 e etiquetas continuam abrindo a janela.</span></div></div>` : ''}
       <label>Cor dos documentos<input type="color" id="cf-cor" value="${esc(c.cor || '#1e3a5f')}" style="height:38px;padding:2px"></label>
       <label>QR Code no recibo${sel('qr', [['pix', 'Pix com o valor do documento (chave da loja)'], ['dados', 'Dados do recibo (nº, data, valor, cliente)'], ['whatsapp', 'Link do WhatsApp da loja'], ['link', 'Link próprio (site, Instagram, avaliação)'], ['nenhum', 'Sem QR Code']], c.qr)}</label>
       <label>Link do QR (se "link próprio")<input id="cf-qrLink" value="${esc(c.qrLink)}" placeholder="https://instagram.com/sualoja"></label>
@@ -1768,7 +1770,54 @@ ACT.credUsar = el => { const c = cli(+el.dataset.id); if (!c) return fecharModal
 ACT.credNao = () => { fecharModal(); render(); };
 ACT.credPergunta = () => { const c = acharCliente(form.venda.cliente); if (c && saldoCredito(c.id) > 0.004) perguntarCredito(c); };
 ACT.fecharModal = fecharModal;
+/* ===== Impressão direta: o sistema faz a imagem do comprovante e o servidor deste computador manda para a impressora escolhida,
+   sem a janela do Windows. Só para bobina (80/58 mm) e só no computador do caixa. Se falhar, abre a janela normal. */
+const impDiretaAtiva = () => MODO_SERVIDOR && !MODO_REDE && !!db.config.impDireta && db.config.papel !== 'A4';
+const blobParaDataUrl = blob => new Promise((ok, erro) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = erro; r.readAsDataURL(blob); });
+async function imprimirDireto(nomes) {
+  const mm = db.config.papel === '58' ? 58 : 80;
+  for (const via of nomes) {
+    const im = await imagemDoc('png', via, 3);
+    await apiJson('imprimir', 'POST', { img: await blobParaDataUrl(im.blob), mm, impressora: db.config.impDireta });
+  }
+}
+async function carregarImpressoras() {
+  const s = $('#cf-impDireta'); if (!s || s.dataset.ok) return;
+  try {
+    const r = await api('impressoras'), atual = db.config.impDireta || '';
+    s.innerHTML = `<option value="">Não (abrir a janela para escolher a impressora)</option>` + (r.lista || []).map(n => `<option value="${esc(n)}" ${n === atual ? 'selected' : ''}>${esc(n)}${n === r.padrao ? ' (padrão do Windows)' : ''}</option>`).join('') + (atual && (r.lista || []).indexOf(atual) < 0 ? `<option value="${esc(atual)}" selected>${esc(atual)} (não encontrada)</option>` : '');
+    s.dataset.ok = '1';
+  } catch (e) { const m = $('#imp-msg'); if (m) m.innerHTML = '<span class="err">Não foi possível listar as impressoras: ' + esc(e.message) + '</span>'; }
+}
+document.addEventListener('change', e => {
+  if (!e.target || e.target.id !== 'cf-impDireta' || !adm()) return;
+  db.config.impDireta = e.target.value; registrar('Impressão direta', e.target.value ? 'na impressora ' + e.target.value : 'desligada'); salvar();
+  aviso(e.target.value ? `Comprovantes em bobina vão direto para ${e.target.value}.` : 'Impressão direta desligada: a janela do Windows volta a abrir.', 'ok');
+});
+document.addEventListener('focusin', e => { if (e.target && e.target.id === 'cf-impDireta') carregarImpressoras(); });
+ACT.impTeste = async () => {
+  const imp = ($('#cf-impDireta') || {}).value; if (!imp) return aviso('Escolha a impressora primeiro.', 'erro');
+  if (($('#cf-papel') || {}).value === 'A4') return aviso('A impressão direta é para bobina (80 ou 58 mm). Escolha o papel do recibo como bobina.', 'erro');
+  const salvo = docAtual, papel = db.config.papel;
+  db.config.papel = $('#cf-papel').value;
+  docAtual = via => `${cabDoc('TESTE DE IMPRESSÃO', '', agora(), via)}<p style="text-align:center">Impressão direta funcionando.<br>${esc(imp)}<br>${fmtDH(agora())}</p>${'<p style="text-align:center">' + '—'.repeat(16) + '</p>'}`;
+  try { aviso('Enviando o teste…', 'ok'); const im = await imagemDoc('png', '', 3); await apiJson('imprimir', 'POST', { img: await blobParaDataUrl(im.blob), mm: db.config.papel === '58' ? 58 : 80, impressora: imp }); aviso('Teste enviado para ' + imp + '.', 'ok'); }
+  catch (e) { aviso('Não imprimiu: ' + e.message, 'erro'); }
+  finally { docAtual = salvo; db.config.papel = papel; }
+};
 ACT.imprimirDoc = () => {
+  if (!docAtual) return;
+  if (impDiretaAtiva()) {
+    const n = Math.min(4, Math.max(1, int($('#doc-vias') ? $('#doc-vias').value : db.config.vias) || 2));
+    const nomes = n === 1 ? [''] : ['VIA DO CLIENTE', 'VIA DA LOJA', '3ª VIA', '4ª VIA'].slice(0, n);
+    aviso('Imprimindo…', 'ok');
+    imprimirDireto(nomes).then(() => { registrar('Impressão', 'direta · ' + n + ' via(s) · ' + db.config.impDireta); aviso(`Enviado para ${db.config.impDireta} (${n} via(s)).`, 'ok'); })
+      .catch(e => { aviso('Impressão direta falhou: ' + e.message + '. Abrindo a janela de impressão.', 'erro'); imprimirDocJanela(); });
+    return;
+  }
+  imprimirDocJanela();
+};
+function imprimirDocJanela() {
   if (!docAtual) return;
   const n = Math.min(4, Math.max(1, int($('#doc-vias') ? $('#doc-vias').value : db.config.vias) || 2));
   const nomes = n === 1 ? [''] : ['VIA DO CLIENTE', 'VIA DA LOJA', '3ª VIA', '4ª VIA'].slice(0, n);
@@ -3924,11 +3973,11 @@ function nomeArqDoc() {
   const num = el && el.querySelector('.doc-tit div') ? el.querySelector('.doc-tit div').textContent : '';
   return [db.config.loja || 'loja', tit, num].join(' ').normalize('NFD').replace(SEM_ACENTO, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
-async function imagemDoc(tipo) {
-  const papel = db.config.papel || 'A4', larg = papel === 'A4' ? 760 : papel === '80' ? 300 : 220, esc2 = 2;
+async function imagemDoc(tipo, via, escala) {
+  const papel = db.config.papel || 'A4', larg = papel === 'A4' ? 760 : papel === '80' ? 300 : 220, esc2 = escala || 2;
   const caixa = document.createElement('div');
   caixa.style.cssText = `position:fixed;left:-20000px;top:0;width:${larg}px;background:#fff;padding:14px`;
-  caixa.innerHTML = `${abreDoc()}${docAtual('VIA DO CLIENTE')}</div>`;
+  caixa.innerHTML = `${abreDoc()}${docAtual(via === undefined ? 'VIA DO CLIENTE' : via)}</div>`;
   document.body.appendChild(caixa);
   try {
     const alt = Math.ceil(caixa.getBoundingClientRect().height), larT = larg + 28;
@@ -4689,6 +4738,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.17-02', itens: ['Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em "Imprimir direto, sem a janela do Windows". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela.'] },
   { v: '2026.11.17-01', itens: ['Etiquetas na impressora de etiquetas: opção "Na impressora: Girar 90°" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada.'] },
   { v: '2026.11.16-03', itens: ['Vendas com vale-troca continuam com o valor total das peças, com destaque verde para a parte paga em vale-troca: na lista de vendas (em cada venda e no total), no relatório (cartão Vendas no período e linha da forma Crédito do cliente).'] },
   { v: '2026.11.16-02', itens: ['Vale-troca na venda: ao usar o crédito do cliente, a tela mostra o total, o vale-troca abatido e o valor A PAGAR em destaque.', 'Recibo: mostra Total da compra, (−) Vale-troca usado e TOTAL A PAGAR; o pagamento lista só o que o cliente pagou (ex.: Pix R$ 129,99) e o QR Code do Pix sai com o valor a pagar. O saldo de vale-troca que fica aparece embaixo.'] },
@@ -5361,6 +5411,13 @@ const AJUDA_PASSOS = [
     'Na venda e na condicional, a busca mostra A e E ao lado do estoque e, se a peça não estiver nas Araras, o sistema avisa para pegar no Estoque.'] },
   { t: 'Cadastrar um produto', quem: 'adm', ir: 'produtos', p: ['Abra <b>Produtos e estoque</b> e clique em <b>+ Novo produto</b>.', 'Preencha tipo, descrição, marca, cor, tamanhos, preço de venda, custo e estoque mínimo.', 'Se quiser, coloque a foto (arquivo ou câmera).', 'Salve. Para muitos produtos de uma vez, use <b>Importar planilha</b> (baixe antes o <b>Modelo da planilha</b>).'] },
   { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b> para etiquetar tudo o que está na lista, ou marque a caixinha dos produtos que quer e clique em <b>Etiquetas dos selecionados</b>. Também há <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
+  { t: 'Imprimir os comprovantes direto, sem a janela do Windows', quem: 'adm', ir: 'config', p: [
+    'Abra <b>Configurações → Recibos e impressão</b> e deixe o <b>Papel do recibo</b> em bobina (80 mm ou 58 mm), como a impressora usa.',
+    'Em <b>Imprimir direto, sem a janela do Windows</b>, clique e escolha a impressora (ex.: a C3Tech). A escolha já fica gravada.',
+    'Clique em <b>Imprimir teste direto</b>: deve sair um comprovante de teste na impressora, sem abrir janela.',
+    'A partir daí, ao clicar em <b>Imprimir</b> no recibo (venda, condicional, troca, caixa, parcela), as vias saem direto. Se a impressora estiver desligada ou sem papel, aparece o aviso e abre a janela normal.',
+    'Relatórios em A4 e etiquetas continuam abrindo a janela, para você escolher a impressora e o papel. Quando trocar o rolo para etiquetas, lembre de voltar o rolo de bobina antes de vender.',
+    'Para desligar, escolha <b>Não (abrir a janela…)</b>.'] },
   { t: 'Imprimir na impressora de etiquetas (térmica)', quem: 'adm', ir: 'produtos', p: [
     'Nas <b>Preferências</b> da impressora no Windows (Configurações → Impressoras → a impressora de etiquetas → Preferências), deixe o papel com o tamanho da etiqueta (ex.: 50 × 30 mm) e o espaço entre etiquetas (gap) que vem na caixa do rolo.',
     'No sistema, em Etiquetas, escolha o formato (<b>50 × 30</b>, <b>40 × 25</b> ou <b>outro tamanho</b> e digite largura × altura em mm).',
@@ -6970,6 +7027,7 @@ const MANUAL = [
     <h4>Vale-troca e créditos</h4><p>Menu próprio (todos os perfis, só no computador): saldo por cliente (db.creditos), composição pelos lotes (vale-troca sem validade × cashback/presente com validade), vencimento mais próximo, movimentações por período, extrato do cliente (impressão), WhatsApp do saldo, Excel e lista. Na venda, escolher cliente com saldo abre a pergunta "usar o crédito?" uma vez por cliente (form.venda.credPerg); "Usar" põe o crédito no pagamento (e o restante em outra forma). A venda grava credUsado/credSaldo. O total da venda (v.total) continua sendo o valor das peças (comissão, metas e relatórios); a tela e o recibo mostram o vale-troca abatido e o TOTAL A PAGAR, e o QR Pix do recibo usa total − vale-troca. Lista de vendas e relatório mostram o total com selo verde da parte em vale-troca (credDaVenda). Desconto da venda e do acerto de condicional começam em %.</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
+    <h4>Impressão direta (sem janela)</h4><p>config.impDireta = nome da impressora do Windows. Só com papel em bobina, no computador do caixa (servidor local). O app gera a imagem do comprovante (imagemDoc, escala 3) por via e manda para /api/imprimir; o servidor imprime com System.Drawing (PowerShell, PaperSize da largura da bobina × altura da imagem, sem margem; desenha na largura imprimível). /api/impressoras lista as instaladas. Falha → aviso e janela normal. Teste: botão "Imprimir teste direto". Testado só na impressora de PDF (ela ignora o tamanho e usa A4); na térmica o tamanho segue a bobina.</p>
     <h4>Etiquetas na impressora térmica</h4><p>Formatos 50×30, 40×25 e "outro tamanho" (config.etqTerm: larg/alt). "Na impressora: Girar 90°" troca o @page para altura × largura e gira cada etiqueta (driver em retrato tira a página em paisagem de lado); ajuste fino dx/dy em mm. Cada etiqueta é uma página (.etq-pg). Teste na C3Tech da Bali: sem giro saiu de lado e entre duas etiquetas (17/11/2026). Edge: margens Nenhuma, escala 100%, sem cabeçalho/rodapé; driver com o tamanho da etiqueta e gap.</p>
     <h4>Produtos e estoque</h4><p>Filtros (inclusive <b>Localização</b>), grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>
     <p><b>Araras × Estoque:</b> <code>p.estoque</code> é o total; <code>p.estqFundo</code> = peças lá atrás; Araras = total − Estoque (produto antigo sem o campo = tudo nas Araras). Venda, condicional e ajuste que baixam o total tiram das Araras primeiro e só depois do Estoque; devolução, troca e entrada voltam para as Araras, salvo a entrada com "Guardar em: Estoque". Transferência (lote pelo leitor com lista para imprimir, ou um tamanho pelo menu do tamanho) só muda o lugar: movimentação TRANSFERÊNCIA com qtd 0 e ⇄ n. O ajuste de estoque pede o total e quantas estão lá atrás. Cores: Araras verde-claro, Estoque azul-claro (selos A/E, barrinha nos tamanhos, caixas no menu do tamanho). CSV do estoque tem as colunas Araras e Estoque. Inventário conta o total: depois de finalizar, ajuste a quantidade lá atrás pelo Ajustar estoque se precisar.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}

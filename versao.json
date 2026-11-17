@@ -1,18 +1,18 @@
 {
- "versao": "2026.11.17-01",
- "publicadoEm": "17/11/2026 14:25",
+ "versao": "2026.11.17-02",
+ "publicadoEm": "17/11/2026 14:39",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "86e52a14b897b4b0d9a60d70cf566d5fc15dcff4e776033fc7ee5393be9483ee",
- "tamanho": 818618,
- "assinatura": "MDt9/GA+WwZVjqP7eZnXTqSsfqgvm33a3G1TNEIKren8zzZ9KhKuRxF3O5CRJ27zSjwYPJRwEME46gNzSZZM78KXlDyv3c2Z+kOjRnlZ76JRbI27gy0O4cAvrVY2CrhgqPkk80BsdoHk1qzjVYq0mgf7YMuF127RL4QeAGrPzi5igUAeBNQ1kEz1k+sQCvcDAFRqOCDsxlM06vdChiaMEQCMd69H2wY1HWJnvZHm8cb/B6rfmNg38pR/EsTxyuz5YU4HP0elM3g2YnhoXyd2bhjeXJIQilLbbXtruVrTLX5yL6Pv/3eXUsV5S4mwfOq7hAghXmILOy46Xyu3W/RlgQTlZel00z3rR/2UiVsTWDZM65DK07NkcyrkDAfDRLVDqNQkWlE1q6Q73Z+lN0Myt8SOxSz+KxhokDFbd8PTwW4s0U/pGQNltpH0v605x/Lfz0rUqfZJWUQFuJTI2QpNwYtWgjz4ZQ5/nXEyxTm/I5HHJovdFwk/h377erAjwd+k",
+ "sha256": "8a316ca2f9242f1831d40103e060fb44bde94118d77161fda4d205c8511e6123",
+ "tamanho": 825184,
+ "assinatura": "LzTX3VyKiqaqpgBN3vrlgbNS5CodHnxhrGyVcHsBRgav5/QfNPM6qZRrvBYuBfWEYNRVwML7xV6YHWQhkG3n/h+Yr3KeM39HmF04F3SRmQ/Ec8udYeLpMICg9D2adiH+PE1nc4+Defba6fx3IacRHhsBE1atzO8izsYkDZJSguae95jGVh4eqtNLyQTmDGnGUetjh0xw0y+uEHAd9sR8XZzjW8cQinAb4g42pwqraj+rtTooG0TJwF43lZyNdcUw42G38eZmk69ZhfBlE+iQ2tYQUFsO2bdR1Fxm7go8GQGMQPEgJUi4Gh64ZLF1CONnGAskarH5Q2MS6lHZvBmE49bju4h9jHpSR7XtDEordUjjH+pxYLzKSjU6EkGfKxZgovlWx5aW/2bi4EgAiXsTZ7frBOiqZ9tgrP4hsoxhRM/fQfkr941X6VL8YqzThIiffy+D9j2Jf1OeGV+/YuosVQk5etcOF9OGVd3Amu+1OLd5i+vsd1mtxHiaQGDZZqv5",
  "novidades": [
-  "Etiquetas na impressora de etiquetas: opção \"Na impressora: Girar 90°\" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada."
+  "Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em \"Imprimir direto, sem a janela do Windows\". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela."
  ],
  "servidor": {
-  "versao": "2026.11.08-01",
+  "versao": "2026.11.17-02",
   "arquivo": "servidor.py",
-  "sha256": "9dfc864bbbf67e94116b35879b757730cb73a5e327767fb6ec78367605c9444f",
-  "assinatura": "eUnHQOBCOL3XtgCkx4a6UEujbzgqSm1XVFOysPI5lf67qLzKwBz2Tp/RVujBnmykl9hBvs1Q/HecI3BAatG2fgE8run8oj9HIHnfoG/Nz7vxRYkXtOTOWmClBTVlU8BG5WsGvUoy3BOVU8j7yE3HLA0f8R8yQL8aMW3+c4TueIK6yNjLQBvlQQXHJaCWlu+onNwq00H8siEtbc65lNYeFQvjvEyNGgHNYo6sAMqKh4GpLyW6qrs+82ol2oCtSUcI6kPvP9ctNpTei9f46unwF4Uvg3yS42I3CA3xNNTv8EABqdn92EWmSGAKQM4NHZDrhn3r13lSVOo0BwRtiRZEds1XrMplnOUkJHTkWFDxKB4+vhdgQJgLsBZBse9EnAE5HNAy+A6vtkoJgs60BIFKlIhISWrD2pHubW5D+USGwF3oqacSNyKEI55t6QLLkL8yUdvnbOB5PX4hT0fq9tSyvpS7BJYmb0pYq0+mkFBlfe2wamtpNhyY4t/2QbNv/0+K",
-  "tamanho": 95793
+  "sha256": "811789ead7b59e394a80a54ca3e0a9f7716be0db10162f5cc786469b50deeb6a",
+  "assinatura": "q54/B+pBfJswFPBP88mORRrVUjGJ7W9um2eId0DT48u0OREIWkmm2QT5wPeLZE57xrYBEip+oU38mlguABVjNhvxQgQ+acs2Jd7BK/FCmYF+mbtt2CWKixylaMwu/6//meBqRfas1GIdWcHdzjgE04iJ9PA1lQb+WM4LJt4HrZUeA9IVjzpqq1SMDnO+PIn39Qbxu+v/07gQi/JJZjR2GLYvR1pOG9C6KgK4YNphHi7qUmEJVCACgojSTDyeUIkr9xFXNAISYw1VSkISENKnWFsdPcYkJArtU/lhgF/165V3ljWxd7aibDusb41xctUIVjFoZ6Oe7ytXoTDw/XinQkxQocJQb1s+haH5UoBnGGYz2Axu8kLhNXM2K0S/KgepMWsvs+1ZA6RoWuyP/5wsjmO/qhlsSGv17kdf2aiNO2/Ju+04T9GxyDYc77tqDzmTNqPH6yIhsQBU2s97uz9fhZ56NuPRq079f/ZWYgyOoFWOQ5VNxsrYcNMBvtERh13n",
+  "tamanho": 99825
  }
 }

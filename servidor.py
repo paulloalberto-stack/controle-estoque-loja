@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.08-01'
+VERSAO_SERVIDOR = '2026.11.17-02'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -932,6 +932,81 @@ def montar_ico(pngs):
     return cab + entradas + dados
 
 
+# ===== Impressão direta (sem a janela do Windows): o sistema manda a imagem do recibo e o servidor imprime pelo Windows =====
+PS_IMPRESSORAS = """[Console]::OutputEncoding = [Text.Encoding]::UTF8
+Add-Type -AssemblyName System.Drawing
+$p = New-Object System.Drawing.Printing.PrinterSettings
+$l = @([System.Drawing.Printing.PrinterSettings]::InstalledPrinters | ForEach-Object { [string]$_ })
+ConvertTo-Json -Compress -InputObject @{ padrao = [string]$p.PrinterName; lista = $l }"""
+
+PS_IMPRIMIR = """[Console]::OutputEncoding = [Text.Encoding]::UTF8
+Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile($env:LOJA_IMG)
+try {
+  $pd = New-Object System.Drawing.Printing.PrintDocument
+  if ($env:LOJA_IMP) { $pd.PrinterSettings.PrinterName = $env:LOJA_IMP }
+  if (-not $pd.PrinterSettings.IsValid) { throw ('impressora nao encontrada: ' + $env:LOJA_IMP) }
+  if ($env:LOJA_ARQ) { $pd.PrinterSettings.PrintToFile = $true; $pd.PrinterSettings.PrintFileName = $env:LOJA_ARQ }
+  $wPol = [int][Math]::Round([double]$env:LOJA_MM / 25.4 * 100)
+  $hPol = [int][Math]::Round($wPol * $img.Height / $img.Width) + 8
+  $pd.DefaultPageSettings.PaperSize = New-Object System.Drawing.Printing.PaperSize('Recibo', $wPol, $hPol)
+  $pd.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0, 0, 0, 0)
+  $pd.OriginAtMargins = $false
+  $pd.DocumentName = 'Controle de Estoque'
+  $pd.add_PrintPage({ param($s, $e)
+    $w = [double]$e.PageSettings.PrintableArea.Width
+    if ($w -le 0 -or $w -gt $wPol) { $w = $wPol }
+    $h = $w * $img.Height / $img.Width
+    $e.Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $e.Graphics.DrawImage($img, [single]0, [single]0, [single]$w, [single]$h)
+    $e.HasMorePages = $false })
+  $pd.Print()
+  'ok'
+} catch { 'ERRO:' + $_.Exception.Message; exit 3 } finally { $img.Dispose() }"""
+
+
+def _ps(script, env_extra, prazo=90):
+    env = dict(os.environ, **env_extra)
+    cod = base64.b64encode(script.encode('utf-16-le')).decode('ascii')
+    r = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', cod], capture_output=True, env=env, timeout=prazo, creationflags=0x08000000)
+    saida, erro = r.stdout.decode('utf-8', 'replace').strip(), r.stderr.decode('utf-8', 'replace').strip()
+    if 'ERRO:' in saida:
+        raise ValueError(saida.split('ERRO:', 1)[1].strip()[:300] or 'falha ao imprimir')
+    if r.returncode != 0:
+        linhas = [x for x in erro.splitlines() if x.strip()]
+        raise ValueError((linhas[0] if linhas else 'falha ao falar com a impressora')[:300])
+    return saida
+
+
+def listar_impressoras():
+    d = json.loads(_ps(PS_IMPRESSORAS, {}, 40) or '{}')
+    l = d.get('lista') or []
+    return {'padrao': d.get('padrao') or '', 'lista': [l] if isinstance(l, str) else l}
+
+
+def imprimir_imagem(dados):
+    img = dados.get('img') or ''
+    m = re.match(r'data:image/png;base64,([A-Za-z0-9+/=]+)$', img)
+    if not m:
+        raise ValueError('imagem do documento inválida')
+    mm = float(dados.get('mm') or 80)
+    if not 20 <= mm <= 220:
+        raise ValueError('largura do papel inválida')
+    impressora = str(dados.get('impressora') or '')[:200]
+    os.makedirs(PASTA_DADOS, exist_ok=True)
+    arq = os.path.join(PASTA_DADOS, 'impressao_%d_%d.png' % (os.getpid(), int(time.time() * 1000)))
+    with open(arq, 'wb') as f:
+        f.write(base64.b64decode(m.group(1)))
+    try:
+        env = {'LOJA_IMG': arq, 'LOJA_IMP': impressora, 'LOJA_MM': str(mm), 'LOJA_ARQ': os.environ.get('LOJA_TESTE_IMPRESSAO', '')}
+        return _ps(PS_IMPRIMIR, env)
+    finally:
+        try:
+            os.remove(arq)
+        except OSError:
+            pass
+
+
 def atualizar_atalhos(criar=False):
     pyw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
     env = dict(os.environ, LOJA_ICO=icone_atual(), LOJA_PYW=pyw, LOJA_SRV=os.path.join(BASE, 'servidor.py'), LOJA_BASE=BASE, LOJA_CRIAR='1' if criar else '0')
@@ -1053,6 +1128,8 @@ class Atendente(BaseHTTPRequestHandler):
                 return self._json(200, {'app': 'lojaRoupas', 'servidor': VERSAO_SERVIDOR, 'sistema': versao_de(open(ARQ_SISTEMA, encoding='utf-8').read()) if os.path.exists(ARQ_SISTEMA) else '',
                                         'vazio': b.vazio(), 'migradoEm': b.meta_interna('migradoEm'), 'banco': b.caminho, 'tamanho': b.tamanho(),
                                         'pasta': BASE, 'backups': PASTA_BACKUP, 'pastaExtra': b.meta_interna('pastaExtra') or '', 'iconeHash': b.meta_interna('iconeHash') or '', 'icone': icone_atual(), 'licenca': situacao_licenca(b, b.config()), 'rede': info_rede(), 'nuvem': info_nuvem(b), 'email': info_email(b)})
+            if caminho == '/api/impressoras':
+                return self._json(200, listar_impressoras())
             if caminho == '/api/dados':
                 corpo = b.ler_dados() if not b.vazio() else '{}'
                 if 'versao=1' in self.path:   # sistema novo: dados + versão (gravação por registro)
@@ -1165,6 +1242,10 @@ class Atendente(BaseHTTPRequestHandler):
                 b.meta_interna('email', c)
                 log('configuração do e-mail de monitoramento alterada (%s, %d destinatário(s), horários %s)' % (h, len(ds), ', '.join(hs)))
                 return self._json(200, info_email(b))
+            if caminho == '/api/imprimir':
+                d = json.loads(corpo.decode('utf-8') or '{}')
+                imprimir_imagem(d)
+                return self._json(200, {'ok': True})
             if caminho == '/api/email/teste':
                 a, corpo, txt = resumo_loja(b)
                 enviar_email(b, '[TESTE] ' + a, corpo, txt)
