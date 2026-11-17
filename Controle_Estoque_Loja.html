@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.16-03">
+<meta name="versao-sistema" content="2026.11.17-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -201,6 +201,9 @@ label.chk input{width:auto}
 .etq .e-cod{font-size:calc(8px * var(--ft,1));letter-spacing:.06em}
 .etq-40 .e-desc{font-size:calc(8px * var(--ft,1));max-height:1.2em}.etq-40 .e-preco{font-size:calc(12px * var(--fp,1))}.etq-40 .e-tam{font-size:calc(11px * var(--fp,1))}
 .etq.cx-normal .e-loja{text-transform:uppercase}.etq .e-loja{text-transform:none}
+.etq-pg{position:relative;overflow:hidden;page-break-after:always;break-after:page;margin:0;padding:0}
+.etq-pg:last-child{page-break-after:auto;break-after:auto}
+.etq-pg>.etq{position:absolute;left:0;top:0;page-break-after:auto;break-after:auto;transform-origin:0 0;box-sizing:border-box}
 .etq-prev{background:#f3f4f6;padding:10px;border-radius:8px;max-height:420px;overflow:auto}
 .etq-prev .etq{border:1px dashed #9ca3af}
 /* ===== Tema moderno (sobrepõe o visual da tela; não altera recibos e etiquetas) ===== */
@@ -2201,7 +2204,16 @@ ACT.salvarAjuste = el => {
   salvar(); fecharModal(); render(); aviso('Estoque ajustado.', 'ok');
 };
 /* etiquetas com código de barras */
-const FORMATOS_ETQ = [['A4', 'Folha A4 – 3 colunas (64 × 37 mm, 21 por folha)'], ['50', 'Impressora de etiquetas – 50 × 30 mm'], ['40', 'Impressora de etiquetas – 40 × 25 mm']];
+const FORMATOS_ETQ = [['A4', 'Folha A4 – 3 colunas (64 × 37 mm, 21 por folha)'], ['50', 'Impressora de etiquetas – 50 × 30 mm'], ['40', 'Impressora de etiquetas – 40 × 25 mm'], ['outro', 'Impressora de etiquetas – outro tamanho (mm)']];
+/* impressora de etiquetas: tamanho, giro de 90° (quando o driver está "em pé" e a etiqueta sai de lado) e ajuste fino em mm */
+const cfgTerm = () => Object.assign({ giro: false, larg: 50, alt: 30, dx: 0, dy: 0 }, db.config.etqTerm || {});
+const tamEtq = fmt => fmt === '40' ? [40, 25] : fmt === '50' ? [50, 30] : [Math.max(15, num(cfgTerm().larg) || 50), Math.max(10, num(cfgTerm().alt) || 30)];
+function paginaEtq(html, fmt) {
+  const c = cfgTerm(), g = c.giro === true ? 90 : int(c.giro), [w, h] = tamEtq(fmt), pw = g ? h : w, ph = g ? w : h, dx = num(c.dx) || 0, dy = num(c.dy) || 0;
+  const tr = g === 90 ? `translate(${h + dx}mm,${dy}mm) rotate(90deg)` : g === 270 ? `translate(${dx}mm,${w + dy}mm) rotate(-90deg)` : `translate(${dx}mm,${dy}mm)`;
+  PAGINA.etqTerm = `@page{size:${pw}mm ${ph}mm;margin:0}html,body{margin:0!important;padding:0!important}`;
+  return html.map(e => `<div class="etq-pg" style="width:${pw}mm;height:${ph}mm">${e.replace('style="--ft', `style="width:${w}mm;height:${h}mm;transform:${tr};--ft`)}</div>`).join('');
+}
 const FONTES_ETQ = [['Arial', 'Arial (padrão)'], ['Arial Narrow', 'Arial estreita (cabe mais texto)'], ['Verdana', 'Verdana (mais legível)'], ['Tahoma', 'Tahoma'], ['Georgia', 'Georgia (com serifa)'], ['Courier New', 'Courier (máquina de escrever)']];
 const CAIXA_ETQ = [['normal', 'Como está no cadastro'], ['maiusculas', 'TUDO MAIÚSCULO'], ['minusculas', 'tudo minúsculo'], ['palavras', 'Primeira Letra Maiúscula']];
 const TAM_ETQ = [70, 80, 90, 100, 110, 125, 140, 160].map(n => [String(n), n === 100 ? '100% (padrão)' : n + '%']);
@@ -2217,7 +2229,7 @@ const CAMPOS_ETQ = [['loja', 'Nome da loja'], ['desc', 'Descrição e marca'], [
 function etiquetaHTML(p, fmt) {
   const cb = codBarras(p), o = db.config.etqCampos || {}, np = Math.max(2, int(db.config.etqParcelas) || 3), f = fonteEtq(), cx = s => esc(caixaTxt(s, f.caixa));
   const desc = [o.desc !== false ? nomeProd(p) + ' · ' + p.marca : '', o.cor !== false ? p.cor : '', o.colecao ? p.colecao : ''].filter(Boolean).map(cx).join(' · ');
-  return `<div class="etq etq-${fmt} cx-${f.caixa}" style="--ft:${f.ft / 100};--fp:${f.fp / 100};--ff:'${esc(f.fam)}'">${o.loja !== false ? `<div class="e-loja">${cx(db.config.loja || 'Loja')}</div>` : ''}${desc ? `<div class="e-desc">${desc}</div>` : ''}<div class="e-lin"><span class="e-tam">${esc(p.tamanho)}</span><span class="e-preco">${fmtR(p.preco)}</span></div>${o.parcelado ? `<div class="e-cod" style="text-align:right">ou ${np}x de ${fmtR(p.preco / np)}</div>` : ''}${barrasSVG(cb, '100%', fmt === '40' ? 22 : 30)}<div class="e-cod">${esc(cb)}</div></div>`;
+  return `<div class="etq etq-${fmt === 'outro' ? '50' : fmt} cx-${f.caixa}" style="--ft:${f.ft / 100};--fp:${f.fp / 100};--ff:'${esc(f.fam)}'">${o.loja !== false ? `<div class="e-loja">${cx(db.config.loja || 'Loja')}</div>` : ''}${desc ? `<div class="e-desc">${desc}</div>` : ''}<div class="e-lin"><span class="e-tam">${esc(p.tamanho)}</span><span class="e-preco">${fmtR(p.preco)}</span></div>${o.parcelado ? `<div class="e-cod" style="text-align:right">ou ${np}x de ${fmtR(p.preco / np)}</div>` : ''}${barrasSVG(cb, '100%', fmt === '40' ? 22 : 30)}<div class="e-cod">${esc(cb)}</div></div>`;
 }
 let etqLista = [];
 function formEtiquetas(lista, titulo) {
@@ -2230,7 +2242,12 @@ function formEtiquetas(lista, titulo) {
     ${(() => { const f = fonteEtq(), s = (id, ops, v) => `<select id="${id}" class="etq-o">${ops.map(([k, t]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
       return `<label>Letras${s('etq-caixa', CAIXA_ETQ, f.caixa)}</label><label>Fonte${s('etq-fam', FONTES_ETQ, f.fam)}</label><label>Tamanho do texto${s('etq-ft', TAM_ETQ, f.ft)}</label><label>Tamanho do preço e do tamanho${s('etq-fp', TAM_ETQ, f.fp)}</label>`; })()}</div>
     <div class="tabw" style="max-height:260px;overflow:auto"><table class="tb"><thead><tr><th>Código de barras</th><th>Produto</th><th>Tam.</th><th class="n">Etiquetas</th></tr></thead><tbody>${etqLista.map((i, k) => { const p = prod(i.prod); return `<tr><td>${esc(codBarras(p))}</td><td>${esc(nomeProd(p))} <span class="mut">${esc(p.marca)}${p.cor ? ' · ' + esc(p.cor) : ''}</span></td><td>${esc(p.tamanho)}</td><td class="n"><input class="qtd etq-q" type="number" min="0" value="${i.qtd}" data-k="${k}"></td></tr>`; }).join('')}</tbody></table></div>
-    <p class="mut">Total: <b id="etq-tot"></b> etiqueta(s). Prévia:</p><div class="etq-prev" id="etq-prev"></div>`,
+    ${(() => { const c = cfgTerm(); return `<div class="etq-term form2" id="etq-term" ${fmt === 'A4' ? 'hidden' : ''} style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px">
+      <label>Na impressora<select id="etq-giro" class="etq-o">${[[0, 'Normal'], [90, 'Girar 90° para a direita (quando sai de lado)'], [270, 'Girar 90° para a esquerda (se sair de cabeça para baixo)']].map(([v, x]) => `<option value="${v}" ${(c.giro === true ? 90 : int(c.giro)) === v ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <label class="etq-outro" ${fmt === 'outro' ? '' : 'hidden'}>Largura × altura da etiqueta (mm)<span style="display:flex;gap:6px;align-items:center"><input id="etq-larg" class="etq-o" type="number" min="15" max="120" step="1" value="${c.larg}" style="width:80px"> × <input id="etq-alt" class="etq-o" type="number" min="10" max="120" step="1" value="${c.alt}" style="width:80px"></span></label>
+      <label>Ajuste fino (mm): → direita / ↓ para baixo<span style="display:flex;gap:6px;align-items:center"><input id="etq-dx" class="etq-o" type="number" step="0.5" min="-10" max="10" value="${c.dx}" style="width:80px"><input id="etq-dy" class="etq-o" type="number" step="0.5" min="-10" max="10" value="${c.dy}" style="width:80px"></span></label>
+      <p class="mut full" style="margin:0">Saiu de lado ou cortada entre duas etiquetas? Mude "Na impressora" para <b>Girar 90° para a direita</b> e imprima 1 de teste; se sair de cabeça para baixo, use <b>para a esquerda</b>. No Edge, na janela de impressão: <b>Margens: Nenhuma</b>, <b>Escala: Padrão (100%)</b> e desmarque <b>Cabeçalhos e rodapés</b>. Nas Preferências da impressora no Windows, o papel deve ser do tamanho da etiqueta.</p></div>`; })()}
+    <p class="mut">Total: <b id="etq-tot"></b> etiqueta(s). Prévia (sem o giro):</p><div class="etq-prev" id="etq-prev"></div>`,
     `<button class="btn pri" data-act="imprimirEtq">Imprimir etiquetas</button>`, true);
   previaEtq();
 }
@@ -2238,13 +2255,16 @@ function lerEtq() {
   const o = {}; $$('.etq-c').forEach(c => o[c.value] = c.checked);
   db.config.etqCampos = o; db.config.etqParcelas = Math.max(2, int($('#etq-np').value) || 3);
   if ($('#etq-caixa')) db.config.etqFonte = { caixa: $('#etq-caixa').value, fam: $('#etq-fam').value, ft: int($('#etq-ft').value) || 100, fp: int($('#etq-fp').value) || 100 };
+  if ($('#etq-giro')) db.config.etqTerm = { giro: int($('#etq-giro').value), larg: num($('#etq-larg').value) || 50, alt: num($('#etq-alt').value) || 30, dx: num($('#etq-dx').value) || 0, dy: num($('#etq-dy').value) || 0 };
+  const fm = ($('#etq-fmt') || {}).value; if ($('#etq-term')) { $('#etq-term').hidden = fm === 'A4'; $('.etq-outro').hidden = fm !== 'outro'; }
   return { fmt: $('#etq-fmt').value, q: $$('.etq-q').map(i => int(i.value)) };
 }
 function previaEtq() {
   if (!$('#etq-prev')) return;
   const { fmt, q } = lerEtq();
   $('#etq-tot').textContent = q.reduce((s, x) => s + x, 0);
-  $('#etq-prev').innerHTML = `<div class="etqs">${etqLista.filter((i, k) => q[k] > 0).slice(0, 6).map(i => etiquetaHTML(prod(i.prod), fmt)).join('')}</div>`;
+  const [pw, ph] = tamEtq(fmt), est = fmt === 'outro' ? `style="width:${pw}mm;height:${ph}mm;--ft` : null;
+  $('#etq-prev').innerHTML = `<div class="etqs">${etqLista.filter((i, k) => q[k] > 0).slice(0, 6).map(i => { const e = etiquetaHTML(prod(i.prod), fmt); return est ? e.replace('style="--ft', est) : e; }).join('')}</div>`;
 }
 ACT.etiquetas = el => { const p = prod(+el.dataset.id); formEtiquetas([{ prod: p.id, qtd: Math.max(1, p.estoque) }], 'Etiquetas – ' + esc(nomeCompleto(p))); };
 ACT.etiquetasSel = () => {
@@ -2255,11 +2275,12 @@ ACT.etiquetasSel = () => {
 ACT.etiquetasFiltro = () => formEtiquetas(produtosFiltrados().map(p => ({ prod: p.id, qtd: Math.max(0, p.estoque) })), 'Etiquetas dos produtos listados');
 ACT.etiquetasEntrada = el => { const e = db.entradas.find(x => x.id === +el.dataset.id); formEtiquetas(e.itens.map(i => ({ prod: i.prod, qtd: i.qtd })), 'Etiquetas da entrada nº ' + nDoc(e.id)); };
 ACT.imprimirEtq = () => {
-  const { fmt, q } = lerEtq(); let html = '';
-  etqLista.forEach((i, k) => { const e = etiquetaHTML(prod(i.prod), fmt); for (let n = 0; n < q[k]; n++) html += e; });
-  if (!html) return aviso('Informe a quantidade de etiquetas.', 'erro');
+  const { fmt, q } = lerEtq(); const lista = [];
+  etqLista.forEach((i, k) => { const e = etiquetaHTML(prod(i.prod), fmt); for (let n = 0; n < q[k]; n++) lista.push(e); });
+  if (!lista.length) return aviso('Informe a quantidade de etiquetas.', 'erro');
   db.config.etiqueta = fmt; salvar();
-  imprimir(`<div class="etqs">${html}</div>`, 'etq' + fmt);
+  if (fmt === 'A4') return imprimir(`<div class="etqs">${lista.join('')}</div>`, 'etqA4');
+  imprimir(paginaEtq(lista, fmt), 'etqTerm');
 };
 /* exclusão de itens lançados por engano */
 function usoProduto(id) {
@@ -4668,6 +4689,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.17-01', itens: ['Etiquetas na impressora de etiquetas: opção "Na impressora: Girar 90°" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada.'] },
   { v: '2026.11.16-03', itens: ['Vendas com vale-troca continuam com o valor total das peças, com destaque verde para a parte paga em vale-troca: na lista de vendas (em cada venda e no total), no relatório (cartão Vendas no período e linha da forma Crédito do cliente).'] },
   { v: '2026.11.16-02', itens: ['Vale-troca na venda: ao usar o crédito do cliente, a tela mostra o total, o vale-troca abatido e o valor A PAGAR em destaque.', 'Recibo: mostra Total da compra, (−) Vale-troca usado e TOTAL A PAGAR; o pagamento lista só o que o cliente pagou (ex.: Pix R$ 129,99) e o QR Code do Pix sai com o valor a pagar. O saldo de vale-troca que fica aparece embaixo.'] },
   { v: '2026.11.16-01', itens: ['Venda: o desconto já vem em % (dá para trocar para R$ na mesma caixinha). No acerto de condicional também.', 'Caixa: clique no valor de Vendas, Recebimentos ou Esperado de cada forma de pagamento para ver as vendas, os títulos ou o extrato que formam aquele total.', 'Novo menu Vale-troca e créditos (também em Clientes): saldo de cada cliente (vale-troca, cashback e presente), vencimentos, movimentações por período, extrato por cliente para imprimir, WhatsApp com o saldo, Excel e lista para imprimir. O recibo da venda que usou crédito mostra quanto foi usado e o saldo que ainda fica.', 'Venda: ao escolher um cliente com crédito (vale-troca, cashback ou presente), aparece uma janela com o valor e a pergunta se quer usar; "Usar o crédito" já coloca no pagamento. O aviso ao lado do cliente ficou em destaque e também abre a pergunta.'] },
@@ -5339,6 +5361,12 @@ const AJUDA_PASSOS = [
     'Na venda e na condicional, a busca mostra A e E ao lado do estoque e, se a peça não estiver nas Araras, o sistema avisa para pegar no Estoque.'] },
   { t: 'Cadastrar um produto', quem: 'adm', ir: 'produtos', p: ['Abra <b>Produtos e estoque</b> e clique em <b>+ Novo produto</b>.', 'Preencha tipo, descrição, marca, cor, tamanhos, preço de venda, custo e estoque mínimo.', 'Se quiser, coloque a foto (arquivo ou câmera).', 'Salve. Para muitos produtos de uma vez, use <b>Importar planilha</b> (baixe antes o <b>Modelo da planilha</b>).'] },
   { t: 'Imprimir etiquetas', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, filtre os produtos que quer etiquetar.', 'Clique em <b>Etiquetas dos produtos listados</b> para etiquetar tudo o que está na lista, ou marque a caixinha dos produtos que quer e clique em <b>Etiquetas dos selecionados</b>. Também há <b>Etiquetas</b> na linha de um produto.', 'Também dá para imprimir pela entrada de mercadoria (botão Etiquetas em Últimas entradas).'] },
+  { t: 'Imprimir na impressora de etiquetas (térmica)', quem: 'adm', ir: 'produtos', p: [
+    'Nas <b>Preferências</b> da impressora no Windows (Configurações → Impressoras → a impressora de etiquetas → Preferências), deixe o papel com o tamanho da etiqueta (ex.: 50 × 30 mm) e o espaço entre etiquetas (gap) que vem na caixa do rolo.',
+    'No sistema, em Etiquetas, escolha o formato (<b>50 × 30</b>, <b>40 × 25</b> ou <b>outro tamanho</b> e digite largura × altura em mm).',
+    'Imprima <b>1 etiqueta de teste</b>. No Edge, na janela de impressão: impressora de etiquetas, <b>Margens: Nenhuma</b>, <b>Escala: Padrão</b>, sem cabeçalhos e rodapés.',
+    'Saiu de lado (texto correndo ao longo do rolo) ou cortada entre duas etiquetas? Mude <b>Na impressora</b> para <b>Girar 90° para a direita</b> e teste de novo. Se sair de cabeça para baixo, use <b>Girar 90° para a esquerda</b>.',
+    'Ficou um pouco deslocada? Use o <b>Ajuste fino</b> (mm para a direita e para baixo; negativo volta). O sistema guarda as escolhas para as próximas vezes.'] },
   { t: 'Ajustar o estoque (contagem)', quem: 'adm', ir: 'produtos', p: ['Em <b>Produtos e estoque</b>, clique no <b>tamanho</b> do produto.', 'Escolha <b>Ajustar</b>.', 'Informe a <b>Quantidade contada na loja</b> e o <b>Motivo</b>.', 'Clique em <b>Salvar ajuste</b>. O ajuste fica registrado em Movimentações.'] },
   { t: 'Cancelar uma venda', quem: 'adm', ir: 'vendas', p: ['Em <b>Vendas → Vendas realizadas</b>, ache a venda (use as datas De / Até).', 'Clique em <b>Cancelar</b> e informe o <b>Motivo do cancelamento</b>.', 'Confirme. As peças voltam ao estoque. Se havia parcelas já pagas, devolva o valor ao cliente.'] },
   { t: 'Cadastrar um vendedor', quem: 'adm', ir: 'usuarios', p: ['Abra <b>Usuárias / usuários</b> e clique em <b>+ Novo vendedor / usuário</b>.', 'Preencha nome, usuário (login), perfil <b>Vendedor</b> e a senha inicial.', 'Defina a regra de comissão dele.', 'Salve. No primeiro acesso, ele troca a senha.'] },
@@ -6942,6 +6970,7 @@ const MANUAL = [
     <h4>Vale-troca e créditos</h4><p>Menu próprio (todos os perfis, só no computador): saldo por cliente (db.creditos), composição pelos lotes (vale-troca sem validade × cashback/presente com validade), vencimento mais próximo, movimentações por período, extrato do cliente (impressão), WhatsApp do saldo, Excel e lista. Na venda, escolher cliente com saldo abre a pergunta "usar o crédito?" uma vez por cliente (form.venda.credPerg); "Usar" põe o crédito no pagamento (e o restante em outra forma). A venda grava credUsado/credSaldo. O total da venda (v.total) continua sendo o valor das peças (comissão, metas e relatórios); a tela e o recibo mostram o vale-troca abatido e o TOTAL A PAGAR, e o QR Pix do recibo usa total − vale-troca. Lista de vendas e relatório mostram o total com selo verde da parte em vale-troca (credDaVenda). Desconto da venda e do acerto de condicional começam em %.</p>${mnP('caixa', 'Caixa aberto com os cards por forma de pagamento.')}
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
+    <h4>Etiquetas na impressora térmica</h4><p>Formatos 50×30, 40×25 e "outro tamanho" (config.etqTerm: larg/alt). "Na impressora: Girar 90°" troca o @page para altura × largura e gira cada etiqueta (driver em retrato tira a página em paisagem de lado); ajuste fino dx/dy em mm. Cada etiqueta é uma página (.etq-pg). Teste na C3Tech da Bali: sem giro saiu de lado e entre duas etiquetas (17/11/2026). Edge: margens Nenhuma, escala 100%, sem cabeçalho/rodapé; driver com o tamanho da etiqueta e gap.</p>
     <h4>Produtos e estoque</h4><p>Filtros (inclusive <b>Localização</b>), grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>
     <p><b>Araras × Estoque:</b> <code>p.estoque</code> é o total; <code>p.estqFundo</code> = peças lá atrás; Araras = total − Estoque (produto antigo sem o campo = tudo nas Araras). Venda, condicional e ajuste que baixam o total tiram das Araras primeiro e só depois do Estoque; devolução, troca e entrada voltam para as Araras, salvo a entrada com "Guardar em: Estoque". Transferência (lote pelo leitor com lista para imprimir, ou um tamanho pelo menu do tamanho) só muda o lugar: movimentação TRANSFERÊNCIA com qtd 0 e ⇄ n. O ajuste de estoque pede o total e quantas estão lá atrás. Cores: Araras verde-claro, Estoque azul-claro (selos A/E, barrinha nos tamanhos, caixas no menu do tamanho). CSV do estoque tem as colunas Araras e Estoque. Inventário conta o total: depois de finalizar, ajuste a quantidade lá atrás pelo Ajustar estoque se precisar.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
     <h4>Entrada de mercadoria</h4>${mnP('entradas', 'Entrada manual ou pelo XML da NF-e.')}

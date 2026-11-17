@@ -1,12 +1,12 @@
 {
- "versao": "2026.11.16-03",
- "publicadoEm": "16/11/2026 12:34",
+ "versao": "2026.11.17-01",
+ "publicadoEm": "17/11/2026 14:25",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "64b5590ba93f57ea14b6282afb6453582951bf3038def848ed82b59979e22e4e",
- "tamanho": 812914,
- "assinatura": "KvtBpEgCplsmTHXzG7vdrNsTxilMpFSQ8HqWrXpuxIzm6EvvwIgKjdK4B1J9XqPPb7M9BjOQRSfw+n5UgIB9kobsloZ7P36VgsY3fnquMozIokEoVrgQA//Rle/uR94WrR2hzAm8wR6RHdxJk2B3bL0IfNiTEUJdaw3kNW03Rf2A7RJ8QckH16awgAYSyiY9ss495GdVxRRblIQlqq541M53N35BARo32vYNQ74Y6MnMiwhSoKSGTGwwBugctFOT++bIK4WfmQbCAo1buMwR3D6dWjAU8+p3Wtr7M1nY0aUnmF8tAqtThKUp8/P2GkAvev0CpEwB3v8z0seDo3JSnB8LZcaLwS3ixtAYcCuzaaV2JJ2qLJgNq07kiuY2MpqH9a7xgT5n7AHq50OLqnBjIT6hoK2cPbqoUh2Iv+oOb2+Uivs7LH8XpVxcBrRWVOQBTXGIKEpPihH0O3wjyYOBTk9ojhqXCBI0iH4JN6kbiFvtqOJo6GPCudw2egrdvfsW",
+ "sha256": "86e52a14b897b4b0d9a60d70cf566d5fc15dcff4e776033fc7ee5393be9483ee",
+ "tamanho": 818618,
+ "assinatura": "MDt9/GA+WwZVjqP7eZnXTqSsfqgvm33a3G1TNEIKren8zzZ9KhKuRxF3O5CRJ27zSjwYPJRwEME46gNzSZZM78KXlDyv3c2Z+kOjRnlZ76JRbI27gy0O4cAvrVY2CrhgqPkk80BsdoHk1qzjVYq0mgf7YMuF127RL4QeAGrPzi5igUAeBNQ1kEz1k+sQCvcDAFRqOCDsxlM06vdChiaMEQCMd69H2wY1HWJnvZHm8cb/B6rfmNg38pR/EsTxyuz5YU4HP0elM3g2YnhoXyd2bhjeXJIQilLbbXtruVrTLX5yL6Pv/3eXUsV5S4mwfOq7hAghXmILOy46Xyu3W/RlgQTlZel00z3rR/2UiVsTWDZM65DK07NkcyrkDAfDRLVDqNQkWlE1q6Q73Z+lN0Myt8SOxSz+KxhokDFbd8PTwW4s0U/pGQNltpH0v605x/Lfz0rUqfZJWUQFuJTI2QpNwYtWgjz4ZQ5/nXEyxTm/I5HHJovdFwk/h377erAjwd+k",
  "novidades": [
-  "Vendas com vale-troca continuam com o valor total das peças, com destaque verde para a parte paga em vale-troca: na lista de vendas (em cada venda e no total), no relatório (cartão Vendas no período e linha da forma Crédito do cliente)."
+  "Etiquetas na impressora de etiquetas: opção \"Na impressora: Girar 90°\" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada."
  ],
  "servidor": {
   "versao": "2026.11.08-01",
