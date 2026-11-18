@@ -1,19 +1,18 @@
 {
- "versao": "2026.11.17-03",
- "publicadoEm": "18/11/2026 12:22",
+ "versao": "2026.11.18-01",
+ "publicadoEm": "18/11/2026 12:46",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "6af5bd96a5e2ebab9e16a4db5a3f10bd8a2bc4c6725cac967a4be596759a7969",
- "tamanho": 826816,
- "assinatura": "GiM182LiWsfp5Ffjr3HBFG6Xp/qT2TT5IB2gTXkqvFwai0M+OjGYFfqjUR7e944CaF1VpztmEb1uHGx1rwh0/GJqRBzCi2m+VUwoVOqHeyA+qJrSO/Q+B0oIfPzK/B6ZwQj/bNaoglfhzROyFc23xl4L0B3O+Wzd5hdmS91Wy3tuseTOwtiMSfb2+OCbIH1f5RexJiHEmGGBnkhXcre+XgulyHwQbpywn0Cmtn8LP2yuwbKz47WB2itkCZi7QjpNIQKFz6ddW9TKSu6Wqq5xokhQUen1o/kLdcAif8QCCwVutNH530cplQh9UMya10UOTs/1oawX/bgHqeHbAtoutpe2CC3AZDuhRqjm0PqGjYslzbrI83IAYpzkrZXOcAxW+mKVf/w8+k9L/u9+engKBjyh+x0eK/qe2aEID4b+br6N/4XtXhpo2KNJRr2eUz6PZ5PlbJt8upzcsHiJiZLTIIufdM2QTwkyHpODkYGM7Ph8Hg/V/I3teStPOofpCBZq",
+ "sha256": "ba6e7224ce8150a1f54e21c2afdfdbcff4ef33e24df0f3c2fa38c786d0b1fad7",
+ "tamanho": 827684,
+ "assinatura": "cX9kZuk8L3Yb9bJoVwQZsEU2Ssx1HSEQjXJc7ntUfkxBmuMhBFL86WbuU6ZZDCzVmIoF1NbfHtlYrHEW7eVp175UBzoCVigWZraC6v/i5hrgm8462vhbdCSJERAWykxd2u6pCLIpBS6mndeZBbB0mjxIDEUb+o/bEcmipteWlk8sOCbgbb6p6T0QeRqBr5Ek997eAQmRvYqanSeq2IddhlazHuo87Z+AZTy/wZtSUHMzoXbrMa6SvWnlZ2nqzcv+gRUa3npEYaexosIlRh02uHUP/JMu74eszdn6D8ecBHH8nNmHB8t5lvav0kuSV/DPP/+gXcIaGx5AVXmGNolOgRZxsGu/KAK4dtkbMds3w8i9JohwACT7yrkt8RBSaScM8oR8UwqThu5dlSMkMwaGeAaBSvZIk10j7LZKPzilMUeiq5LcyCDdCGEfob3J0O7qWCOuzOt+v3IIZT/YklUbXOCDKuyiVyx4YMNUeshvgve/sFVxV2GUv1hW83b71hmw",
  "novidades": [
-  "Atualização: se a tela já tiver sido trocada numa tentativa anterior, o instalador segue e atualiza o servidor (antes parava com \"não é mais nova que a instalada\" e o servidor ficava antigo). A tela de atualização avisa quando o servidor está desatualizado.",
-  "Impressão direta: se o servidor do computador ainda for antigo, o aviso explica que é preciso atualizar."
+  "Servidor: só uma cópia pode rodar por vez. Antes, no Windows, o servidor podia subir duas vezes (inicialização do Windows + atalho) e as duas atendiam ao mesmo tempo, o que confundia a atualização e duplicava e-mails e backups. A atualização do servidor espera até 1 minuto para ele voltar."
  ],
  "servidor": {
-  "versao": "2026.11.17-03",
+  "versao": "2026.11.18-01",
   "arquivo": "servidor.py",
-  "sha256": "acf506a74ebdb47cdcb81f576256f4814759bcf368e6d82cb3d7cdc55ac94251",
-  "assinatura": "WmL2UB3b1cvJO4iH3SVa4d5WxM6Yw4P8pNXVYtu2vgZDHQAybshpOTbYLjXOaEzJ1NliQfTMh96j2agUnOEghLqp57qxSoS+Ld4ckg8JS4f9pfCgnzIbGK4kEp6AoQeOBI9SyrvAe7zDqLtIhpQdN/mHzaJBnHp2yPPqiM2v7XPOnTIRQdaPrm13M3MtRyxNJ35VfULocZcZ6aaG/aj+X3AXycI6yuujZ+eqzrTngWO8dpGst6EctHfeVZ1JvFVkrqbFyRSX9Ghbg7dvBdhrNZf5BNYBP3LotF6qDvQgVnJ2p6HAD/iiDmx5jf7V4KRRgdAB20hYofz/3cFkVEtEsLW9tMYJEF4n9EeMuWQC58iV32ygPS59tinTz+op7U/0XolSjN6alHAnXr+HpgJjphvg/ov/yKs8C95frXr6jEvxzqTX6Jrza/NYkPkdWEon09GJKfCS/I4FB/jDgFzBa4zQtsX7Lnx5+Lq5R1s3KCgPO+zsrMbPwU26qLEGwiuA",
-  "tamanho": 100001
+  "sha256": "0d5b8ffc62fd893c141b570eb650b97f0652983ab4c763308f93aecd1f8c8d84",
+  "assinatura": "PK4iPHLjrz1ZauaqCVWnpR2BPT/oHOIU002DmIASA731wPUHxAm47naIqb/3YFH/HbKYns/wPRiX/5uAqYlfzj8Mwuj8o7lNHNR2IAu+z30eRpZ27KUIsQ3oqqV5AjDP4tyap8WRQn3Bfe4D0k0pr4OZaeCc9EN+OrIBhYRIJ0PsFiQ28Fznxwyq93/ZpSISsmos+nlyavAis8dgyHnP8BgrVRnVNuylGCAOgiEk/R0EfQp9XVRkJmsDYBVU40eaxdDc4Y/lZTOCJO1mkzLn2Yr5jRSOYfy0RXsuIoFzvYRchIXgLEnbgzPefuWJShuPEBQIPL+kayvY9/QTawzQWx4+xGjZtcwnFcJDspEjabgWO7ItCCippY+e0pjVqdft28MZRzkaILtnrC2ahjXgo1URpQb1Zs6AC0cmu+SUJ96si2ynjJaQUHw+fTTVNzXQtaGWxIs4CqCEDpm6wy8BHdRWtPt+zolAlOvoO0GcbnvXQtAaVa9ZFJ4LaxueqrqX",
+  "tamanho": 101469
  }
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.17-03">
+<meta name="versao-sistema" content="2026.11.18-01">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -4738,6 +4738,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.18-01', itens: ['Servidor: só uma cópia pode rodar por vez. Antes, no Windows, o servidor podia subir duas vezes (inicialização do Windows + atalho) e as duas atendiam ao mesmo tempo, o que confundia a atualização e duplicava e-mails e backups. A atualização do servidor espera até 1 minuto para ele voltar.'] },
   { v: '2026.11.17-03', itens: ['Atualização: se a tela já tiver sido trocada numa tentativa anterior, o instalador segue e atualiza o servidor (antes parava com "não é mais nova que a instalada" e o servidor ficava antigo). A tela de atualização avisa quando o servidor está desatualizado.', 'Impressão direta: se o servidor do computador ainda for antigo, o aviso explica que é preciso atualizar.'] },
   { v: '2026.11.17-02', itens: ['Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em "Imprimir direto, sem a janela do Windows". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela.'] },
   { v: '2026.11.17-01', itens: ['Etiquetas na impressora de etiquetas: opção "Na impressora: Girar 90°" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada.'] },
@@ -5155,8 +5156,8 @@ ACT.atInstalar = async () => {
       if (p.srv && st.servidor >= SERVIDOR_SEGURO) {   // servidor novo: confere a assinatura, troca o arquivo e reinicia sozinho
         progEtapa(5, 94, 'Atualizando o servidor para ' + p.srv.versao + ' (reinicia em poucos segundos)…');
         await api('instalarServidor', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Versao': p.srv.versao, 'X-Sha256': p.srv.sha256, 'X-Assinatura': p.srv.assinatura }, body: p.srv.buf });
-        let ok = false; for (let k = 0; k < 40 && !ok; k++) { await pausa(500); try { const s2 = await api('status'); ok = s2.servidor === p.srv.versao; srvInfo = s2; } catch (e) { } }
-        if (!ok) throw new Error('o servidor não voltou na versão ' + p.srv.versao + '; feche e abra pelo atalho');
+        let ok = false; for (let k = 0; k < 120 && !ok; k++) { await pausa(500); try { const s2 = await api('status'); ok = s2.servidor === p.srv.versao; srvInfo = s2; } catch (e) { } }
+        if (!ok) throw new Error('o servidor não voltou na versão ' + p.srv.versao + ' em 1 minuto; reinicie o computador e confira em Sobre e atualização (os dados e o arquivo novo já estão gravados)');
       }
     } else {
     progEtapa(1, 15, 'Abrindo a pasta do sistema…');
@@ -7064,6 +7065,7 @@ const MANUAL = [
       <tr><td>Backup na nuvem atrasado / pasta inacessível</td><td>Google Drive aberto e conectado? Criptografia ligada?</td><td>Abrir o Drive, conferir a pasta Backups; ligar a criptografia.</td></tr>
       <tr><td>Quantidade das Araras/Estoque não bate com a prateleira</td><td>Transferência não lançada; venda tirou do Estoque porque as Araras zeraram</td><td>Ajustar estoque (total e "no Estoque") ou fazer a transferência; conferir Movimentações → TRANSFERÊNCIA.</td></tr>
       <tr><td>Atualização: "não é mais nova que a instalada" / impressão direta "não encontrado"</td><td>A tela já era a nova, mas o servidor ficou antigo (até a 2026.11.17-02 o instalador parava aí)</td><td>Instalar a 2026.11.17-03 ou mais nova pela tela (atualiza o servidor) ou ATUALIZAR.bat do pacote. Sobre e atualização mostra "Servidor desatualizado".</td></tr>
+      <tr><td>Servidor em duas versões ao mesmo tempo / e-mail ou backup em dobro</td><td>Duas cópias do servidor rodando (até o servidor 2026.11.17-03 o Windows deixava as duas abrirem a mesma porta; no servidor.log aparecem dois "iniciado" seguidos)</td><td>Servidor 2026.11.18-01 ou mais novo usa porta exclusiva: a segunda cópia registra "porta ocupada" e sai. Para quem ainda estiver com duas: reiniciar o computador.</td></tr>
       <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
     <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
   { id: 'treinamento', t: 'Roteiro de treinamento', h: `

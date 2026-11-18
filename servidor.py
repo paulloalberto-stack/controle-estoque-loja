@@ -7,8 +7,21 @@
 #   python  servidor.py --parar    para o servidor (usado pelo instalador)
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+import socket as _sock
 
-VERSAO_SERVIDOR = '2026.11.17-03'
+
+class ServidorHTTP(ThreadingHTTPServer):
+    """porta exclusiva: no Windows o padrão (SO_REUSEADDR) deixava DUAS cópias do servidor ouvirem a mesma porta
+    (aconteceu na loja: uma pela inicialização do Windows e outra pelo atalho); a segunda cópia agora sai sozinha"""
+    allow_reuse_address = False
+    daemon_threads = True
+
+    def server_bind(self):
+        if hasattr(_sock, 'SO_EXCLUSIVEADDRUSE'):
+            self.socket.setsockopt(_sock.SOL_SOCKET, _sock.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+VERSAO_SERVIDOR = '2026.11.18-01'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -1001,7 +1014,10 @@ def imprimir_imagem(dados):
     with open(arq, 'wb') as f:
         f.write(base64.b64decode(m.group(1)))
     try:
-        env = {'LOJA_IMG': arq, 'LOJA_IMP': impressora, 'LOJA_MM': str(mm), 'LOJA_ARQ': os.environ.get('LOJA_TESTE_IMPRESSAO', '')}
+        teste = os.environ.get('LOJA_TESTE_IMPRESSAO', '')   # só nos testes: imprime em arquivo (um por trabalho)
+        if teste:
+            teste = teste[:-4] + '_%d.pdf' % int(time.time() * 1000)
+        env = {'LOJA_IMG': arq, 'LOJA_IMP': impressora, 'LOJA_MM': str(mm), 'LOJA_ARQ': teste}
         return _ps(PS_IMPRIMIR, env)
     finally:
         try:
@@ -1762,9 +1778,9 @@ def iniciar_rede():
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         ctx.load_cert_chain(c['crt'], c['key'])
-        s1 = ThreadingHTTPServer(('0.0.0.0', PORTA_REDE), AtendenteRede)
+        s1 = ServidorHTTP(('0.0.0.0', PORTA_REDE), AtendenteRede)
         s1.socket = ctx.wrap_socket(s1.socket, server_side=True)
-        s2 = ThreadingHTTPServer(('0.0.0.0', PORTA_INSTALAR), AtendenteInstalar)
+        s2 = ServidorHTTP(('0.0.0.0', PORTA_INSTALAR), AtendenteInstalar)
         for s in (s1, s2):
             threading.Thread(target=s.serve_forever, daemon=True).start()
         REDE.update(https=s1, http=s2)
@@ -1814,11 +1830,18 @@ def status():
 
 def servir():
     global BANCO_ATIVO, SERVIDOR_HTTP
-    for tentativa in range(60 if '--esperar' in sys.argv else 1):
+    for tentativa in range(120 if '--esperar' in sys.argv else 1):
         try:
-            SERVIDOR_HTTP = ThreadingHTTPServer(('127.0.0.1', PORTA), Atendente)
+            SERVIDOR_HTTP = ServidorHTTP(('127.0.0.1', PORTA), Atendente)
             break
         except OSError:
+            if tentativa in (10, 30, 60):   # reinício da atualização: outra cópia antiga ainda segura a porta; pede para ela parar
+                try:
+                    rq = urllib.request.Request('http://127.0.0.1:%d/api/parar' % PORTA, data=b'{}', method='POST', headers={'Content-Type': 'application/json', 'X-Controle-Estoque': '1'})
+                    urllib.request.urlopen(rq, timeout=5).read()
+                    log('porta %d ainda ocupada por outra cópia do servidor: pedido para ela parar' % PORTA)
+                except Exception:
+                    pass
             time.sleep(0.5)
     else:
         log('porta %d ocupada; servidor não iniciado (já está rodando?)' % PORTA)
@@ -1833,6 +1856,11 @@ def servir():
             time.sleep(0.5)
     log('servidor %s iniciado em http://127.0.0.1:%d (pasta %s)' % (VERSAO_SERVIDOR, PORTA, BASE))
     SERVIDOR_HTTP.serve_forever()
+    try:   # solta as portas na hora, para a versão nova (reinício da atualização) poder subir
+        SERVIDOR_HTTP.server_close()
+        parar_rede()
+    except Exception:
+        pass
     log('servidor parado')
     return True
 
