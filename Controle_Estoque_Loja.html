@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.17-02">
+<meta name="versao-sistema" content="2026.11.17-03">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -1787,7 +1787,7 @@ async function carregarImpressoras() {
     const r = await api('impressoras'), atual = db.config.impDireta || '';
     s.innerHTML = `<option value="">Não (abrir a janela para escolher a impressora)</option>` + (r.lista || []).map(n => `<option value="${esc(n)}" ${n === atual ? 'selected' : ''}>${esc(n)}${n === r.padrao ? ' (padrão do Windows)' : ''}</option>`).join('') + (atual && (r.lista || []).indexOf(atual) < 0 ? `<option value="${esc(atual)}" selected>${esc(atual)} (não encontrada)</option>` : '');
     s.dataset.ok = '1';
-  } catch (e) { const m = $('#imp-msg'); if (m) m.innerHTML = '<span class="err">Não foi possível listar as impressoras: ' + esc(e.message) + '</span>'; }
+  } catch (e) { const m = $('#imp-msg'); if (m) m.innerHTML = '<span class="err">' + (/encontrad|404/i.test(e.message) ? 'O servidor deste computador ainda é de uma versão antiga e não tem a impressão direta. Atualize o sistema (Configurações → Sobre e atualização) como master.' : 'Não foi possível listar as impressoras: ' + esc(e.message)) + '</span>'; }
 }
 document.addEventListener('change', e => {
   if (!e.target || e.target.id !== 'cf-impDireta' || !adm()) return;
@@ -4738,6 +4738,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.17-03', itens: ['Atualização: se a tela já tiver sido trocada numa tentativa anterior, o instalador segue e atualiza o servidor (antes parava com "não é mais nova que a instalada" e o servidor ficava antigo). A tela de atualização avisa quando o servidor está desatualizado.', 'Impressão direta: se o servidor do computador ainda for antigo, o aviso explica que é preciso atualizar.'] },
   { v: '2026.11.17-02', itens: ['Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em "Imprimir direto, sem a janela do Windows". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela.'] },
   { v: '2026.11.17-01', itens: ['Etiquetas na impressora de etiquetas: opção "Na impressora: Girar 90°" para quando a etiqueta sai de lado ou cortada entre duas, tamanho livre em mm (outro tamanho) e ajuste fino da posição. A escolha fica gravada.'] },
   { v: '2026.11.16-03', itens: ['Vendas com vale-troca continuam com o valor total das peças, com destaque verde para a parte paga em vale-troca: na lista de vendas (em cada venda e no total), no relatório (cartão Vendas no período e linha da forma Crédito do cliente).'] },
@@ -4980,6 +4981,7 @@ async function consultarNuvem() {
   versaoNuvem = await r.json(); versaoNuvem.consultadaEm = agora(); return versaoNuvem;
 }
 const temVersaoNova = () => !!(versaoNuvem && versaoNuvem.versao > VERSAO_APP);
+const srvAtrasado = () => !!(MODO_SERVIDOR && !MODO_REDE && versaoNuvem && versaoNuvem.servidor && srvInfo && srvInfo.servidor && versaoNuvem.servidor.versao > srvInfo.servidor);
 const pastaDoSistema = () => { const p = decodeURIComponent(location.pathname.replace(/^[/]/, '')).split('/'); p.pop(); return p.join(String.fromCharCode(92)); };
 function avisoNuvem() {
   const el = $('#alerta-nuvem'); if (!el) return;
@@ -5144,7 +5146,9 @@ ACT.atInstalar = async () => {
       progEtapa(2, 35, 'Conferindo o SHA-256 e a assinatura do arquivo baixado…'); await pausa(250);
       hash = await verificarAssinatura(p, p.buf);
       progEtapa(3, 55, 'O servidor confere a assinatura e guarda a versão ' + de + '…'); await pausa(200);
-      await api('instalar', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Versao': p.versao, 'X-Sha256': hash, 'X-Assinatura': p.assinatura }, body: p.buf });
+      const st0 = await atualizarSrvInfo();
+      if (!st0 || st0.sistema !== p.versao)   // se a tela já foi gravada numa tentativa anterior, pula e segue para o servidor
+        await api('instalar', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Versao': p.versao, 'X-Sha256': hash, 'X-Assinatura': p.assinatura }, body: p.buf });
       progEtapa(4, 80, 'Versão ' + p.versao + ' gravada…'); await pausa(200);
       progEtapa(5, 92, 'Conferindo a instalação…');
       const st = await atualizarSrvInfo(); if (!st || st.sistema !== p.versao) throw new Error('o servidor não confirmou a versão instalada');
@@ -5198,7 +5202,7 @@ function atualizacao() {
   const e1 = v ? 'feito' : 'atual', e2 = !nova ? 'off' : p ? 'feito' : 'atual', e3 = estadoInstalacao ? 'feito' : p ? 'atual' : 'off', e4 = conf ? 'feito' : estadoInstalacao ? 'atual' : 'off';
   const s1 = `<div class="resumo-tit"><div class="rbox ok"><small>Versão instalada</small><b>${esc(VERSAO_APP)}</b></div>
       <div class="rbox"><small>Versão na nuvem</small><b>${v ? esc(v.versao) : '—'}</b><span>${v ? 'publicada em ' + esc(v.publicadoEm || '—') : 'ainda não consultada'}</span></div>
-      <div class="rbox"><small>Situação</small><b>${!v ? '—' : nova ? 'Versão nova disponível' : 'Sistema em dia'}</b><span>${v ? 'consulta às ' + esc(String(v.consultadaEm || '').slice(11, 16)) : ''}</span></div></div>
+      <div class="rbox ${v && !nova && srvAtrasado() ? 'at' : ''}"><small>Situação</small><b>${!v ? '—' : nova ? 'Versão nova disponível' : srvAtrasado() ? 'Servidor desatualizado' : 'Sistema em dia'}</b>${v && !nova && srvAtrasado() ? `<span>servidor ${esc(srvInfo.servidor)} · nuvem ${esc(v.servidor.versao)}: instale a próxima versão (ou rode o ATUALIZAR.bat do pacote)</span>` : ''}<span>${v ? 'consulta às ' + esc(String(v.consultadaEm || '').slice(11, 16)) : ''}</span></div></div>
     ${nova ? `<h4 class="rel-sec">O que muda na versão ${esc(v.versao)}</h4>${listaNovidadesNuvem(v)}` : ''}
     <div class="acoes" style="justify-content:flex-start"><button class="btn" data-act="atVerificar">Verificar agora</button></div>`;
   const s2 = !nova ? '<p class="mut">Nada para baixar: o sistema já está na versão mais nova.</p>' : p
@@ -7059,6 +7063,7 @@ const MANUAL = [
       <tr><td>E-mail não chega</td><td>Caixa "Enviar" marcada? Spam? Último erro na tela</td><td>Enviar e-mail de teste; olhar <code>dados</code>/servidor.log.</td></tr>
       <tr><td>Backup na nuvem atrasado / pasta inacessível</td><td>Google Drive aberto e conectado? Criptografia ligada?</td><td>Abrir o Drive, conferir a pasta Backups; ligar a criptografia.</td></tr>
       <tr><td>Quantidade das Araras/Estoque não bate com a prateleira</td><td>Transferência não lançada; venda tirou do Estoque porque as Araras zeraram</td><td>Ajustar estoque (total e "no Estoque") ou fazer a transferência; conferir Movimentações → TRANSFERÊNCIA.</td></tr>
+      <tr><td>Atualização: "não é mais nova que a instalada" / impressão direta "não encontrado"</td><td>A tela já era a nova, mas o servidor ficou antigo (até a 2026.11.17-02 o instalador parava aí)</td><td>Instalar a 2026.11.17-03 ou mais nova pela tela (atualiza o servidor) ou ATUALIZAR.bat do pacote. Sobre e atualização mostra "Servidor desatualizado".</td></tr>
       <tr><td>Problema depois de atualizar</td><td>Versão em Sobre</td><td>VOLTAR_VERSAO_ANTERIOR.bat e avisar o desenvolvimento.</td></tr></tbody></table>
     <p class="mn-dica">Arquivos úteis: <code>dados\\servidor.log</code> (servidor), Histórico de logs (ações), Configurações → Segurança (verificação geral).</p>` },
   { id: 'treinamento', t: 'Roteiro de treinamento', h: `

@@ -1,18 +1,19 @@
 {
- "versao": "2026.11.17-02",
- "publicadoEm": "17/11/2026 14:39",
+ "versao": "2026.11.17-03",
+ "publicadoEm": "18/11/2026 12:22",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "8a316ca2f9242f1831d40103e060fb44bde94118d77161fda4d205c8511e6123",
- "tamanho": 825184,
- "assinatura": "LzTX3VyKiqaqpgBN3vrlgbNS5CodHnxhrGyVcHsBRgav5/QfNPM6qZRrvBYuBfWEYNRVwML7xV6YHWQhkG3n/h+Yr3KeM39HmF04F3SRmQ/Ec8udYeLpMICg9D2adiH+PE1nc4+Defba6fx3IacRHhsBE1atzO8izsYkDZJSguae95jGVh4eqtNLyQTmDGnGUetjh0xw0y+uEHAd9sR8XZzjW8cQinAb4g42pwqraj+rtTooG0TJwF43lZyNdcUw42G38eZmk69ZhfBlE+iQ2tYQUFsO2bdR1Fxm7go8GQGMQPEgJUi4Gh64ZLF1CONnGAskarH5Q2MS6lHZvBmE49bju4h9jHpSR7XtDEordUjjH+pxYLzKSjU6EkGfKxZgovlWx5aW/2bi4EgAiXsTZ7frBOiqZ9tgrP4hsoxhRM/fQfkr941X6VL8YqzThIiffy+D9j2Jf1OeGV+/YuosVQk5etcOF9OGVd3Amu+1OLd5i+vsd1mtxHiaQGDZZqv5",
+ "sha256": "6af5bd96a5e2ebab9e16a4db5a3f10bd8a2bc4c6725cac967a4be596759a7969",
+ "tamanho": 826816,
+ "assinatura": "GiM182LiWsfp5Ffjr3HBFG6Xp/qT2TT5IB2gTXkqvFwai0M+OjGYFfqjUR7e944CaF1VpztmEb1uHGx1rwh0/GJqRBzCi2m+VUwoVOqHeyA+qJrSO/Q+B0oIfPzK/B6ZwQj/bNaoglfhzROyFc23xl4L0B3O+Wzd5hdmS91Wy3tuseTOwtiMSfb2+OCbIH1f5RexJiHEmGGBnkhXcre+XgulyHwQbpywn0Cmtn8LP2yuwbKz47WB2itkCZi7QjpNIQKFz6ddW9TKSu6Wqq5xokhQUen1o/kLdcAif8QCCwVutNH530cplQh9UMya10UOTs/1oawX/bgHqeHbAtoutpe2CC3AZDuhRqjm0PqGjYslzbrI83IAYpzkrZXOcAxW+mKVf/w8+k9L/u9+engKBjyh+x0eK/qe2aEID4b+br6N/4XtXhpo2KNJRr2eUz6PZ5PlbJt8upzcsHiJiZLTIIufdM2QTwkyHpODkYGM7Ph8Hg/V/I3teStPOofpCBZq",
  "novidades": [
-  "Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em \"Imprimir direto, sem a janela do Windows\". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela."
+  "Atualização: se a tela já tiver sido trocada numa tentativa anterior, o instalador segue e atualiza o servidor (antes parava com \"não é mais nova que a instalada\" e o servidor ficava antigo). A tela de atualização avisa quando o servidor está desatualizado.",
+  "Impressão direta: se o servidor do computador ainda for antigo, o aviso explica que é preciso atualizar."
  ],
  "servidor": {
-  "versao": "2026.11.17-02",
+  "versao": "2026.11.17-03",
   "arquivo": "servidor.py",
-  "sha256": "811789ead7b59e394a80a54ca3e0a9f7716be0db10162f5cc786469b50deeb6a",
-  "assinatura": "q54/B+pBfJswFPBP88mORRrVUjGJ7W9um2eId0DT48u0OREIWkmm2QT5wPeLZE57xrYBEip+oU38mlguABVjNhvxQgQ+acs2Jd7BK/FCmYF+mbtt2CWKixylaMwu/6//meBqRfas1GIdWcHdzjgE04iJ9PA1lQb+WM4LJt4HrZUeA9IVjzpqq1SMDnO+PIn39Qbxu+v/07gQi/JJZjR2GLYvR1pOG9C6KgK4YNphHi7qUmEJVCACgojSTDyeUIkr9xFXNAISYw1VSkISENKnWFsdPcYkJArtU/lhgF/165V3ljWxd7aibDusb41xctUIVjFoZ6Oe7ytXoTDw/XinQkxQocJQb1s+haH5UoBnGGYz2Axu8kLhNXM2K0S/KgepMWsvs+1ZA6RoWuyP/5wsjmO/qhlsSGv17kdf2aiNO2/Ju+04T9GxyDYc77tqDzmTNqPH6yIhsQBU2s97uz9fhZ56NuPRq079f/ZWYgyOoFWOQ5VNxsrYcNMBvtERh13n",
-  "tamanho": 99825
+  "sha256": "acf506a74ebdb47cdcb81f576256f4814759bcf368e6d82cb3d7cdc55ac94251",
+  "assinatura": "WmL2UB3b1cvJO4iH3SVa4d5WxM6Yw4P8pNXVYtu2vgZDHQAybshpOTbYLjXOaEzJ1NliQfTMh96j2agUnOEghLqp57qxSoS+Ld4ckg8JS4f9pfCgnzIbGK4kEp6AoQeOBI9SyrvAe7zDqLtIhpQdN/mHzaJBnHp2yPPqiM2v7XPOnTIRQdaPrm13M3MtRyxNJ35VfULocZcZ6aaG/aj+X3AXycI6yuujZ+eqzrTngWO8dpGst6EctHfeVZ1JvFVkrqbFyRSX9Ghbg7dvBdhrNZf5BNYBP3LotF6qDvQgVnJ2p6HAD/iiDmx5jf7V4KRRgdAB20hYofz/3cFkVEtEsLW9tMYJEF4n9EeMuWQC58iV32ygPS59tinTz+op7U/0XolSjN6alHAnXr+HpgJjphvg/ov/yKs8C95frXr6jEvxzqTX6Jrza/NYkPkdWEon09GJKfCS/I4FB/jDgFzBa4zQtsX7Lnx5+Lq5R1s3KCgPO+zsrMbPwU26qLEGwiuA",
+  "tamanho": 100001
  }
 }

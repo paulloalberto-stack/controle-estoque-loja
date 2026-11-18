@@ -8,7 +8,7 @@
 import os, sys, json, sqlite3, threading, hashlib, base64, re, time, datetime, subprocess, struct, urllib.request, urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-VERSAO_SERVIDOR = '2026.11.17-02'
+VERSAO_SERVIDOR = '2026.11.17-03'
 PORTA = int(os.environ.get('LOJA_PORTA') or 8787)   # outra porta só em testes
 ORIGENS_OK = {'http://127.0.0.1:%d' % PORTA, 'http://localhost:%d' % PORTA}
 MARCA = 'X-Controle-Estoque'   # cabeçalho que só o próprio sistema manda (outro site não consegue mandar sem permissão)
@@ -480,6 +480,9 @@ def instalar_versao(conteudo, versao, sha, ass):
         raise ValueError('o número da versão dentro do arquivo não confere')
     atual = open(ARQ_SISTEMA, encoding='utf-8').read() if os.path.exists(ARQ_SISTEMA) else ''
     v_atual = versao_de(atual)
+    if v_atual == versao and hashlib.sha256(atual.encode('utf-8')).hexdigest() == sha_real:
+        log('sistema %s já estava gravado; nada a trocar' % versao)
+        return
     if v_atual and not versao > v_atual:
         raise ValueError('a versão %s não é mais nova que a instalada (%s)' % (versao, v_atual))
     os.makedirs(PASTA_VERSOES, exist_ok=True)
