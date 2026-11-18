@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'self' http://127.0.0.1:8787 https://viacep.com.br https://brasilapi.com.br https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
-<meta name="versao-sistema" content="2026.11.18-01">
+<meta name="versao-sistema" content="2026.11.18-02">
 <meta name="atualizacao-url" content="https://raw.githubusercontent.com/paulloalberto-stack/controle-estoque-loja/main">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" id="favicon" href="data:,">
@@ -2253,12 +2253,16 @@ ACT.salvarAjuste = el => {
   salvar(); fecharModal(); render(); aviso('Estoque ajustado.', 'ok');
 };
 /* etiquetas com código de barras */
-const FORMATOS_ETQ = [['A4', 'Folha A4 – 3 colunas (64 × 37 mm, 21 por folha)'], ['50', 'Impressora de etiquetas – 50 × 30 mm'], ['40', 'Impressora de etiquetas – 40 × 25 mm'], ['outro', 'Impressora de etiquetas – outro tamanho (mm)']];
+const FORMATOS_ETQ = [['A4', 'Folha A4 – 3 colunas (64 × 37 mm, 21 por folha)'], ['50', 'Impressora de etiquetas – 50 × 30 mm'], ['3050', 'Impressora de etiquetas – 30 × 50 mm (Bali / C3Tech)'], ['40', 'Impressora de etiquetas – 40 × 25 mm'], ['outro', 'Impressora de etiquetas – outro tamanho (mm)']];
 /* impressora de etiquetas: tamanho, giro de 90° (quando o driver está "em pé" e a etiqueta sai de lado) e ajuste fino em mm */
-const cfgTerm = () => Object.assign({ giro: false, larg: 50, alt: 30, dx: 0, dy: 0 }, db.config.etqTerm || {});
-const tamEtq = fmt => fmt === '40' ? [40, 25] : fmt === '50' ? [50, 30] : [Math.max(15, num(cfgTerm().larg) || 50), Math.max(10, num(cfgTerm().alt) || 30)];
+// giro e ajuste ficam guardados por formato (config.etqTermF[fmt]); o 30 × 50 nasce "Normal" e sem ajuste
+const PADRAO_TERM = { '3050': { giro: 0, dx: 0, dy: 0 } };
+const cfgTerm = fmt => Object.assign({ giro: 0, larg: 50, alt: 30, dx: 0, dy: 0 }, db.config.etqTerm || {}, PADRAO_TERM[fmt] || {}, (db.config.etqTermF || {})[fmt] || {});
+const tamEtq = fmt => fmt === '40' ? [40, 25] : fmt === '50' ? [50, 30] : fmt === '3050' ? [30, 50] : [Math.max(15, num(cfgTerm('outro').larg) || 50), Math.max(10, num(cfgTerm('outro').alt) || 30)];
+const etqMedidaLivre = fmt => fmt === 'outro' || fmt === '3050';
+let etqFmtTela = '';
 function paginaEtq(html, fmt) {
-  const c = cfgTerm(), g = c.giro === true ? 90 : int(c.giro), [w, h] = tamEtq(fmt), pw = g ? h : w, ph = g ? w : h, dx = num(c.dx) || 0, dy = num(c.dy) || 0;
+  const c = cfgTerm(fmt), g = c.giro === true ? 90 : int(c.giro), [w, h] = tamEtq(fmt), pw = g ? h : w, ph = g ? w : h, dx = num(c.dx) || 0, dy = num(c.dy) || 0;
   const tr = g === 90 ? `translate(${h + dx}mm,${dy}mm) rotate(90deg)` : g === 270 ? `translate(${dx}mm,${w + dy}mm) rotate(-90deg)` : `translate(${dx}mm,${dy}mm)`;
   PAGINA.etqTerm = `@page{size:${pw}mm ${ph}mm;margin:0}html,body{margin:0!important;padding:0!important}`;
   return html.map(e => `<div class="etq-pg" style="width:${pw}mm;height:${ph}mm">${e.replace('style="--ft', `style="width:${w}mm;height:${h}mm;transform:${tr};--ft`)}</div>`).join('');
@@ -2278,7 +2282,7 @@ const CAMPOS_ETQ = [['loja', 'Nome da loja'], ['desc', 'Descrição e marca'], [
 function etiquetaHTML(p, fmt) {
   const cb = codBarras(p), o = db.config.etqCampos || {}, np = Math.max(2, int(db.config.etqParcelas) || 3), f = fonteEtq(), cx = s => esc(caixaTxt(s, f.caixa));
   const desc = [o.desc !== false ? nomeProd(p) + ' · ' + p.marca : '', o.cor !== false ? p.cor : '', o.colecao ? p.colecao : ''].filter(Boolean).map(cx).join(' · ');
-  return `<div class="etq etq-${fmt === 'outro' ? '50' : fmt} cx-${f.caixa}" style="--ft:${f.ft / 100};--fp:${f.fp / 100};--ff:'${esc(f.fam)}'">${o.loja !== false ? `<div class="e-loja">${cx(db.config.loja || 'Loja')}</div>` : ''}${desc ? `<div class="e-desc">${desc}</div>` : ''}<div class="e-lin"><span class="e-tam">${esc(p.tamanho)}</span><span class="e-preco">${fmtR(p.preco)}</span></div>${o.parcelado ? `<div class="e-cod" style="text-align:right">ou ${np}x de ${fmtR(p.preco / np)}</div>` : ''}${barrasSVG(cb, '100%', fmt === '40' ? 22 : 30)}<div class="e-cod">${esc(cb)}</div></div>`;
+  return `<div class="etq etq-${etqMedidaLivre(fmt) ? '50' : fmt} cx-${f.caixa}" style="--ft:${f.ft / 100};--fp:${f.fp / 100};--ff:'${esc(f.fam)}'">${o.loja !== false ? `<div class="e-loja">${cx(db.config.loja || 'Loja')}</div>` : ''}${desc ? `<div class="e-desc">${desc}</div>` : ''}<div class="e-lin"><span class="e-tam">${esc(p.tamanho)}</span><span class="e-preco">${fmtR(p.preco)}</span></div>${o.parcelado ? `<div class="e-cod" style="text-align:right">ou ${np}x de ${fmtR(p.preco / np)}</div>` : ''}${barrasSVG(cb, '100%', fmt === '40' ? 22 : 30)}<div class="e-cod">${esc(cb)}</div></div>`;
 }
 let etqLista = [];
 function formEtiquetas(lista, titulo) {
@@ -2291,7 +2295,7 @@ function formEtiquetas(lista, titulo) {
     ${(() => { const f = fonteEtq(), s = (id, ops, v) => `<select id="${id}" class="etq-o">${ops.map(([k, t]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
       return `<label>Letras${s('etq-caixa', CAIXA_ETQ, f.caixa)}</label><label>Fonte${s('etq-fam', FONTES_ETQ, f.fam)}</label><label>Tamanho do texto${s('etq-ft', TAM_ETQ, f.ft)}</label><label>Tamanho do preço e do tamanho${s('etq-fp', TAM_ETQ, f.fp)}</label>`; })()}</div>
     <div class="tabw" style="max-height:260px;overflow:auto"><table class="tb"><thead><tr><th>Código de barras</th><th>Produto</th><th>Tam.</th><th class="n">Etiquetas</th></tr></thead><tbody>${etqLista.map((i, k) => { const p = prod(i.prod); return `<tr><td>${esc(codBarras(p))}</td><td>${esc(nomeProd(p))} <span class="mut">${esc(p.marca)}${p.cor ? ' · ' + esc(p.cor) : ''}</span></td><td>${esc(p.tamanho)}</td><td class="n"><input class="qtd etq-q" type="number" min="0" value="${i.qtd}" data-k="${k}"></td></tr>`; }).join('')}</tbody></table></div>
-    ${(() => { const c = cfgTerm(); return `<div class="etq-term form2" id="etq-term" ${fmt === 'A4' ? 'hidden' : ''} style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px">
+    ${(() => { const c = cfgTerm(fmt); etqFmtTela = fmt; return `<div class="etq-term form2" id="etq-term" ${fmt === 'A4' ? 'hidden' : ''} style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px">
       <label>Na impressora<select id="etq-giro" class="etq-o">${[[0, 'Normal'], [90, 'Girar 90° para a direita (quando sai de lado)'], [270, 'Girar 90° para a esquerda (se sair de cabeça para baixo)']].map(([v, x]) => `<option value="${v}" ${(c.giro === true ? 90 : int(c.giro)) === v ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
       <label class="etq-outro" ${fmt === 'outro' ? '' : 'hidden'}>Largura × altura da etiqueta (mm)<span style="display:flex;gap:6px;align-items:center"><input id="etq-larg" class="etq-o" type="number" min="15" max="120" step="1" value="${c.larg}" style="width:80px"> × <input id="etq-alt" class="etq-o" type="number" min="10" max="120" step="1" value="${c.alt}" style="width:80px"></span></label>
       <label>Ajuste fino (mm): → direita / ↓ para baixo<span style="display:flex;gap:6px;align-items:center"><input id="etq-dx" class="etq-o" type="number" step="0.5" min="-10" max="10" value="${c.dx}" style="width:80px"><input id="etq-dy" class="etq-o" type="number" step="0.5" min="-10" max="10" value="${c.dy}" style="width:80px"></span></label>
@@ -2304,15 +2308,21 @@ function lerEtq() {
   const o = {}; $$('.etq-c').forEach(c => o[c.value] = c.checked);
   db.config.etqCampos = o; db.config.etqParcelas = Math.max(2, int($('#etq-np').value) || 3);
   if ($('#etq-caixa')) db.config.etqFonte = { caixa: $('#etq-caixa').value, fam: $('#etq-fam').value, ft: int($('#etq-ft').value) || 100, fp: int($('#etq-fp').value) || 100 };
-  if ($('#etq-giro')) db.config.etqTerm = { giro: int($('#etq-giro').value), larg: num($('#etq-larg').value) || 50, alt: num($('#etq-alt').value) || 30, dx: num($('#etq-dx').value) || 0, dy: num($('#etq-dy').value) || 0 };
-  const fm = ($('#etq-fmt') || {}).value; if ($('#etq-term')) { $('#etq-term').hidden = fm === 'A4'; $('.etq-outro').hidden = fm !== 'outro'; }
+  const fm = ($('#etq-fmt') || {}).value;
+  if ($('#etq-giro') && etqFmtTela) {   // grava o que está na tela no formato que estava aberto; ao trocar de formato, mostra o que é dele
+    const F = db.config.etqTermF = db.config.etqTermF || {};
+    if (etqFmtTela !== 'A4') F[etqFmtTela] = { giro: int($('#etq-giro').value), dx: num($('#etq-dx').value) || 0, dy: num($('#etq-dy').value) || 0 };
+    if (etqFmtTela === 'outro') db.config.etqTerm = Object.assign({}, db.config.etqTerm || {}, { larg: num($('#etq-larg').value) || 50, alt: num($('#etq-alt').value) || 30 });
+    if (fm !== etqFmtTela) { const c = cfgTerm(fm); $('#etq-giro').value = String(c.giro === true ? 90 : int(c.giro)); $('#etq-dx').value = c.dx; $('#etq-dy').value = c.dy; etqFmtTela = fm; }
+  }
+  if ($('#etq-term')) { $('#etq-term').hidden = fm === 'A4'; $('.etq-outro').hidden = fm !== 'outro'; }
   return { fmt: $('#etq-fmt').value, q: $$('.etq-q').map(i => int(i.value)) };
 }
 function previaEtq() {
   if (!$('#etq-prev')) return;
   const { fmt, q } = lerEtq();
   $('#etq-tot').textContent = q.reduce((s, x) => s + x, 0);
-  const [pw, ph] = tamEtq(fmt), est = fmt === 'outro' ? `style="width:${pw}mm;height:${ph}mm;--ft` : null;
+  const [pw, ph] = tamEtq(fmt), est = etqMedidaLivre(fmt) ? `style="width:${pw}mm;height:${ph}mm;--ft` : null;
   $('#etq-prev').innerHTML = `<div class="etqs">${etqLista.filter((i, k) => q[k] > 0).slice(0, 6).map(i => { const e = etiquetaHTML(prod(i.prod), fmt); return est ? e.replace('style="--ft', est) : e; }).join('')}</div>`;
 }
 ACT.etiquetas = el => { const p = prod(+el.dataset.id); formEtiquetas([{ prod: p.id, qtd: Math.max(1, p.estoque) }], 'Etiquetas – ' + esc(nomeCompleto(p))); };
@@ -4738,6 +4748,7 @@ async function infoArmazenamento() {
    registra a atualização e mostra as novidades ao administrador. Uma cópia ANTIGA do sistema não grava sobre dados mais novos sem confirmação. */
 const VERSAO_APP = (document.querySelector('meta[name="versao-sistema"]') || {}).content || '0';
 const NOVIDADES = [
+  { v: '2026.11.18-02', itens: ['Etiquetas: novo formato fixo "Impressora de etiquetas – 30 × 50 mm" (o mesmo que a Bali usa na C3Tech: 30 de largura × 50 de altura, Normal, sem ajuste). O giro e o ajuste fino agora ficam guardados por formato.'] },
   { v: '2026.11.18-01', itens: ['Servidor: só uma cópia pode rodar por vez. Antes, no Windows, o servidor podia subir duas vezes (inicialização do Windows + atalho) e as duas atendiam ao mesmo tempo, o que confundia a atualização e duplicava e-mails e backups. A atualização do servidor espera até 1 minuto para ele voltar.'] },
   { v: '2026.11.17-03', itens: ['Atualização: se a tela já tiver sido trocada numa tentativa anterior, o instalador segue e atualiza o servidor (antes parava com "não é mais nova que a instalada" e o servidor ficava antigo). A tela de atualização avisa quando o servidor está desatualizado.', 'Impressão direta: se o servidor do computador ainda for antigo, o aviso explica que é preciso atualizar.'] },
   { v: '2026.11.17-02', itens: ['Impressão direta: em Configurações → Recibos e impressão, escolha a impressora em "Imprimir direto, sem a janela do Windows". Recibo, condicional, troca, caixa e parcelas em bobina saem direto, já com as vias, sem escolher impressora. Se a impressora não responder, a janela normal abre. Relatórios A4 e etiquetas continuam com a janela.'] },
@@ -5425,7 +5436,7 @@ const AJUDA_PASSOS = [
     'Para desligar, escolha <b>Não (abrir a janela…)</b>.'] },
   { t: 'Imprimir na impressora de etiquetas (térmica)', quem: 'adm', ir: 'produtos', p: [
     'Nas <b>Preferências</b> da impressora no Windows (Configurações → Impressoras → a impressora de etiquetas → Preferências), deixe o papel com o tamanho da etiqueta (ex.: 50 × 30 mm) e o espaço entre etiquetas (gap) que vem na caixa do rolo.',
-    'No sistema, em Etiquetas, escolha o formato (<b>50 × 30</b>, <b>40 × 25</b> ou <b>outro tamanho</b> e digite largura × altura em mm).',
+    'No sistema, em Etiquetas, escolha o formato (<b>30 × 50</b>, que é o da loja, <b>50 × 30</b>, <b>40 × 25</b> ou <b>outro tamanho</b> e digite largura × altura em mm).',
     'Imprima <b>1 etiqueta de teste</b>. No Edge, na janela de impressão: impressora de etiquetas, <b>Margens: Nenhuma</b>, <b>Escala: Padrão</b>, sem cabeçalhos e rodapés.',
     'Saiu de lado (texto correndo ao longo do rolo) ou cortada entre duas etiquetas? Mude <b>Na impressora</b> para <b>Girar 90° para a direita</b> e teste de novo. Se sair de cabeça para baixo, use <b>Girar 90° para a esquerda</b>.',
     'Ficou um pouco deslocada? Use o <b>Ajuste fino</b> (mm para a direita e para baixo; negativo volta). O sistema guarda as escolhas para as próximas vezes.'] },
@@ -7033,7 +7044,7 @@ const MANUAL = [
     <h4>Condicionais</h4>${mnP('condicionais', 'Saída em condicional e acerto.')}
     <h4>Clientes</h4><p>Cadastro com o campo <b>Mensagens de promoção e aniversário (LGPD)</b>: Autoriza / Não autoriza / Não perguntado (guarda data e quem registrou). Não autoriza bloqueia o WhatsApp de aniversário e de cashback. O administrador tem <b>Privacidade (LGPD)</b> (contagens e aviso de privacidade editável/imprimível) e, em Ver, <b>Cópia dos dados</b> (PDF ou JSON) e <b>Anonimizar</b> (troca o nome por CLIENTE ANONIMIZADO nº e apaga telefone, CPF, endereço e nascimento em todos os registros; bloqueado com crediário aberto, crédito ou condicional aberta; não desfaz). Logs e backups antigos mantêm o nome: o log é registro de segurança e os backups antigos saem com o tempo.</p>${mnP('clientes', 'Clientes, crédito e histórico.')}
     <h4>Impressão direta (sem janela)</h4><p>config.impDireta = nome da impressora do Windows. Só com papel em bobina, no computador do caixa (servidor local). O app gera a imagem do comprovante (imagemDoc, escala 3) por via e manda para /api/imprimir; o servidor imprime com System.Drawing (PowerShell, PaperSize da largura da bobina × altura da imagem, sem margem; desenha na largura imprimível). /api/impressoras lista as instaladas. Falha → aviso e janela normal. Teste: botão "Imprimir teste direto". Testado só na impressora de PDF (ela ignora o tamanho e usa A4); na térmica o tamanho segue a bobina.</p>
-    <h4>Etiquetas na impressora térmica</h4><p>Formatos 50×30, 40×25 e "outro tamanho" (config.etqTerm: larg/alt). "Na impressora: Girar 90°" troca o @page para altura × largura e gira cada etiqueta (driver em retrato tira a página em paisagem de lado); ajuste fino dx/dy em mm. Cada etiqueta é uma página (.etq-pg). Teste na C3Tech da Bali: sem giro saiu de lado e entre duas etiquetas (17/11/2026). Edge: margens Nenhuma, escala 100%, sem cabeçalho/rodapé; driver com o tamanho da etiqueta e gap.</p>
+    <h4>Etiquetas na impressora térmica</h4><p>Formatos 30×50 (padrão da Bali na C3Tech, giro Normal), 50×30, 40×25 e "outro tamanho" (config.etqTerm: larg/alt). Giro e ajuste por formato em config.etqTermF[fmt]. "Na impressora: Girar 90°" troca o @page para altura × largura e gira cada etiqueta (driver em retrato tira a página em paisagem de lado); ajuste fino dx/dy em mm. Cada etiqueta é uma página (.etq-pg). Teste na C3Tech da Bali: sem giro saiu de lado e entre duas etiquetas (17/11/2026). Edge: margens Nenhuma, escala 100%, sem cabeçalho/rodapé; driver com o tamanho da etiqueta e gap.</p>
     <h4>Produtos e estoque</h4><p>Filtros (inclusive <b>Localização</b>), grade por modelo, etiquetas dos listados ou dos selecionados, lista de compra.</p>
     <p><b>Araras × Estoque:</b> <code>p.estoque</code> é o total; <code>p.estqFundo</code> = peças lá atrás; Araras = total − Estoque (produto antigo sem o campo = tudo nas Araras). Venda, condicional e ajuste que baixam o total tiram das Araras primeiro e só depois do Estoque; devolução, troca e entrada voltam para as Araras, salvo a entrada com "Guardar em: Estoque". Transferência (lote pelo leitor com lista para imprimir, ou um tamanho pelo menu do tamanho) só muda o lugar: movimentação TRANSFERÊNCIA com qtd 0 e ⇄ n. O ajuste de estoque pede o total e quantas estão lá atrás. Cores: Araras verde-claro, Estoque azul-claro (selos A/E, barrinha nos tamanhos, caixas no menu do tamanho). CSV do estoque tem as colunas Araras e Estoque. Inventário conta o total: depois de finalizar, ajuste a quantidade lá atrás pelo Ajustar estoque se precisar.</p>${mnP('produtos', 'Produtos por modelo e tamanho.')}${mnP('etiquetas', 'Impressão de etiquetas.')}
     <h4>Entrada de mercadoria</h4>${mnP('entradas', 'Entrada manual ou pelo XML da NF-e.')}

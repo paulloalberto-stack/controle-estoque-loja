@@ -1,12 +1,12 @@
 {
- "versao": "2026.11.18-01",
- "publicadoEm": "18/11/2026 12:46",
+ "versao": "2026.11.18-02",
+ "publicadoEm": "18/11/2026 12:53",
  "arquivo": "Controle_Estoque_Loja.html",
- "sha256": "ba6e7224ce8150a1f54e21c2afdfdbcff4ef33e24df0f3c2fa38c786d0b1fad7",
- "tamanho": 827684,
- "assinatura": "cX9kZuk8L3Yb9bJoVwQZsEU2Ssx1HSEQjXJc7ntUfkxBmuMhBFL86WbuU6ZZDCzVmIoF1NbfHtlYrHEW7eVp175UBzoCVigWZraC6v/i5hrgm8462vhbdCSJERAWykxd2u6pCLIpBS6mndeZBbB0mjxIDEUb+o/bEcmipteWlk8sOCbgbb6p6T0QeRqBr5Ek997eAQmRvYqanSeq2IddhlazHuo87Z+AZTy/wZtSUHMzoXbrMa6SvWnlZ2nqzcv+gRUa3npEYaexosIlRh02uHUP/JMu74eszdn6D8ecBHH8nNmHB8t5lvav0kuSV/DPP/+gXcIaGx5AVXmGNolOgRZxsGu/KAK4dtkbMds3w8i9JohwACT7yrkt8RBSaScM8oR8UwqThu5dlSMkMwaGeAaBSvZIk10j7LZKPzilMUeiq5LcyCDdCGEfob3J0O7qWCOuzOt+v3IIZT/YklUbXOCDKuyiVyx4YMNUeshvgve/sFVxV2GUv1hW83b71hmw",
+ "sha256": "34d6b791f250078ea9eca0204c3a9b7403e317fc68bd536d583bbc71f006a947",
+ "tamanho": 829033,
+ "assinatura": "XXFsrTZcBLCRXc+m7BSi6ADJ+45IkpZSV8fFrNYysOWwNkdTHQeTM8g5D+hkLfjfkcs3sxLisIXLO7MCKhodHpB5pGJxI0gKejD7gXcHr/CuD6UZt4yefDiZGRSB6yQWecViWQVC+3l+HDUQW1W6nc22HCotCAL3uFgZekdvxQV/ZdBfrLRZR6waIVGNzR8RJhZVnVpPOaGgDRc5J7wLd7zeGSxdnVquxJDhhYgIibGQY1yvxaU8ly5BF7/Yit/QAadSzplZAHJoTLuKpFmPjfpR7DIi3kDpsRo3kGI+V+A2gVHPpLxzdIjuS/32pEJASsHMSbPwoGXZOisVoVfshYT++ptfD1VNPurQQN8eb/tMC5FaFt+Pwgl6rMI4FOLigJcseKhqe+Ao00jm3iXu6RM4dc9mA8BRpra8bc/tKgX9QI24PONXvhOTBunqPn6nb+UctSGLB1o8rFzeU+P7l8oTtTntdYnSSnNVWQAOSWB2H8qLKS544FyT0pjB0jtF",
  "novidades": [
-  "Servidor: só uma cópia pode rodar por vez. Antes, no Windows, o servidor podia subir duas vezes (inicialização do Windows + atalho) e as duas atendiam ao mesmo tempo, o que confundia a atualização e duplicava e-mails e backups. A atualização do servidor espera até 1 minuto para ele voltar."
+  "Etiquetas: novo formato fixo \"Impressora de etiquetas – 30 × 50 mm\" (o mesmo que a Bali usa na C3Tech: 30 de largura × 50 de altura, Normal, sem ajuste). O giro e o ajuste fino agora ficam guardados por formato."
  ],
  "servidor": {
   "versao": "2026.11.18-01",
